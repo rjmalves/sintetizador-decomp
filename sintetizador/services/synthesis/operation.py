@@ -364,7 +364,7 @@ class OperationSynthetizer:
 
         return [
             first_stage + timedelta(hours=sum(hours_stage[:i]))
-            for i in range(len(hours_stage) - 1)
+            for i in range(len(hours_stage))
         ]
 
     @property
@@ -394,7 +394,7 @@ class OperationSynthetizer:
 
         return [
             first_stage + timedelta(hours=sum(hours_stage[:i]))
-            for i in range(1, len(hours_stage))
+            for i in range(1, len(hours_stage) + 1)
         ]
 
     @property
