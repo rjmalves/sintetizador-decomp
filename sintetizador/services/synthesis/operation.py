@@ -371,6 +371,7 @@ class OperationSynthetizer:
     def stages_start_date(self) -> List[datetime]:
         if self.__stages_start_dates is None:
             self.__stages_start_dates = self.__resolve_stages_start_date()
+            print("START: ", self.__stages_start_dates)
         return self.__stages_start_dates
 
     def __resolve_stages_end_date(self) -> List[datetime]:
@@ -400,6 +401,7 @@ class OperationSynthetizer:
     def stages_end_date(self) -> List[datetime]:
         if self.__stages_end_dates is None:
             self.__stages_end_dates = self.__resolve_stages_end_date()
+            print("END: ", self.__stages_end_dates)
         return self.__stages_end_dates
 
     def synthetize(self, variables: List[str]):
