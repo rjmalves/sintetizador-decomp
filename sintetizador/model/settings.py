@@ -7,7 +7,6 @@ class Settings(metaclass=Singleton):
         # Execution parameters
         self.basedir = getenv("APP_BASEDIR")
         self.installdir = getenv("APP_INSTALLDIR")
-        self.tmpdir = getenv("TMPDIR")
         self.newave_deck_pattern = getenv("PADRAO_DECK")
         self.newave_output_pattern = getenv("PADRAO_SAIDAS")
         self.nwlistop_pattern = getenv("PADRAO_NWLISTOP")
