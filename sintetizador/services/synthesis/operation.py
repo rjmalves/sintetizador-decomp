@@ -330,7 +330,8 @@ class OperationSynthetizer:
         with self.__uow:
             Log.log().info(f"Obtendo patamares")
             dadger = self.__uow.files.get_dadger()
-            dps = dadger.dp(subsistema=sample_sb, estagio=1)
+            sb_code = dadger.sb(nome=sample_sb).codigo
+            dps = dadger.dp(subsistema=sb_code, estagio=1)
         if dps is None:
             return []
         if isinstance(dps, list):
