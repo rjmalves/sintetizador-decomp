@@ -282,6 +282,9 @@ class OperationSynthetizer:
                 df_processed["Estagio"] == e,
                 cols_scenarios,
             ] = df2.loc[df2["Estágio"] == e, col].to_numpy()
+        df_processed = df_processed[
+            ["Estagio", "Data Inicio", "Data Fim"] + cols_scenarios
+        ]
         return df_processed
 
     def _default_args(self) -> List[OperationSynthesis]:
