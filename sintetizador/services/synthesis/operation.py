@@ -355,7 +355,7 @@ class OperationSynthetizer:
             return []
         if dps is None:
             hours_stage = []
-        if isinstance(dps, list):
+        elif isinstance(dps, list):
             hours_stage = [sum(dp.duracoes) for dp in dps]
         else:
             hours_stage = [sum(dps.duracoes)]
@@ -383,7 +383,7 @@ class OperationSynthetizer:
             return []
         if dps is None:
             hours_stage = []
-        if isinstance(dps, list):
+        elif isinstance(dps, list):
             hours_stage = [sum(dp.duracoes) for dp in dps]
         else:
             hours_stage = [sum(dps.duracoes)]
