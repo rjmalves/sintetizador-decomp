@@ -36,7 +36,7 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_inviab_unic(self) -> InviabUnic:
+    def get_inviabunic(self) -> InviabUnic:
         raise NotImplementedError
 
     @abstractmethod
@@ -63,16 +63,6 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__relato2: Optional[Relato] = None
         self.__inviabunic: Optional[InviabUnic] = None
         self.__relgnl: Optional[RelGNL] = None
-
-    def __extrai_patamares_df(
-        self, df: pd.DataFrame, patamares: list = None
-    ) -> pd.DataFrame:
-        if patamares is None:
-            patamares = [
-                str(i)
-                for i in range(1, self.get_patamar().numero_patamares + 1)
-            ]
-        return df.loc[df["Patamar"].isin(patamares), :]
 
     @property
     def caso(self) -> Caso:
