@@ -281,7 +281,7 @@ class OperationSynthetizer:
             df_processed.loc[
                 df_processed["Estagio"] == e,
                 cols_scenarios,
-            ] = df1.loc[df1["Estágio"] == e, col].to_numpy()
+            ] = df2.loc[df2["Estágio"] == e, col].to_numpy()
         return df_processed
 
     def _default_args(self) -> List[OperationSynthesis]:
@@ -371,7 +371,6 @@ class OperationSynthetizer:
     def stages_start_date(self) -> List[datetime]:
         if self.__stages_start_dates is None:
             self.__stages_start_dates = self.__resolve_stages_start_date()
-            print("START: ", self.__stages_start_dates)
         return self.__stages_start_dates
 
     def __resolve_stages_end_date(self) -> List[datetime]:
@@ -401,7 +400,6 @@ class OperationSynthetizer:
     def stages_end_date(self) -> List[datetime]:
         if self.__stages_end_dates is None:
             self.__stages_end_dates = self.__resolve_stages_end_date()
-            print("END: ", self.__stages_end_dates)
         return self.__stages_end_dates
 
     def synthetize(self, variables: List[str]):
