@@ -349,8 +349,9 @@ class OperationSynthetizer:
         with self.__uow:
             Log.log().info(f"Obtendo início dos estágios")
             dadger = self.__uow.files.get_dadger()
+            sb_code = dadger.sb(nome=sample_sb).codigo
             dt = dadger.dt
-            dps = dadger.dp(subsistema=sample_sb)
+            dps = dadger.dp(subsistema=sb_code)
         if dt is None:
             return []
         if dps is None:
@@ -377,8 +378,9 @@ class OperationSynthetizer:
         with self.__uow:
             Log.log().info(f"Obtendo fim dos estágios")
             dadger = self.__uow.files.get_dadger()
+            sb_code = dadger.sb(nome=sample_sb).codigo
             dt = dadger.dt
-            dps = dadger.dp(subsistema=sample_sb)
+            dps = dadger.dp(subsistema=sb_code)
         if dt is None:
             return []
         if dps is None:
@@ -406,6 +408,7 @@ class OperationSynthetizer:
         else:
             variables = self._process_variable_arguments(variables)
         valid_synthesis = self.filter_valid_variables(variables)
+        Log.log().info(f"Variáveis: {valid_synthesis}")
         for s in valid_synthesis:
             filename = str(s)
             Log.log().info(f"Realizando síntese de {filename}")
