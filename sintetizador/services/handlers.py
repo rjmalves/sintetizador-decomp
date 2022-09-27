@@ -16,8 +16,8 @@ def synthetize_execution(
 def synthetize_operation(
     command: commands.SynthetizeOperation, uow: AbstractUnitOfWork
 ):
-    synthetizer = OperationSynthetizer()
-    synthetizer.synthetize(command.variables, uow)
+    synthetizer = OperationSynthetizer(uow)
+    synthetizer.synthetize(command.variables)
 
 
 def clean():
