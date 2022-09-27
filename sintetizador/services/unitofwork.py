@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-from os import chdir, curdir, listdir
-import re
-from typing import Optional, Dict
-from zipfile import ZipFile
+from os import chdir, curdir
+from typing import Dict
 from pathlib import Path
 
-from sintetizador.utils.log import Log
 from sintetizador.model.settings import Settings
 from sintetizador.adapters.repository.files import (
     AbstractFilesRepository,
@@ -28,22 +25,6 @@ class AbstractUnitOfWork(ABC):
 
     @abstractmethod
     def rollback(self):
-        raise NotImplementedError
-
-    @abstractmethod
-    def extract_deck(self) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def extract_outputs(self) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def extract_nwlistop(self) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def extract_nwlistcf(self) -> bool:
         raise NotImplementedError
 
     @property
