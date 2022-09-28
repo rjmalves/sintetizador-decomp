@@ -16,12 +16,42 @@ class OperationSynthetizer:
     DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
         "CMO_SBM_EST",
         "CTER_SIN_EST",
-        "CTER_SBM_EST",
-        "CTER_SBM_PAT",
         "COP_SIN_EST",
         "CFU_SIN_EST",
+        "EARMI_SBM_EST",
+        "EARMI_SIN_EST",
+        "EARPI_SBM_EST",
+        "EARPI_SIN_EST",
+        "EARMF_SBM_EST",
+        "EARMF_SIN_EST",
+        "EARPF_SBM_EST",
+        "EARPF_SIN_EST",
+        "GTER_SBM_EST",
+        "GTER_SBM_PAT",
+        "GTER_SIN_EST",
+        "GTER_SIN_PAT",
+        "GHID_SBM_EST",
+        "GHID_SBM_PAT",
+        "GHID_SIN_EST",
+        "GHID_SIN_PAT",
         "ENA_SBM_EST",
         "ENA_SIN_EST",
+        "MER_SBM_EST",
+        "MER_SBM_PAT",
+        "MER_SIN_EST",
+        "MER_SIN_PAT",
+        "DEF_SBM_EST",
+        "DEF_SBM_PAT",
+        "DEF_SIN_EST",
+        "DEF_SIN_PAT",
+        "VARPI_UHE_EST",
+        "VARPF_UHE_EST",
+        "QAFL_UHE_EST",
+        "QDEF_UHE_EST",
+        "GHID_UHE_EST",
+        "GHID_UHE_PAT",
+        "EVERT_UHE_EST",
+        "EVERNT_UHE_EST",
     ]
 
     def __init__(self, uow: AbstractUnitOfWork) -> None:
@@ -45,16 +75,6 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): self.__processa_bloco_relatorio_operacao("Geração Térmica"),
             (
-                Variable.CUSTO_GERACAO_TERMICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_gt_estagio(),
-            (
-                Variable.CUSTO_GERACAO_TERMICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_gt_patamar(),
-            (
                 Variable.CUSTO_OPERACAO,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
@@ -67,18 +87,266 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): self.__processa_bloco_relatorio_operacao("Custo Futuro"),
             (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Earm Inicial Absoluto"],
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Earm Inicial Percentual"],
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Earm Inicial Absoluto"],
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_energetico_earm_sin_percentual(
+                "Earm Inicial Absoluto"
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Earm Final Absoluto"],
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Earm Final Percentual"],
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Earm Final Absoluto"],
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_energetico_earm_sin_percentual(
+                "Earm Final Absoluto"
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Gter", "GterAT"],
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Gter", "GterAT"],
+                self.patamares,
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Gter", "GterAT"],
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Gter", "GterAT"],
+                self.patamares,
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Ghid", "Itaipu50"],
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Ghid", "Itaipu50"],
+                self.patamares,
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Ghid", "Itaipu50"],
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Ghid", "Itaipu50"],
+                self.patamares,
+            ),
+            (
                 Variable.ENERGIA_NATURAL_AFLUENTE,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_energetico(
-                "ENA Absoluta"
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["ENA Absoluta"],
             ),
             (
                 Variable.ENERGIA_NATURAL_AFLUENTE,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_energetico_sin(
-                "ENA Absoluta"
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["ENA Absoluta"],
+            ),
+            (
+                Variable.MERCADO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Mercado"],
+                self.patamares,
+            ),
+            (
+                Variable.MERCADO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Mercado"],
+            ),
+            (
+                Variable.MERCADO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Mercado"],
+                self.patamares,
+            ),
+            (
+                Variable.MERCADO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Mercado"],
+            ),
+            (
+                Variable.DEFICIT,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Deficit"],
+                self.patamares,
+            ),
+            (
+                Variable.DEFICIT,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Deficit"],
+            ),
+            (
+                Variable.DEFICIT,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Deficit"],
+                self.patamares,
+            ),
+            (
+                Variable.DEFICIT,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Deficit"],
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_uhe(
+                "Volume Ini (% V.U)"
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_uhe(
+                "Volume Fin (% V.U)"
+            ),
+            (
+                Variable.VAZAO_AFLUENTE,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_uhe("Qafl (m3/s)"),
+            (
+                Variable.VAZAO_DEFLUENTE,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_uhe("Qdef (m3/s)"),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_uhe_patamares(self.patamares),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_uhe("Geração Média"),
+            (
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_uhe(
+                "Vertimento Turbinável"
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_uhe(
+                "Vertimento Não-Turbinável"
             ),
         }
 
@@ -112,6 +380,7 @@ class OperationSynthetizer:
     #         )
     #     return df_completo
 
+    ##  ---------------  DADOS DA OPERACAO DAS UTE   --------------   ##
     def __processa_bloco_relatorio_operacao_ute(
         self, col: str
     ) -> pd.DataFrame:
@@ -132,6 +401,7 @@ class OperationSynthetizer:
         df_final = df_final[["Usina"] + cols_df_u]
         return df_final
 
+    ##  ---------------  DADOS DA OPERACAO DAS UHE   --------------   ##
     def __processa_bloco_relatorio_operacao_uhe(
         self, col: str
     ) -> pd.DataFrame:
@@ -154,9 +424,53 @@ class OperationSynthetizer:
         df_final = df_final[["Usina"] + cols_df_u]
         return df_final
 
-    def __processa_bloco_relatorio_balanco_energetico(
+    def __processa_bloco_relatorio_uhe_patamares(
+        self, pats: List[str]
+    ) -> pd.DataFrame:
+        """
+        Extrai informações de uma soma de colunas para um patamar e para o SIN.
+        """
+        df_final = pd.DataFrame()
+        for p in pats:
+            df_p = self.__processa_bloco_relatorio_operacao_uhe(
+                f"Geração Pat {p}"
+            )
+            cols_df_p = df_p.columns.to_list()
+            df_p["Patamar"] = p
+            df_final = pd.concat([df_final, df_p], ignore_index=True)
+        df_final = df_final[["Patamar"] + cols_df_p]
+        return df_final
+
+    ##  ---------------  DADOS DO BALANCO ENERGETICO --------------   ##
+
+    def __processa_bloco_relatorio_balanco_energetico_earm_sin_percentual(
+        self, col: str
+    ) -> pd.DataFrame:
+        """
+        Extrai informação de uma coluna do balanço energético, para um patamar
+        e todos os submercados.
+        """
+        df = self.__processa_bloco_relatorio_balanco_energetico_sin(col)
+        with self.__uow:
+            earmax = (
+                self.__uow.files.get_relato().energia_armazenada_maxima_subsistema
+            )
+        cte_earmax_sin = float(earmax["Earmax"].sum()) / 100.0
+        cols_scenarios = [
+            c
+            for c in df.columns
+            if c not in ["Estagio", "Data Inicio", "Data Fim"]
+        ]
+        df.loc[:, cols_scenarios] /= cte_earmax_sin
+        return df
+
+    def __processa_bloco_relatorio_balanco_energetico_submercado(
         self, col: str, pat: str = "Medio"
     ) -> pd.DataFrame:
+        """
+        Extrai informação de uma coluna do balanço energético, para um patamar
+        e todos os submercados.
+        """
         with self.__uow:
             r1 = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
@@ -173,14 +487,23 @@ class OperationSynthetizer:
             ]
             df_s = self.__process_df_relato1_relato2(df1_s, df2_s, col)
             cols_df_s = df_s.columns.to_list()
+            if pat != "Medio":
+                df_s["Patamar"] = pat
             df_s["Submercado"] = s
             df_final = pd.concat([df_final, df_s], ignore_index=True)
-        df_final = df_final[["Submercado"] + cols_df_s]
+        cols_adic = (
+            ["Submercado", "Patamar"] if pat != "Medio" else ["Submercado"]
+        )
+        df_final = df_final[cols_adic + cols_df_s]
         return df_final
 
     def __processa_bloco_relatorio_balanco_energetico_sin(
         self, col: str, pat: str = "Medio"
     ) -> pd.DataFrame:
+        """
+        Extrai informação de uma coluna do balanço energético, para um patamar
+        e agrega os valores para o SIN.
+        """
         with self.__uow:
             r1 = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
@@ -196,6 +519,9 @@ class OperationSynthetizer:
                 (df2["Subsistema"] == s) & (df2["Patamar"] == pat), :
             ]
             df_s = self.__process_df_relato1_relato2(df1_s, df2_s, col)
+            cols_df_s = df_s.columns.to_list()
+            if pat != "Medio":
+                df_s["Patamar"] = pat
             if df_final.empty:
                 df_final = df_s
             else:
@@ -205,7 +531,30 @@ class OperationSynthetizer:
                     if c not in ["Estagio", "Data Inicio", "Data Fim"]
                 ]
                 df_final.loc[:, cols_cenarios] += df_s.loc[:, cols_cenarios]
-        return df_final
+        cols_adic = ["Patamar"] if pat != "Medio" else []
+        return df_final[cols_adic + cols_df_s]
+
+    def __processa_bloco_relatorio_balanco_estagio(
+        self, function: Callable, cols: List[str], pats: List[str] = ["Medio"]
+    ) -> pd.DataFrame:
+        """
+        Extrai informações de uma soma de colunas para um patamar e para o SIN.
+        """
+        return pd.concat(
+            [
+                self.__sum_df_scenarios_columns(
+                    self.__process_columns_dfs(
+                        function,
+                        cols,
+                        p,
+                    )
+                )
+                for p in pats
+            ],
+            ignore_index=True,
+        )
+
+    ##  ---------------  DADOS DA OPERACAO GERAL     --------------   ##
 
     def __processa_bloco_relatorio_operacao(self, col: str) -> pd.DataFrame:
         with self.__uow:
@@ -232,30 +581,7 @@ class OperationSynthetizer:
         df_final = df_final[["Submercado"] + cols_df_s]
         return df_final
 
-    def __processa_bloco_relatorio_balanco_gt_estagio(
-        self, pat: str = "Medio"
-    ) -> pd.DataFrame:
-        df_gt = self.__processa_bloco_relatorio_balanco_energetico("Gter", pat)
-        df_gtat = self.__processa_bloco_relatorio_balanco_energetico(
-            "GterAT", pat
-        )
-        cols_cenarios = [
-            c
-            for c in df_gt.columns
-            if c not in ["Submercado", "Estagio", "Data Inicio", "Data Fim"]
-        ]
-        df_gt.loc[:, cols_cenarios] += df_gtat.loc[:, cols_cenarios]
-        return df_gt
-
-    def __processa_bloco_relatorio_balanco_gt_patamar(self) -> pd.DataFrame:
-        df_final = pd.DataFrame()
-        for pat in self.patamares:
-            df_pat = self.__processa_bloco_relatorio_balanco_gt_estagio(pat)
-            cols_df_pat = df_pat.columns.to_list()
-            df_pat["Patamar"] = pat
-            df_final = pd.concat([df_final, df_pat], ignore_index=True)
-        df_final = df_final[["Patamar"] + cols_df_pat]
-        return df_final
+    ## -------------- FUNCOES GERAIS ------------- ##
 
     def __process_df_relato1_relato2(
         self, df1: pd.DataFrame, df2: pd.DataFrame, col: str
@@ -286,6 +612,35 @@ class OperationSynthetizer:
             ["Estagio", "Data Inicio", "Data Fim"] + cols_scenarios
         ]
         return df_processed
+
+    def __process_columns_dfs(
+        self, function: Callable, cols: List[str], pat: str = "Medio"
+    ) -> List[pd.DataFrame]:
+        """
+        Processa uma função de formatação de DataFrame para diversas colunas
+        e um patamar fixo.
+        """
+        return [function(c, pat) for c in cols]
+
+    def __sum_df_scenarios_columns(self, dfs: List[pd.DataFrame]):
+        """
+        Realiza a soma das colunas relativas a cenários em uma lista de
+        DataFrames, preservando as demais colunas.
+        """
+        non_scenario_columns = [
+            "Patamar",
+            "Submercado",
+            "Estagio",
+            "Data Inicio",
+            "Data Fim",
+        ]
+        scenario_columns = [
+            c for c in dfs[0].columns if c not in non_scenario_columns
+        ]
+        df_sum = dfs[0].copy()
+        for i in range(1, len(dfs)):
+            df_sum.loc[:, scenario_columns] += dfs[i].loc[:, scenario_columns]
+        return df_sum
 
     def _default_args(self) -> List[OperationSynthesis]:
         return [
