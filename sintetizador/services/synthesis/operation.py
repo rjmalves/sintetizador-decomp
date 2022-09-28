@@ -34,8 +34,9 @@ class OperationSynthetizer:
         "GHID_SBM_PAT",
         "GHID_SIN_EST",
         "GHID_SIN_PAT",
-        "ENA_SBM_EST",
-        "ENA_SIN_EST",
+        "ENAA_SBM_EST",
+        "ENAA_SIN_EST",
+        "ENAM_SBM_EST",
         "MER_SBM_EST",
         "MER_SBM_PAT",
         "MER_SIN_EST",
@@ -222,7 +223,7 @@ class OperationSynthetizer:
                 self.patamares,
             ),
             (
-                Variable.ENERGIA_NATURAL_AFLUENTE,
+                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
             ): self.__processa_bloco_relatorio_balanco_estagio(
@@ -230,12 +231,20 @@ class OperationSynthetizer:
                 ["ENA Absoluta"],
             ),
             (
-                Variable.ENERGIA_NATURAL_AFLUENTE,
+                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
             ): self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["ENA Absoluta"],
+            ),
+            (
+                Variable.ENERGIA_NATURAL_AFLUENTE_MLT,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["ENA Percentual"],
             ),
             (
                 Variable.MERCADO,
