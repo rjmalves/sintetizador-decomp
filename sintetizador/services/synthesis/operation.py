@@ -58,6 +58,7 @@ class OperationSynthetizer:
         self.__uow = uow
         self.__subsystems: Optional[List[str]] = None
         self.__patamares: Optional[List[str]] = None
+        self.__horas_patamares: Optional[Dict[str, Dict[int, List[float]]]] = {}
         self.__stages_start_dates: Optional[List[datetime]] = None
         self.__stages_end_dates: Optional[List[datetime]] = None
         self.__rules: Dict[
@@ -381,14 +382,29 @@ class OperationSynthetizer:
     #     return df_completo
 
     ##  ---------------  DADOS DA OPERACAO DAS UTE   --------------   ##
+
+    def __calcula_geracao_media(self, df: pd.DataFrame) -> pd.DataFrame:
+        def aux_calcula_media(self, linha: pd.Series):
+            sb = linha["Subsistema"]
+            e = linha["Estágio"]
+            acumulado = 0.
+            for i, p in enumerate(self.patamares):
+                acumulado += self.horas_patamares[sb][e][i] * linha[f"Patamar {p}"]
+            acumulado /= sum(self.horas_patamares[sb][e]) 
+            linha["Patamar Medio"] = acumulado
+        return df.apply(aux_calcula_media, axis=1)
+
     def __processa_bloco_relatorio_operacao_ute(
         self, col: str
     ) -> pd.DataFrame:
         with self.__uow:
             r1 = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
-        df1 = r1.relatorio_operacao_ute
-        df2 = r2.relatorio_operacao_ute
+        df1 = self.__calcula_geracao_media(r1.relatorio_operacao_ute)
+        df2 = self.__calcula_geracao_media(r2.relatorio_operacao_ute)
+        # Elimina usinas com nome repetido
+        df1 = df1.groupby(["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"], as_index=False).sum()
+        df2 = df2.groupby(["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"], as_index=False).sum()
         usinas_relatorio = df1["Usina"].unique()
         df_final = pd.DataFrame()
         for u in usinas_relatorio:
@@ -702,6 +718,30 @@ class OperationSynthetizer:
         if self.__patamares is None:
             self.__patamares = self.__resolve_patamares()
         return self.__patamares
+
+    def __resolve_horas_patamares(self) -> Dict[str, Dict[int, List[float]]]:
+        with self.__uow:
+            Log.log().info(f"Obtendo duração dos patamares")
+            dadger = self.__uow.files.get_dadger()
+        duracoes_patamares = {}
+        for sb in self.subsystems:
+            duracoes_patamares[sb] = {}
+            sb_code = dadger.sb(nome=sb).codigo
+            for e in range(1, len(self.stages_start_date) + 1):
+                dps = dadger.dp(subsistema=sb_code, estagio=e)
+                if dps is None:
+                    duracoes_patamares[sb][e] = []
+                if isinstance(dps, list):
+                    duracoes_patamares[sb][e] = dps[0].duracoes
+                else:
+                    duracoes_patamares[sb][e] = dps.duracoes
+        return duracoes_patamares
+
+    @property
+    def horas_patamares(self) -> Dict[str, Dict[int, List[float]]]:
+        if self.__horas_patamares is None:
+            self.__horas_patamares = self.__resolve_horas_patamares()
+        return self.__horas_patamares
 
     def __resolve_stages_start_date(self) -> List[datetime]:
         sample_sb = self.subsystems[0]
