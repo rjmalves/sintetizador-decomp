@@ -52,15 +52,19 @@ class OperationSynthetizer:
         "GHID_UHE_PAT",
         "EVERT_UHE_EST",
         "EVERNT_UHE_EST",
+        "GTER_UTE_EST",
+        "GTER_UTE_PAT",
+        "CTER_UTE_EST",
     ]
 
     def __init__(self, uow: AbstractUnitOfWork) -> None:
         self.__uow = uow
         self.__subsystems: Optional[List[str]] = None
         self.__patamares: Optional[List[str]] = None
-        self.__horas_patamares: Optional[Dict[str, Dict[int, List[float]]]] = {}
+        self.__horas_patamares: Optional[Dict[str, Dict[int, List[float]]]] = None
         self.__stages_start_dates: Optional[List[datetime]] = None
         self.__stages_end_dates: Optional[List[datetime]] = None
+        self.__utes: Optional[Dict[str, Dict[int, List[str]]]] = None
         self.__rules: Dict[
             Tuple[Variable, SpatialResolution, TemporalResolution],
             pd.DataFrame,
@@ -349,6 +353,21 @@ class OperationSynthetizer:
             ): self.__processa_bloco_relatorio_operacao_uhe(
                 "Vertimento Não-Turbinável"
             ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.USINA_TERMELETRICA,
+                TemporalResolution.PATAMAR,
+            ): self.__processa_bloco_relatorio_ute_patamares(self.patamares),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.USINA_TERMELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_ute("Patamar Medio"),
+            (
+                Variable.CUSTO_GERACAO_TERMICA,
+                SpatialResolution.USINA_TERMELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_bloco_relatorio_operacao_ute("Custo"),
         }
 
     # def __processa_bloco_cmo(
@@ -384,15 +403,17 @@ class OperationSynthetizer:
     ##  ---------------  DADOS DA OPERACAO DAS UTE   --------------   ##
 
     def __calcula_geracao_media(self, df: pd.DataFrame) -> pd.DataFrame:
-        def aux_calcula_media(self, linha: pd.Series):
+
+        def aux_calcula_media(linha: pd.Series):
             sb = linha["Subsistema"]
             e = linha["Estágio"]
             acumulado = 0.
             for i, p in enumerate(self.patamares):
                 acumulado += self.horas_patamares[sb][e][i] * linha[f"Patamar {p}"]
             acumulado /= sum(self.horas_patamares[sb][e]) 
-            linha["Patamar Medio"] = acumulado
-        return df.apply(aux_calcula_media, axis=1)
+            return acumulado
+        df["Patamar Medio"] = df.apply(aux_calcula_media, axis=1)
+        return df
 
     def __processa_bloco_relatorio_operacao_ute(
         self, col: str
@@ -405,16 +426,50 @@ class OperationSynthetizer:
         # Elimina usinas com nome repetido
         df1 = df1.groupby(["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"], as_index=False).sum()
         df2 = df2.groupby(["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"], as_index=False).sum()
-        usinas_relatorio = df1["Usina"].unique()
+        df = pd.concat([df1, df2], ignore_index=True)
+        scenarios_r1 = df1["Cenário"].unique().tolist()
+        scenarios_r2 = df2["Cenário"].unique().tolist()
+        estagios_r1 = df1["Estágio"].unique().tolist()
+        scenarios = list(set(scenarios_r1 + scenarios_r2))
+        cols_scenarios = [str(s) for s in scenarios]
         df_final = pd.DataFrame()
-        for u in usinas_relatorio:
-            df1_u = df1.loc[df1["Usina"] == u, :]
-            df2_u = df2.loc[df2["Usina"] == u, :]
-            df_u = self.__process_df_relato1_relato2(df1_u, df2_u, col)
-            cols_df_u = df_u.columns.to_list()
-            df_u["Usina"] = u
-            df_final = pd.concat([df_final, df_u], ignore_index=True)
-        df_final = df_final[["Usina"] + cols_df_u]
+        for sb, estagios_utes in self.utes.items():
+            df_sb = pd.DataFrame()
+            for e, utes in estagios_utes.items():
+                df_sb_e = pd.DataFrame(np.zeros((len(utes), len(scenarios))), columns=cols_scenarios)
+                df_sb_e["Usina"] = utes
+                df_sb_e["Estagio"] = e
+                df_sb_e["Data Inicio"] = self.stages_start_date[e - 1]
+                df_sb_e["Data Fim"] = self.stages_end_date[e - 1]
+                for u in utes:
+                    filtro = (df["Estágio"] == e) & (df["Subsistema"] == sb) & (df["Usina"] == u)
+                    valores_cenarios = df.loc[filtro, ["Cenário", col]]
+                    for _, v in valores_cenarios.iterrows():
+                        if e in estagios_r1:
+                            df_sb_e.loc[(df_sb_e["Usina"] == u) & (df_sb_e["Estagio"] == e), cols_scenarios] += float(v[col])
+                        else:
+                            df_sb_e.loc[(df_sb_e["Usina"] == u) & (df_sb_e["Estagio"] == e), str(int(v["Cenário"]))] += float(v[col])
+
+                df_sb = pd.concat([df_sb, df_sb_e], ignore_index=True)
+            df_final = pd.concat([df_final, df_sb], ignore_index=True)
+
+        return df_final[["Usina", "Estagio", "Data Inicio", "Data Fim"] + cols_scenarios]
+
+    def __processa_bloco_relatorio_ute_patamares(
+        self, pats: List[str]
+    ) -> pd.DataFrame:
+        """
+        Extrai informações de uma soma de colunas para um patamar e para o SIN.
+        """
+        df_final = pd.DataFrame()
+        for p in pats:
+            df_p = self.__processa_bloco_relatorio_operacao_ute(
+                f"Patamar {p}"
+            )
+            cols_df_p = df_p.columns.to_list()
+            df_p["Patamar"] = p
+            df_final = pd.concat([df_final, df_p], ignore_index=True)
+        df_final = df_final[["Patamar"] + cols_df_p]
         return df_final
 
     ##  ---------------  DADOS DA OPERACAO DAS UHE   --------------   ##
@@ -607,7 +662,9 @@ class OperationSynthetizer:
         estagios = list(set(estagios_r1 + estagios_r2))
         start_dates = [self.stages_start_date[i - 1] for i in estagios]
         end_dates = [self.stages_end_date[i - 1] for i in estagios]
-        scenarios = df2["Cenário"].unique()
+        scenarios_r1 = df1["Cenário"].unique().tolist()
+        scenarios_r2 = df2["Cenário"].unique().tolist()
+        scenarios = list(set(scenarios_r1 + scenarios_r2))
         cols_scenarios = [str(c) for c in scenarios]
         empty_table = np.zeros((len(start_dates), len(scenarios)))
         df_processed = pd.DataFrame(empty_table, columns=cols_scenarios)
@@ -801,13 +858,36 @@ class OperationSynthetizer:
             self.__stages_end_dates = self.__resolve_stages_end_date()
         return self.__stages_end_dates
 
+    def __resolve_utes(self) -> Dict[str, Dict[int, List[float]]]:
+        with self.__uow:
+            Log.log().info(f"Obtendo UTEs")
+            dadger = self.__uow.files.get_dadger()
+        utes = {}
+        for sb in self.subsystems:
+            utes[sb] = {}
+            sb_code = dadger.sb(nome=sb).codigo
+            for e in range(1, len(self.stages_start_date) + 1):
+                cts = dadger.ct(subsistema=sb_code, estagio=e)
+                if cts is None:
+                    utes[sb][e] = []
+                elif isinstance(cts, list):
+                    utes[sb][e] = [c.nome for c in cts]
+                else:
+                    utes[sb][e] = [cts.nome]
+        return utes
+
+    @property
+    def utes(self) -> Dict[str, Dict[int, List[str]]]:
+        if self.__utes is None:
+            self.__utes = self.__resolve_utes()
+        return self.__utes
+
     def synthetize(self, variables: List[str]):
         if len(variables) == 0:
             variables = self._default_args()
         else:
             variables = self._process_variable_arguments(variables)
         valid_synthesis = self.filter_valid_variables(variables)
-        Log.log().info(f"Variáveis: {valid_synthesis}")
         for s in valid_synthesis:
             filename = str(s)
             Log.log().info(f"Realizando síntese de {filename}")
