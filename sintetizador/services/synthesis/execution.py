@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Callable, Dict, List, Optional
 import pandas as pd
 
@@ -45,7 +46,7 @@ class ExecutionSynthetizer:
         self.__inviabilidades: Optional[List[Inviabilidade]] = None
         self.__rules: Dict[Variable, Callable] = {
             Variable.CONVERGENCIA: self._resolve_convergence,
-            Variable.TEMPO_EXECUCAO: self._resolve_convergence,
+            Variable.TEMPO_EXECUCAO: self._resolve_tempo,
             Variable.INVIABILIDADES_CODIGO: self._resolve_inviabilidades_codigo,
             Variable.INVIABILIDADES_PATAMAR: self._resolve_inviabilidades_patamar,
             Variable.INVIABILIDADES_PATAMAR_LIMITE: self._resolve_inviabilidades_patamar_limite,
@@ -106,6 +107,14 @@ class ExecutionSynthetizer:
         df_processed.drop(
             columns=["Tot. Def. Niv. Seg. (MWmes)"], inplace=True
         )
+        return df_processed
+
+    def _resolve_tempo(self) -> pd.DataFrame:
+        with self.__uow:
+            relato = self.__uow.files.get_relato()
+        df = relato.convergencia
+        tempo_total = timedelta(seconds=float(df["Tempo (s)"].sum()))
+        df_processed = pd.DataFrame(data={"Etapa": ["Tempo Total"], "Tempo": [tempo_total]})
         return df_processed
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:

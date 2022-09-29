@@ -196,7 +196,7 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
-                ["Ghid", "Itaipu50"],
+                ["Ghid", "Itaipu60"],
             ),
             (
                 Variable.GERACAO_HIDRAULICA,
@@ -204,7 +204,7 @@ class OperationSynthetizer:
                 TemporalResolution.PATAMAR,
             ): self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
-                ["Ghid", "Itaipu50"],
+                ["Ghid", "Itaipu60"],
                 self.patamares,
             ),
             (
@@ -213,7 +213,7 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
-                ["Ghid", "Itaipu50"],
+                ["Ghid", "Itaipu60"],
             ),
             (
                 Variable.GERACAO_HIDRAULICA,
@@ -221,7 +221,7 @@ class OperationSynthetizer:
                 TemporalResolution.PATAMAR,
             ): self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
-                ["Ghid", "Itaipu50"],
+                ["Ghid", "Itaipu60"],
                 self.patamares,
             ),
             (
