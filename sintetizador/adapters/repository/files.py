@@ -9,6 +9,7 @@ from idecomp.decomp.dadgnl import DadGNL
 from idecomp.decomp.inviabunic import InviabUnic
 from idecomp.decomp.relato import Relato
 from idecomp.decomp.relgnl import RelGNL
+from idecomp.decomp.hidr import Hidr
 
 from sintetizador.utils.log import Log
 from sintetizador.model.operation.variable import Variable
@@ -51,6 +52,10 @@ class AbstractFilesRepository(ABC):
     def get_relgnl(self) -> RelGNL:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_hidr(self) -> Hidr:
+        raise NotImplementedError
+
 
 class RawFilesRepository(AbstractFilesRepository):
     def __init__(self, tmppath: str):
@@ -63,6 +68,7 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__relato2: Optional[Relato] = None
         self.__inviabunic: Optional[InviabUnic] = None
         self.__relgnl: Optional[RelGNL] = None
+        self.__hidr: Optional[Hidr] = None
 
     @property
     def caso(self) -> Caso:
@@ -123,6 +129,14 @@ class RawFilesRepository(AbstractFilesRepository):
                 self.__tmppath, f"relgnl.{self.caso.arquivos}"
             )
         return self.__relgnl
+
+    def get_hidr(self) -> Hidr:
+        if self.__hidr is None:
+            Log.log().info(f"Lendo arquivo {self.arquivos.hidr}")
+            self.__hidr = Hidr.le_arquivo(
+                self.__tmppath, self.arquivos.hidr
+            )
+        return self.__hidr
 
 
 def factory(kind: str, *args, **kwargs) -> AbstractFilesRepository:
