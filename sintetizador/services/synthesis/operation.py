@@ -62,7 +62,9 @@ class OperationSynthetizer:
         self.__uow = uow
         self.__subsystems: Optional[List[str]] = None
         self.__patamares: Optional[List[str]] = None
-        self.__horas_patamares: Optional[Dict[str, Dict[int, List[float]]]] = None
+        self.__horas_patamares: Optional[
+            Dict[str, Dict[int, List[float]]]
+        ] = None
         self.__stages_start_dates: Optional[List[datetime]] = None
         self.__stages_end_dates: Optional[List[datetime]] = None
         self.__utes: Optional[Dict[str, Dict[int, List[str]]]] = None
@@ -412,15 +414,17 @@ class OperationSynthetizer:
     ##  ---------------  DADOS DA OPERACAO DAS UTE   --------------   ##
 
     def __calcula_geracao_media(self, df: pd.DataFrame) -> pd.DataFrame:
-
         def aux_calcula_media(linha: pd.Series):
             sb = linha["Subsistema"]
             e = linha["Estágio"]
-            acumulado = 0.
+            acumulado = 0.0
             for i, p in enumerate(self.patamares):
-                acumulado += self.horas_patamares[sb][e][i] * linha[f"Patamar {p}"]
-            acumulado /= sum(self.horas_patamares[sb][e]) 
+                acumulado += (
+                    self.horas_patamares[sb][e][i] * linha[f"Patamar {p}"]
+                )
+            acumulado /= sum(self.horas_patamares[sb][e])
             return acumulado
+
         df["Patamar Medio"] = df.apply(aux_calcula_media, axis=1)
         return df
 
@@ -433,8 +437,14 @@ class OperationSynthetizer:
         df1 = self.__calcula_geracao_media(r1.relatorio_operacao_ute)
         df2 = self.__calcula_geracao_media(r2.relatorio_operacao_ute)
         # Elimina usinas com nome repetido
-        df1 = df1.groupby(["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"], as_index=False).sum()
-        df2 = df2.groupby(["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"], as_index=False).sum()
+        df1 = df1.groupby(
+            ["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"],
+            as_index=False,
+        ).sum()
+        df2 = df2.groupby(
+            ["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"],
+            as_index=False,
+        ).sum()
         df = pd.concat([df1, df2], ignore_index=True)
         scenarios_r1 = df1["Cenário"].unique().tolist()
         scenarios_r2 = df2["Cenário"].unique().tolist()
@@ -445,24 +455,41 @@ class OperationSynthetizer:
         for sb, estagios_utes in self.utes.items():
             df_sb = pd.DataFrame()
             for e, utes in estagios_utes.items():
-                df_sb_e = pd.DataFrame(np.zeros((len(utes), len(scenarios))), columns=cols_scenarios)
+                df_sb_e = pd.DataFrame(
+                    np.zeros((len(utes), len(scenarios))),
+                    columns=cols_scenarios,
+                )
                 df_sb_e["Usina"] = utes
                 df_sb_e["Estagio"] = e
                 df_sb_e["Data Inicio"] = self.stages_start_date[e - 1]
                 df_sb_e["Data Fim"] = self.stages_end_date[e - 1]
                 for u in utes:
-                    filtro = (df["Estágio"] == e) & (df["Subsistema"] == sb) & (df["Usina"] == u)
+                    filtro = (
+                        (df["Estágio"] == e)
+                        & (df["Subsistema"] == sb)
+                        & (df["Usina"] == u)
+                    )
                     valores_cenarios = df.loc[filtro, ["Cenário", col]]
                     for _, v in valores_cenarios.iterrows():
                         if e in estagios_r1:
-                            df_sb_e.loc[(df_sb_e["Usina"] == u) & (df_sb_e["Estagio"] == e), cols_scenarios] += float(v[col])
+                            df_sb_e.loc[
+                                (df_sb_e["Usina"] == u)
+                                & (df_sb_e["Estagio"] == e),
+                                cols_scenarios,
+                            ] += float(v[col])
                         else:
-                            df_sb_e.loc[(df_sb_e["Usina"] == u) & (df_sb_e["Estagio"] == e), str(int(v["Cenário"]))] += float(v[col])
+                            df_sb_e.loc[
+                                (df_sb_e["Usina"] == u)
+                                & (df_sb_e["Estagio"] == e),
+                                str(int(v["Cenário"])),
+                            ] += float(v[col])
 
                 df_sb = pd.concat([df_sb, df_sb_e], ignore_index=True)
             df_final = pd.concat([df_final, df_sb], ignore_index=True)
 
-        return df_final[["Usina", "Estagio", "Data Inicio", "Data Fim"] + cols_scenarios]
+        return df_final[
+            ["Usina", "Estagio", "Data Inicio", "Data Fim"] + cols_scenarios
+        ]
 
     def __processa_bloco_relatorio_ute_patamares(
         self, pats: List[str]
@@ -472,9 +499,7 @@ class OperationSynthetizer:
         """
         df_final = pd.DataFrame()
         for p in pats:
-            df_p = self.__processa_bloco_relatorio_operacao_ute(
-                f"Patamar {p}"
-            )
+            df_p = self.__processa_bloco_relatorio_operacao_ute(f"Patamar {p}")
             cols_df_p = df_p.columns.to_list()
             df_p["Patamar"] = p
             df_final = pd.concat([df_final, df_p], ignore_index=True)

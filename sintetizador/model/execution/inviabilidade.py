@@ -54,8 +54,17 @@ class Inviabilidade:
                 violacao,
                 unidade,
             )
+        elif "RHA" in mensagem_restricao:
+            return InviabilidadeRHA(
+                iteracao,
+                estagio,
+                cenario,
+                mensagem_restricao,
+                violacao,
+                unidade,
+            )
         elif "RHQ" in mensagem_restricao:
-            return InviabilidadeHQ(
+            return InviabilidadeRHQ(
                 iteracao,
                 estagio,
                 cenario,
@@ -74,7 +83,7 @@ class Inviabilidade:
                 hidr,
             )
         elif "RHV" in mensagem_restricao:
-            return InviabilidadeHV(
+            return InviabilidadeRHV(
                 iteracao,
                 estagio,
                 cenario,
@@ -83,7 +92,7 @@ class Inviabilidade:
                 unidade,
             )
         elif "RHE" in mensagem_restricao:
-            return InviabilidadeHE(
+            return InviabilidadeRHE(
                 iteracao,
                 estagio,
                 cenario,
@@ -173,15 +182,49 @@ class InviabilidadeTI(Inviabilidade):
         hidr: Hidr = args[0]
         nome = self._mensagem_restricao.split("IRRIGACAO, USINA")[1].strip()
         codigo = int(
-            list(hidr.tabela.loc[hidr.tabela["Nome"] == nome, :].index)[0]
+            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
         )
         return [codigo, nome]
 
 
-class InviabilidadeHQ(Inviabilidade):
+class InviabilidadeRHA(Inviabilidade):
+
+    NOME = "RHA"
+
+    def __init__(
+        self,
+        iteracao: int,
+        estagio: int,
+        cenario: int,
+        mensagem_restricao: str,
+        violacao: float,
+        unidade: str,
+    ):
+
+        super().__init__(
+            iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
+        )
+        dados = self.processa_mensagem()
+        self._codigo = dados[0]
+        self._limite = dados[1]
+
+    def __str__(self) -> str:
+        return (
+            f"HA {self._codigo} ({self._limite}) "
+            + f"- Estágio {self._estagio}"
+            + f" - It {self._iteracao} - Cenário {self._cenario}"
+            + f" - Viol. {self._violacao} {self._unidade}"
+        )
+
+    def processa_mensagem(self, *args) -> list:
+        codigo = int(self._mensagem_restricao.split("RHA")[1].split(":")[0])
+        limite = self._mensagem_restricao.split("(")[1].split(")")[0]
+        return [codigo, limite]
 
 
-    NOME = "HQ"
+class InviabilidadeRHQ(Inviabilidade):
+
+    NOME = "RHQ"
 
     def __init__(
         self,
@@ -216,9 +259,9 @@ class InviabilidadeHQ(Inviabilidade):
         return [codigo, pat, limite]
 
 
-class InviabilidadeHV(Inviabilidade):
+class InviabilidadeRHV(Inviabilidade):
 
-    NOME = "HV"
+    NOME = "RHV"
 
     def __init__(
         self,
@@ -251,9 +294,9 @@ class InviabilidadeHV(Inviabilidade):
         return [codigo, limite]
 
 
-class InviabilidadeHE(Inviabilidade):
+class InviabilidadeRHE(Inviabilidade):
 
-    NOME = "HE"
+    NOME = "RHE"
 
     def __init__(
         self,
@@ -360,7 +403,7 @@ class InviabilidadeEV(Inviabilidade):
         hidr: Hidr = args[0]
         nome = self._mensagem_restricao.split("EVAPORACAO, USINA")[1].strip()
         codigo = int(
-            list(hidr.tabela.loc[hidr.tabela["Nome"] == nome, :].index)[0]
+            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
         )
         return [codigo, nome]
 
@@ -403,12 +446,14 @@ class InviabilidadeDEFMIN(Inviabilidade):
         pat = int(self._mensagem_restricao.split(p)[1].split(u)[0].strip())
         nome = self._mensagem_restricao.split(u)[1].strip()
         codigo = int(
-            list(hidr.tabela.loc[hidr.tabela["Nome"] == nome, :].index)[0]
+            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
         )
         vazmin_hidr = int(
-            list(hidr.tabela.loc[hidr.tabela["Nome"] == nome, "Vazão Mínima"])[
-                0
-            ]
+            list(
+                hidr.cadastro.loc[
+                    hidr.cadastro["Nome"] == nome, "Vazão Mínima Histórica"
+                ]
+            )[0]
         )
         return [codigo, nome, pat, vazmin_hidr]
 
@@ -450,7 +495,7 @@ class InviabilidadeFP(Inviabilidade):
         pat = int(self._mensagem_restricao.split(p)[1])
         nome = self._mensagem_restricao.split(u)[1].split(",")[0].strip()
         codigo = int(
-            list(hidr.tabela.loc[hidr.tabela["Nome"] == nome, :].index)[0]
+            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
         )
         return [codigo, nome, pat]
 

@@ -10,7 +10,8 @@ from sintetizador.services.synthesis.operation import OperationSynthetizer
 def synthetize_execution(
     command: commands.SynthetizeExecution, uow: AbstractUnitOfWork
 ):
-    ExecutionSynthetizer.synthetize(command.variables, uow)
+    synthetizer = ExecutionSynthetizer(uow)
+    synthetizer.synthetize(command.variables)
 
 
 def synthetize_operation(
