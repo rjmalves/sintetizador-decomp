@@ -63,12 +63,19 @@ class RawFilesRepository(AbstractFilesRepository):
             raise e
         self.__arquivos: Optional[Arquivos] = None
         self.__dadger: Optional[Dadger] = None
+        self.__read_dadger = False
         self.__dadgnl: Optional[DadGNL] = None
+        self.__read_dadgnl = False
         self.__relato: Optional[Relato] = None
+        self.__read_relato = False
         self.__relato2: Optional[Relato] = None
+        self.__read_relato2 = False
         self.__inviabunic: Optional[InviabUnic] = None
+        self.__read_inviabunic = False
         self.__relgnl: Optional[RelGNL] = None
+        self.__read_relgnl = False
         self.__hidr: Optional[Hidr] = None
+        self.__read_hidr = False
 
     @property
     def caso(self) -> Caso:
@@ -89,7 +96,8 @@ class RawFilesRepository(AbstractFilesRepository):
         return self.__arquivos
 
     def get_dadger(self) -> Dadger:
-        if self.__dadger is None:
+        if self.__read_dadger is False:
+            self.__read_dadger = True
             try:
                 Log.log().info(f"Lendo arquivo {self.arquivos.dadger}")
                 self.__dadger = Dadger.le_arquivo(
@@ -103,7 +111,8 @@ class RawFilesRepository(AbstractFilesRepository):
         return self.__dadger
 
     def get_dadgnl(self) -> Optional[DadGNL]:
-        if self.__dadgnl is None:
+        if self.__read_dadgnl is False:
+            self.__read_dadgnl = True
             try:
                 Log.log().info(f"Lendo arquivo {self.arquivos.dadgnl}")
                 self.__dadgnl = DadGNL.le_arquivo(
@@ -122,7 +131,8 @@ class RawFilesRepository(AbstractFilesRepository):
         return self.__dadgnl
 
     def get_relato(self) -> Relato:
-        if self.__relato is None:
+        if self.__read_relato is False:
+            self.__read_relato = True
             try:
                 Log.log().info(f"Lendo arquivo relato.{self.caso.arquivos}")
                 self.__relato = Relato.le_arquivo(
@@ -136,7 +146,8 @@ class RawFilesRepository(AbstractFilesRepository):
         return self.__relato
 
     def get_relato2(self) -> Optional[Relato]:
-        if self.__relato2 is None:
+        if self.__read_relato2 is False:
+            self.__read_relato2 = True
             try:
                 Log.log().info(f"Lendo arquivo relato2.{self.caso.arquivos}")
                 self.__relato2 = Relato.le_arquivo(
@@ -155,7 +166,8 @@ class RawFilesRepository(AbstractFilesRepository):
         return self.__relato2
 
     def get_inviabunic(self) -> Optional[InviabUnic]:
-        if self.__inviabunic is None:
+        if self.__read_inviabunic is False:
+            self.__read_inviabunic = True
             try:
                 Log.log().info(
                     f"Lendo arquivo inviab_unic.{self.caso.arquivos}"
@@ -176,7 +188,8 @@ class RawFilesRepository(AbstractFilesRepository):
         return self.__inviabunic
 
     def get_relgnl(self) -> Optional[RelGNL]:
-        if self.__relgnl is None:
+        if self.__read_relgnl is False:
+            self.__read_relgnl = True
             try:
                 Log.log().info(f"Lendo arquivo relgnl.{self.caso.arquivos}")
                 self.__relgnl = RelGNL.le_arquivo(
@@ -195,7 +208,8 @@ class RawFilesRepository(AbstractFilesRepository):
         return self.__relgnl
 
     def get_hidr(self) -> Hidr:
-        if self.__hidr is None:
+        if self.__read_hidr is False:
+            self.__read_hidr = True
             try:
                 Log.log().info(f"Lendo arquivo {self.arquivos.hidr}")
                 self.__hidr = Hidr.le_arquivo(

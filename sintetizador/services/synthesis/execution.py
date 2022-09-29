@@ -97,7 +97,10 @@ class ExecutionSynthetizer:
                 "Gap (%)": "Gap",
                 "Tempo (s)": "Tempo",
                 "Num. Inviab": "Inviabilidades",
-                "Total Def. Demanda (MWmed)": "Deficit",
+                "Tot. Def. Demanda (MWmed)": "Deficit",
+                "Tot. Inviab (MWmed)": "Violacao (MWmed)",
+                "Tot. Inviab (m3/s)": "Violacao (m3/s)",
+                "Tot. Inviab (Hm3)": "Violacao (hm3)",
             }
         )
         df_processed.drop(
