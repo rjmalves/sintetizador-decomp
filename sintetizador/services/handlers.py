@@ -4,6 +4,7 @@ from sintetizador.model.settings import Settings
 import sintetizador.domain.commands as commands
 from sintetizador.services.unitofwork import AbstractUnitOfWork
 from sintetizador.services.synthesis.execution import ExecutionSynthetizer
+from sintetizador.services.synthesis.scenarios import ScenarioSynthetizer
 from sintetizador.services.synthesis.operation import OperationSynthetizer
 
 
@@ -11,6 +12,13 @@ def synthetize_execution(
     command: commands.SynthetizeExecution, uow: AbstractUnitOfWork
 ):
     synthetizer = ExecutionSynthetizer(uow)
+    synthetizer.synthetize(command.variables)
+
+
+def synthetize_scenario(
+    command: commands.SynthetizeScenario, uow: AbstractUnitOfWork
+):
+    synthetizer = ScenarioSynthetizer(uow)
     synthetizer.synthetize(command.variables)
 
 

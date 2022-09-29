@@ -41,6 +41,29 @@ def execucao(variaveis, formato):
     Log.log().info("# Fim da síntese #")
 
 
+@click.command("cenarios")
+@click.argument(
+    "variaveis",
+    nargs=-1,
+)
+@click.option(
+    "--formato", default="PARQUET", help="formato para escrita da síntese"
+)
+def cenarios(variaveis, formato):
+    """
+    Realiza a síntese dos dados de cenários do DECOMP.
+    """
+    os.environ["FORMATO_SINTESE"] = formato
+    Log.log().info("# Realizando síntese dos CENÁRIOS #")
+
+    uow = factory(
+        "FS",
+        Settings().synthesis_dir,
+    )
+    command = commands.SynthetizeScenario(variaveis)
+    handlers.synthetize_scenario(command, uow)
+    Log.log().info("# Fim da síntese #")
+
 @click.command("operacao")
 @click.argument(
     "variaveis",
@@ -79,12 +102,15 @@ def limpeza():
     "--execucao", multiple=True, help="variável da execução para síntese"
 )
 @click.option(
+    "--cenarios", multiple=True, help="variável dos cenários para síntese"
+)
+@click.option(
     "--operacao", multiple=True, help="variável da operação para síntese"
 )
 @click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def completa(execucao, operacao, formato):
+def completa(execucao, cenarios, operacao, formato):
     """
     Realiza a síntese completa do DECOMP.
     """
@@ -97,6 +123,8 @@ def completa(execucao, operacao, formato):
     )
     command = commands.SynthetizeExecution(execucao)
     handlers.synthetize_execution(command, uow)
+    command = commands.SynthetizeScenario(cenarios)
+    handlers.synthetize_scenario(command, uow)
     command = commands.SynthetizeOperation(operacao)
     handlers.synthetize_operation(command, uow)
 
@@ -105,5 +133,6 @@ def completa(execucao, operacao, formato):
 
 app.add_command(completa)
 app.add_command(execucao)
+app.add_command(cenarios)
 app.add_command(operacao)
 app.add_command(limpeza)
