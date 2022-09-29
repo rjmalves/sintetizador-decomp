@@ -29,11 +29,11 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_dadgnl(self) -> DadGNL:
+    def get_dadgnl(self) -> Optional[DadGNL]:
         raise NotImplementedError
 
     @abstractmethod
-    def get_inviabunic(self) -> InviabUnic:
+    def get_inviabunic(self) -> Optional[InviabUnic]:
         raise NotImplementedError
 
     @abstractmethod
@@ -41,11 +41,11 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_relato2(self) -> Relato:
+    def get_relato2(self) -> Optional[Relato]:
         raise NotImplementedError
 
     @abstractmethod
-    def get_relgnl(self) -> RelGNL:
+    def get_relgnl(self) -> Optional[RelGNL]:
         raise NotImplementedError
 
     @abstractmethod
@@ -135,18 +135,23 @@ class RawFilesRepository(AbstractFilesRepository):
                 raise e
         return self.__relato
 
-    def get_relato2(self) -> Relato:
+    def get_relato2(self) -> Optional[Relato]:
         if self.__relato2 is None:
             try:
                 Log.log().info(f"Lendo arquivo relato2.{self.caso.arquivos}")
                 self.__relato2 = Relato.le_arquivo(
                     self.__tmppath, f"relato2.{self.caso.arquivos}"
                 )
+            except FileNotFoundError as e:
+                Log.log().info(
+                    f"Não encontrado arquivo relato2.{self.caso.arquivos}"
+                )
+                return None
             except Exception as e:
-                Log.log().error(
+                Log.log().info(
                     f"Erro na leitura do relato2.{self.caso.arquivos}: {e}"
                 )
-                raise e
+                return None
         return self.__relato2
 
     def get_inviabunic(self) -> Optional[InviabUnic]:

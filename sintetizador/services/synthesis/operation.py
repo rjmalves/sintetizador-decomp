@@ -435,7 +435,7 @@ class OperationSynthetizer:
             r1 = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
         df1 = self.__calcula_geracao_media(r1.relatorio_operacao_ute)
-        df2 = self.__calcula_geracao_media(r2.relatorio_operacao_ute)
+        df2 = self.__calcula_geracao_media(r2.relatorio_operacao_ute if r2 is not None else r1.relatorio_operacao_ute)
         # Elimina usinas com nome repetido
         df1 = df1.groupby(
             ["Estágio", "Cenário", "Probabilidade", "Subsistema", "Usina"],
@@ -514,7 +514,7 @@ class OperationSynthetizer:
             r1 = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
         df1 = r1.relatorio_operacao_uhe
-        df2 = r2.relatorio_operacao_uhe
+        df2 = r2.relatorio_operacao_uhe if r2 is not None else r1.relatorio_operacao_uhe
         df1 = df1.loc[~pd.isna(df1["FPCGC"]), :]
         df2 = df2.loc[~pd.isna(df2["FPCGC"]), :]
         usinas_relatorio = df1["Usina"].unique()
@@ -580,7 +580,7 @@ class OperationSynthetizer:
             r1 = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
         df1 = r1.balanco_energetico
-        df2 = r2.balanco_energetico
+        df2 = r2.balanco_energetico if r2 is not None else r1.balanco_energetico
         subsis_balanco = df1["Subsistema"].unique()
         df_final = pd.DataFrame()
         for s in subsis_balanco:
@@ -613,7 +613,7 @@ class OperationSynthetizer:
             r1 = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
         df1 = r1.balanco_energetico
-        df2 = r2.balanco_energetico
+        df2 = r2.balanco_energetico if r2 is not None else r1.balanco_energetico
         subsis_balanco = df1["Subsistema"].unique()
         df_final = pd.DataFrame()
         for s in subsis_balanco:
@@ -666,7 +666,7 @@ class OperationSynthetizer:
             r1 = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
         df1 = r1.relatorio_operacao_custos
-        df2 = r2.relatorio_operacao_custos
+        df2 = r2.relatorio_operacao_custos if r2 is not None else r1.relatorio_operacao_custos
         df_s = self.__process_df_relato1_relato2(df1, df2, col)
         return df_s
 
