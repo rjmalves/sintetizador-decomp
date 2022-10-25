@@ -399,13 +399,13 @@ class OperationSynthetizer:
     #             .flatten()
     #         )
     #         df_cmo = pd.DataFrame(data={"1": cmos})
-    #         df_cmo["Data Inicio"] = self.stages_start_date
-    #         df_cmo["Data Fim"] = self.stages_end_date
+    #         df_cmo["dataInicio"] = self.stages_start_date
+    #         df_cmo["dataFim"] = self.stages_end_date
     #         df_cmo["Submercado"] = submercado
     #         df_completo = pd.concat(
     #             [
     #                 df_completo,
-    #                 df_cmo[["Data Inicio", "Data Fim", "Submercado", "1"]],
+    #                 df_cmo[["dataInicio", "dataFim", "Submercado", "1"]],
     #             ],
     #             ignore_index=True,
     #         )
@@ -462,10 +462,10 @@ class OperationSynthetizer:
                     np.zeros((len(utes), len(scenarios))),
                     columns=cols_scenarios,
                 )
-                df_sb_e["Usina"] = utes
-                df_sb_e["Estagio"] = e
-                df_sb_e["Data Inicio"] = self.stages_start_date[e - 1]
-                df_sb_e["Data Fim"] = self.stages_end_date[e - 1]
+                df_sb_e["usina"] = utes
+                df_sb_e["estagio"] = e
+                df_sb_e["dataInicio"] = self.stages_start_date[e - 1]
+                df_sb_e["dataFim"] = self.stages_end_date[e - 1]
                 for u in utes:
                     filtro = (
                         (df["Estágio"] == e)
@@ -476,14 +476,14 @@ class OperationSynthetizer:
                     for _, v in valores_cenarios.iterrows():
                         if e in estagios_r1:
                             df_sb_e.loc[
-                                (df_sb_e["Usina"] == u)
-                                & (df_sb_e["Estagio"] == e),
+                                (df_sb_e["usina"] == u)
+                                & (df_sb_e["estagio"] == e),
                                 cols_scenarios,
                             ] += float(v[col])
                         else:
                             df_sb_e.loc[
-                                (df_sb_e["Usina"] == u)
-                                & (df_sb_e["Estagio"] == e),
+                                (df_sb_e["usina"] == u)
+                                & (df_sb_e["estagio"] == e),
                                 str(int(v["Cenário"])),
                             ] += float(v[col])
 
@@ -491,7 +491,7 @@ class OperationSynthetizer:
             df_final = pd.concat([df_final, df_sb], ignore_index=True)
 
         return df_final[
-            ["Usina", "Estagio", "Data Inicio", "Data Fim"] + cols_scenarios
+            ["usina", "estagio", "dataInicio", "dataFim"] + cols_scenarios
         ]
 
     def __processa_bloco_relatorio_ute_patamares(
@@ -504,9 +504,9 @@ class OperationSynthetizer:
         for p in pats:
             df_p = self.__processa_bloco_relatorio_operacao_ute(f"Patamar {p}")
             cols_df_p = df_p.columns.to_list()
-            df_p["Patamar"] = p
+            df_p["patamar"] = p
             df_final = pd.concat([df_final, df_p], ignore_index=True)
-        df_final = df_final[["Patamar"] + cols_df_p]
+        df_final = df_final[["patamar"] + cols_df_p]
         return df_final
 
     ##  ---------------  DADOS DA OPERACAO DAS UHE   --------------   ##
@@ -531,9 +531,9 @@ class OperationSynthetizer:
             df2_u = df2.loc[df2["Usina"] == u, :]
             df_u = self.__process_df_relato1_relato2(df1_u, df2_u, col)
             cols_df_u = df_u.columns.to_list()
-            df_u["Usina"] = u
+            df_u["usina"] = u
             df_final = pd.concat([df_final, df_u], ignore_index=True)
-        df_final = df_final[["Usina"] + cols_df_u]
+        df_final = df_final[["usina"] + cols_df_u]
         return df_final
 
     def __processa_bloco_relatorio_uhe_patamares(
@@ -548,9 +548,9 @@ class OperationSynthetizer:
                 f"Geração Pat {p}"
             )
             cols_df_p = df_p.columns.to_list()
-            df_p["Patamar"] = p
+            df_p["patamar"] = p
             df_final = pd.concat([df_final, df_p], ignore_index=True)
-        df_final = df_final[["Patamar"] + cols_df_p]
+        df_final = df_final[["patamar"] + cols_df_p]
         return df_final
 
     ##  ---------------  DADOS DO BALANCO ENERGETICO --------------   ##
@@ -571,7 +571,7 @@ class OperationSynthetizer:
         cols_scenarios = [
             c
             for c in df.columns
-            if c not in ["Estagio", "Data Inicio", "Data Fim", "Patamar"]
+            if c not in ["estagio", "dataInicio", "dataFim", "patamar"]
         ]
         df.loc[:, cols_scenarios] /= cte_earmax_sin
         return df
@@ -604,11 +604,11 @@ class OperationSynthetizer:
             df_s = self.__process_df_relato1_relato2(df1_s, df2_s, col)
             cols_df_s = df_s.columns.to_list()
             if pat != "Medio":
-                df_s["Patamar"] = pat
-            df_s["Submercado"] = s
+                df_s["patamar"] = pat
+            df_s["submercado"] = s
             df_final = pd.concat([df_final, df_s], ignore_index=True)
         cols_adic = (
-            ["Submercado", "Patamar"] if pat != "Medio" else ["Submercado"]
+            ["submercado", "patamar"] if pat != "Medio" else ["submercado"]
         )
         df_final = df_final[cols_adic + cols_df_s]
         return df_final
@@ -641,7 +641,7 @@ class OperationSynthetizer:
             df_s = self.__process_df_relato1_relato2(df1_s, df2_s, col)
             cols_df_s = df_s.columns.to_list()
             if pat != "Medio":
-                df_s["Patamar"] = pat
+                df_s["patamar"] = pat
             if df_final.empty:
                 df_final = df_s
             else:
@@ -649,10 +649,10 @@ class OperationSynthetizer:
                     c
                     for c in df_s.columns
                     if c
-                    not in ["Estagio", "Data Inicio", "Data Fim", "Patamar"]
+                    not in ["estagio", "dataInicio", "dataFim", "patamar"]
                 ]
                 df_final.loc[:, cols_cenarios] += df_s.loc[:, cols_cenarios]
-        cols_adic = ["Patamar"] if pat != "Medio" else []
+        cols_adic = ["patamar"] if pat != "Medio" else []
         return df_final[cols_adic + cols_df_s]
 
     def __processa_bloco_relatorio_balanco_estagio(
@@ -705,9 +705,9 @@ class OperationSynthetizer:
             col = f"CMO {s}"
             df_s = self.__process_df_relato1_relato2(df1, df2, col)
             cols_df_s = df_s.columns.to_list()
-            df_s["Submercado"] = s
+            df_s["submercado"] = s
             df_final = pd.concat([df_final, df_s], ignore_index=True)
-        df_final = df_final[["Submercado"] + cols_df_s]
+        df_final = df_final[["submercado"] + cols_df_s]
         return df_final
 
     ## -------------- FUNCOES GERAIS ------------- ##
@@ -726,21 +726,21 @@ class OperationSynthetizer:
         cols_scenarios = [str(c) for c in scenarios]
         empty_table = np.zeros((len(start_dates), len(scenarios)))
         df_processed = pd.DataFrame(empty_table, columns=cols_scenarios)
-        df_processed["Estagio"] = estagios
-        df_processed["Data Inicio"] = start_dates
-        df_processed["Data Fim"] = end_dates
+        df_processed["estagio"] = estagios
+        df_processed["dataInicio"] = start_dates
+        df_processed["dataFim"] = end_dates
         for e in estagios_r1:
             df_processed.loc[
-                df_processed["Estagio"] == e,
+                df_processed["estagio"] == e,
                 cols_scenarios,
             ] = float(df1.loc[df1["Estágio"] == e, col])
         for e in estagios_r2:
             df_processed.loc[
-                df_processed["Estagio"] == e,
+                df_processed["estagio"] == e,
                 cols_scenarios,
             ] = df2.loc[df2["Estágio"] == e, col].to_numpy()
         df_processed = df_processed[
-            ["Estagio", "Data Inicio", "Data Fim"] + cols_scenarios
+            ["estagio", "dataInicio", "dataFim"] + cols_scenarios
         ]
         return df_processed
 
@@ -759,11 +759,11 @@ class OperationSynthetizer:
         DataFrames, preservando as demais colunas.
         """
         non_scenario_columns = [
-            "Patamar",
-            "Submercado",
-            "Estagio",
-            "Data Inicio",
-            "Data Fim",
+            "patamar",
+            "submercado",
+            "estagio",
+            "dataInicio",
+            "dataFim",
         ]
         scenario_columns = [
             c for c in dfs[0].columns if c not in non_scenario_columns
