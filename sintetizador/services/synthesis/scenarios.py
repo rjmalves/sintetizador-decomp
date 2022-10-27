@@ -17,7 +17,7 @@ class ScenarioSynthetizer:
         self.__uow = uow
         self.__rules: Dict[Variable, Callable] = {
             Variable.PROBABILIDADES: self._resolve_probabilities,
-         }
+        }
 
     def _default_args(self) -> List[ScenarioSynthesis]:
         return [
@@ -46,10 +46,25 @@ class ScenarioSynthetizer:
         with self.__uow:
             r = self.__uow.files.get_relato()
             r2 = self.__uow.files.get_relato2()
-        
-        df = pd.concat([r.balanco_energetico, r2.balanco_energetico], ignore_index=True) if r2 is not None else r.balanco_energetico
-        df = df.rename(columns={"Estágio": "Estagio", "Cenário": "Cenario"})
-        df_subset = df[["Estagio", "Cenario", "Probabilidade"]].drop_duplicates(ignore_index=True)
+
+        df = (
+            pd.concat(
+                [r.balanco_energetico, r2.balanco_energetico],
+                ignore_index=True,
+            )
+            if r2 is not None
+            else r.balanco_energetico
+        )
+        df = df.rename(
+            columns={
+                "Estágio": "estagio",
+                "Cenário": "cenario",
+                "Probabilidade": "probabilidade",
+            }
+        )
+        df_subset = df[
+            ["Estagio", "Cenario", "Probabilidade"]
+        ].drop_duplicates(ignore_index=True)
         return df_subset
 
     def synthetize(self, variables: List[str]):
