@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import Callable, Dict, List, Optional
 import pandas as pd
+import numpy as np
 
 from sintetizador.model.execution.inviabilidade import (
     Inviabilidade,
@@ -161,12 +162,12 @@ class ExecutionSynthetizer:
             )
             dfe["estagio"] = e
             df_completo = pd.concat([df_completo, dfe], ignore_index=True)
-        print(df_completo)
+        df_completo = df_completo.astype(
+            {"mean": np.float64, "std": np.float64}
+        )
         df_completo = df_completo.groupby("parcela").sum()
-        print(df_completo)
         df_completo = df_completo.reset_index()
-        print(df_completo)
-        return df_completo
+        return df_completo[["mean", "std"]]
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
         with self.__uow:
