@@ -63,7 +63,7 @@ class ScenarioSynthetizer:
             }
         )
         df_subset = df[
-            ["Estagio", "Cenario", "Probabilidade"]
+            ["estagio", "cenario", "probabilidade"]
         ].drop_duplicates(ignore_index=True)
         return df_subset
 
