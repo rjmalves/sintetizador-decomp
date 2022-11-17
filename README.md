@@ -16,11 +16,15 @@ Informações da representação do sistema existente e alvo da otimização (TO
 
 Informações da execução do modelo, como ambiente escolhido, recursos computacionais disponíveis, convergência, tempo gasto, etc. (TODO)
 
-|          VARIÁVEL          |     MNEMÔNICO     |
-| -------------------------- | ----------------- |
-| Tempo de Execução          |       TEMPO       |
-| Convergência               |   CONVERGENCIA    |
-| Inviabilidades             |       INVIAB      |
+|          VARIÁVEL          |           MNEMÔNICO            |
+| -------------------------- | ------------------------------ |
+| Tempo de Execução          |  TEMPO                         |
+| Convergência               |  CONVERGENCIA                  |
+| Inviabilidades por Código  |  INVIABILIDADES_CODIGO         |
+| Inviabilidades por Código  |  INVIABILIDADES_PATAMAR        |
+| Inviabilidades por Código  |  INVIABILIDADES_PATAMAR_LIMITE |
+| Inviabilidades por Código  |  INVIABILIDADES_LIMITE         |
+| Inviabilidades por Código  |  INVIABILIDADES_SBM_PATAMAR    |
 
 Para síntese da informações da execução, as chaves de dados a serem sintetizados contém apenas os nomes das variáveis.
 
