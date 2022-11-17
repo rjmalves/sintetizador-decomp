@@ -7,6 +7,7 @@ from idecomp.decomp.dadger import Dadger
 from idecomp.decomp.dadgnl import DadGNL
 from idecomp.decomp.inviabunic import InviabUnic
 from idecomp.decomp.relato import Relato
+from idecomp.decomp.decomptim import DecompTim
 from idecomp.decomp.relgnl import RelGNL
 from idecomp.decomp.hidr import Hidr
 
@@ -41,6 +42,10 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_decomptim(self) -> DecompTim:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_relato2(self) -> Optional[Relato]:
         raise NotImplementedError
 
@@ -70,6 +75,8 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_relato = False
         self.__relato2: Optional[Relato] = None
         self.__read_relato2 = False
+        self.__decomptim: Optional[DecompTim] = None
+        self.__read_decomptim = False
         self.__inviabunic: Optional[InviabUnic] = None
         self.__read_inviabunic = False
         self.__relgnl: Optional[RelGNL] = None
@@ -164,6 +171,19 @@ class RawFilesRepository(AbstractFilesRepository):
                 )
                 return None
         return self.__relato2
+
+    def get_decomptim(self) -> DecompTim:
+        if self.__read_decomptim is False:
+            self.__read_decomptim = True
+            try:
+                Log.log().info(f"Lendo arquivo decomp.tim")
+                self.__decomptim = DecompTim.le_arquivo(
+                    self.__tmppath, "decomp.tim"
+                )
+            except Exception as e:
+                Log.log().error(f"Erro na leitura do decomp.tim: {e}")
+                raise e
+        return self.__decomptim
 
     def get_inviabunic(self) -> Optional[InviabUnic]:
         if self.__read_inviabunic is False:

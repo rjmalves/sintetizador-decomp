@@ -26,6 +26,7 @@ class ExecutionSynthetizer:
     DEFAULT_EXECUTION_SYNTHESIS_ARGS: List[str] = [
         "CONVERGENCIA",
         "TEMPO",
+        "CUSTOS",
         "INVIABILIDADES_CODIGO",
         "INVIABILIDADES_PATAMAR",
         "INVIABILIDADES_PATAMAR_LIMITE",
@@ -47,6 +48,7 @@ class ExecutionSynthetizer:
         self.__rules: Dict[Variable, Callable] = {
             Variable.CONVERGENCIA: self._resolve_convergence,
             Variable.TEMPO_EXECUCAO: self._resolve_tempo,
+            Variable.CUSTOS: self._resolve_costs,
             Variable.INVIABILIDADES_CODIGO: self._resolve_inviabilidades_codigo,
             Variable.INVIABILIDADES_PATAMAR: self._resolve_inviabilidades_patamar,
             Variable.INVIABILIDADES_PATAMAR_LIMITE: self._resolve_inviabilidades_patamar_limite,
@@ -94,14 +96,16 @@ class ExecutionSynthetizer:
         df = relato.convergencia
         df_processed = df.rename(
             columns={
-                "Iteração": "Iteracao",
-                "Gap (%)": "Gap",
-                "Tempo (s)": "Tempo",
-                "Num. Inviab": "Inviabilidades",
-                "Tot. Def. Demanda (MWmed)": "Deficit",
-                "Tot. Inviab (MWmed)": "Violacao (MWmed)",
-                "Tot. Inviab (m3/s)": "Violacao (m3/s)",
-                "Tot. Inviab (Hm3)": "Violacao (hm3)",
+                "Iteração": "iter",
+                "Zinf": "zinf",
+                "Zsup": "zsup",
+                "Gap (%)": "gap",
+                "Tempo (s)": "tempo",
+                "Num. Inviab": "inviabilidades",
+                "Tot. Def. Demanda (MWmed)": "deficit",
+                "Tot. Inviab (MWmed)": "viol_MWmed",
+                "Tot. Inviab (m3/s)": "viol_m3s",
+                "Tot. Inviab (Hm3)": "viol_hm3",
             }
         )
         df_processed.drop(
@@ -111,11 +115,55 @@ class ExecutionSynthetizer:
 
     def _resolve_tempo(self) -> pd.DataFrame:
         with self.__uow:
+            decomptim = self.__uow.files.get_decomptim()
+        df = decomptim.tempos_etapas
+        df = df.rename(columns={"Etapa": "etapa", "Tempo": "tempo"})
+        return df
+
+    def _resolve_costs(self) -> pd.DataFrame:
+        with self.__uow:
             relato = self.__uow.files.get_relato()
-        df = relato.convergencia
-        tempo_total = timedelta(seconds=float(df["Tempo (s)"].sum()))
-        df_processed = pd.DataFrame(data={"Etapa": ["Tempo Total"], "Tempo": [tempo_total]})
-        return df_processed
+        df = relato.relatorio_operacao_custos
+        estagios = df["Estágio"].unique()
+        df_completo = pd.DataFrame(columns=["parcela", "mean", "std"])
+        for e in estagios:
+            parcelas = [
+                "GERACAO TERMICA",
+                "VIOL DESVIO",
+                "VIOL TURB RESERV",
+                "VIOL TURB FIO",
+                "VERTIMENTO RESERV",
+                "VERTIMENTO FIO",
+                "INTERCAMBIO",
+            ]
+            means = (
+                df.loc[
+                    df["Estágio"] == e,
+                    [
+                        "Geração Térmica",
+                        "Violação Desvio",
+                        "Violação de Turbinamento em Reservatórios",
+                        "Violação de Turbinamento em Fio",
+                        "Penalidade de Vertimento em Reservatórios",
+                        "Penalidade de Vertimento em Fio",
+                        "Penalidade de Intercâmbio",
+                    ],
+                ]
+                .to_numpy()
+                .flatten()
+            )
+            dfe = pd.DataFrame(
+                data={
+                    "parcela": parcelas,
+                    "mean": means,
+                    "std": [0.0] * len(means),
+                }
+            )
+            dfe["estagio"] = e
+            df_completo = pd.concat([df_completo, dfe], ignore_index=True)
+        df_completo = df_completo.groupby("parcela").sum()
+        df_completo.reset_index()
+        return df_completo
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
         with self.__uow:

@@ -14,12 +14,13 @@ Informações da representação do sistema existente e alvo da otimização (TO
 
 ### Execução
 
-Informações da execução do modelo, como ambiente escolhido, recursos computacionais disponíveis, convergência, tempo gasto, etc. (TODO)
+Informações da execução do modelo, como ambiente escolhido, recursos computacionais disponíveis, convergência, tempo gasto, etc.
 
 |          VARIÁVEL          |           MNEMÔNICO            |
 | -------------------------- | ------------------------------ |
 | Tempo de Execução          |  TEMPO                         |
 | Convergência               |  CONVERGENCIA                  |
+| Composição de Custos       |  CUSTOS                        |
 | Inviabilidades por Código  |  INVIABILIDADES_CODIGO         |
 | Inviabilidades por Código  |  INVIABILIDADES_PATAMAR        |
 | Inviabilidades por Código  |  INVIABILIDADES_PATAMAR_LIMITE |
