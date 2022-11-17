@@ -167,7 +167,7 @@ class ExecutionSynthetizer:
         )
         df_completo = df_completo.groupby("parcela").sum()
         df_completo = df_completo.reset_index()
-        return df_completo[["mean", "std"]]
+        return df_completo[["parcela", "mean", "std"]]
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
         with self.__uow:
