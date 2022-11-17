@@ -161,8 +161,9 @@ class ExecutionSynthetizer:
             )
             dfe["estagio"] = e
             df_completo = pd.concat([df_completo, dfe], ignore_index=True)
+        print(df_completo)
         df_completo = df_completo.groupby("parcela").sum()
-        df_completo.reset_index()
+        df_completo = df_completo.reset_index()
         return df_completo
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
