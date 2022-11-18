@@ -119,6 +119,7 @@ class ExecutionSynthetizer:
             decomptim = self.__uow.files.get_decomptim()
         df = decomptim.tempos_etapas
         df = df.rename(columns={"Etapa": "etapa", "Tempo": "tempo"})
+        df["tempo"] = df["tempo"].dt.total_seconds()
         return df
 
     def _resolve_costs(self) -> pd.DataFrame:
