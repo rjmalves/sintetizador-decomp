@@ -130,9 +130,9 @@ class ExecutionSynthetizer:
         for e in estagios:
             parcelas = [
                 "GERACAO TERMICA",
-                "VIOL DESVIO",
-                "VIOL TURB RESERV",
-                "VIOL TURB FIO",
+                "DESVIO",
+                "TURB RESERV",
+                "TURB FIO",
                 "VERTIMENTO RESERV",
                 "VERTIMENTO FIO",
                 "INTERCAMBIO",
