@@ -11,6 +11,10 @@ class AbstractExportRepository(ABC):
         super().__init__()
 
     @abstractmethod
+    def read_df(self, filename: str) -> pd.DataFrame:
+        pass
+
+    @abstractmethod
     def synthetize_df(self, df: pd.DataFrame, filename: str) -> bool:
         pass
 
@@ -22,6 +26,9 @@ class ParquetExportRepository(AbstractExportRepository):
     @property
     def path(self) -> pathlib.Path:
         return pathlib.Path(self.__path)
+
+    def read_df(self, filename: str) -> pd.DataFrame:
+        return pd.read_parquet(self.path.joinpath(filename + ".parquet.gzip"))
 
     def synthetize_df(self, df: pd.DataFrame, filename: str) -> bool:
         df.to_parquet(
@@ -37,6 +44,9 @@ class CSVExportRepository(AbstractExportRepository):
     @property
     def path(self) -> pathlib.Path:
         return pathlib.Path(self.__path)
+
+    def read_df(self, filename: str) -> pd.DataFrame:
+        return pd.read_parquet(self.path.joinpath(filename + ".csv"))
 
     def synthetize_df(self, df: pd.DataFrame, filename: str) -> bool:
         df.to_csv(self.path.joinpath(filename + ".csv"), index=False)

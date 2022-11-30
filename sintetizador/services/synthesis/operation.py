@@ -13,6 +13,18 @@ from sintetizador.model.operation.operationsynthesis import OperationSynthesis
 
 class OperationSynthetizer:
 
+    PROBABILITIES_FILE = "PROBABILIDADES"
+
+    IDENTIFICATION_COLUMNS = [
+        "estagio",
+        "submercado",
+        "submercadoDe",
+        "submercadoPara",
+        "ree",
+        "usina",
+        "patamar",
+    ]
+
     DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
         "CMO_SBM_EST",
         "CTER_SIN_EST",
@@ -648,8 +660,7 @@ class OperationSynthetizer:
                 cols_cenarios = [
                     c
                     for c in df_s.columns
-                    if c
-                    not in ["estagio", "dataInicio", "dataFim", "patamar"]
+                    if c not in ["estagio", "dataInicio", "dataFim", "patamar"]
                 ]
                 df_final.loc[:, cols_cenarios] += df_s.loc[:, cols_cenarios]
         cols_adic = ["patamar"] if pat != "Medio" else []
@@ -940,6 +951,83 @@ class OperationSynthetizer:
             self.__utes = self.__resolve_utes()
         return self.__utes
 
+    def _processa_media(
+        self, df: pd.DataFrame, probabilities: Optional[pd.DataFrame] = None
+    ) -> pd.DataFrame:
+        cols_cenarios = [
+            col
+            for col in df.columns.tolist()
+            if col not in self.IDENTIFICATION_COLUMNS
+        ]
+        estagios = [int(e) for e in df["estagio"].unique()]
+        if probabilities is not None:
+            df["mean"] = 0.0
+            for e in estagios:
+                df_estagio = probabilities.loc[
+                    probabilities["estagio"] == e, :
+                ]
+                probabilidades = {
+                    str(int(linha["cenario"])): linha["Probabilidade"]
+                    for _, linha in df_estagio.iterrows()
+                }
+                probabilidades = {
+                    **probabilidades,
+                    **{
+                        c: 0.0
+                        for c in cols_cenarios
+                        if c not in probabilidades.keys()
+                    },
+                }
+                df_cenarios_estagio = df.loc[
+                    df["estagio"] == e, cols_cenarios
+                ].mul(probabilidades, fill_value=0.0)
+                df.loc[df["estagio"] == e, "mean"] = df_cenarios_estagio[
+                    list(probabilidades.keys())
+                ].sum(axis=1)
+        else:
+            df["mean"] = df[cols_cenarios].mean(axis=1)
+        return df.drop(columns=cols_cenarios)
+
+    def _processa_quantis(
+        self, df: pd.DataFrame, quantiles: List[float]
+    ) -> pd.DataFrame:
+        cols_cenarios = [
+            col
+            for col in df.columns.tolist()
+            if col not in self.IDENTIFICATION_COLUMNS
+        ]
+        for q in quantiles:
+            if q == 0:
+                label = "min"
+            elif q == 1:
+                label = "max"
+            elif q == 0.5:
+                label = "median"
+            else:
+                label = f"p{int(100 * q)}"
+            df[label] = df[cols_cenarios].quantile(q, axis=1)
+        return df.drop(columns=cols_cenarios)
+
+    def _postprocess(
+        self, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
+    ) -> pd.DataFrame:
+        df = self._processa_quantis(df, [0.05 * i for i in range(21)])
+        df = self._processa_media(df, probabilities)
+        cols_not_scenarios = [
+            c for c in df.columns if c in self.IDENTIFICATION_COLUMNS
+        ]
+        cols_scenarios = [
+            c for c in df.columns if c not in self.IDENTIFICATION_COLUMNS
+        ]
+        df = pd.melt(
+            df,
+            id_vars=cols_not_scenarios,
+            value_vars=cols_scenarios,
+            var_name="cenario",
+            value_name="valor",
+        )
+        return df
+
     def synthetize(self, variables: List[str]):
         if len(variables) == 0:
             variables = self._default_args()
@@ -953,4 +1041,6 @@ class OperationSynthetizer:
                 (s.variable, s.spatial_resolution, s.temporal_resolution)
             ]
             with self.__uow:
+                probs = self.__uow.export.read_df(self.PROBABILITIES_FILE)
+                df = self._postprocess(df, probs)
                 self.__uow.export.synthetize_df(df, filename)

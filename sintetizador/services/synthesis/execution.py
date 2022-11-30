@@ -1,7 +1,8 @@
-from datetime import timedelta
 from typing import Callable, Dict, List, Optional
 import pandas as pd
 import numpy as np
+import socket
+import pathlib
 
 from sintetizador.model.execution.inviabilidade import (
     Inviabilidade,
@@ -18,6 +19,7 @@ from sintetizador.model.execution.inviabilidade import (
 )
 from sintetizador.services.unitofwork import AbstractUnitOfWork
 from sintetizador.utils.log import Log
+from sintetizador.utils.fs import set_directory
 from sintetizador.model.execution.variable import Variable
 from sintetizador.model.execution.executionsynthesis import ExecutionSynthesis
 
@@ -25,14 +27,13 @@ from sintetizador.model.execution.executionsynthesis import ExecutionSynthesis
 class ExecutionSynthetizer:
 
     DEFAULT_EXECUTION_SYNTHESIS_ARGS: List[str] = [
+        "PROGRAMA",
         "CONVERGENCIA",
         "TEMPO",
         "CUSTOS",
-        "INVIABILIDADES_CODIGO",
-        "INVIABILIDADES_PATAMAR",
-        "INVIABILIDADES_PATAMAR_LIMITE",
-        "INVIABILIDADES_LIMITE",
-        "INVIABILIDADES_SBM_PATAMAR",
+        "RECURSOS_JOB",
+        "RECURSOS_CLUSTER",
+        "INVIABILIDADES",
     ]
 
     INVIABS_CODIGO = [InviabilidadeTI, InviabilidadeEV]
@@ -47,14 +48,13 @@ class ExecutionSynthetizer:
         self.__uow = uow
         self.__inviabilidades: Optional[List[Inviabilidade]] = None
         self.__rules: Dict[Variable, Callable] = {
+            Variable.PROGRAMA: self._resolve_program,
             Variable.CONVERGENCIA: self._resolve_convergence,
             Variable.TEMPO_EXECUCAO: self._resolve_tempo,
             Variable.CUSTOS: self._resolve_costs,
-            Variable.INVIABILIDADES_CODIGO: self._resolve_inviabilidades_codigo,
-            Variable.INVIABILIDADES_PATAMAR: self._resolve_inviabilidades_patamar,
-            Variable.INVIABILIDADES_PATAMAR_LIMITE: self._resolve_inviabilidades_patamar_limite,
-            Variable.INVIABILIDADES_LIMITE: self._resolve_inviabilidades_limite,
-            Variable.INVIABILIDADES_SBM_PATAMAR: self._resolve_inviabilidades_submercado_patamar,
+            Variable.RECURSOS_JOB: self._resolve_job_resources,
+            Variable.RECURSOS_CLUSTER: self._resolve_cluster_resources,
+            Variable.INVIABILIDADES: self._resolve_inviabilidades_completas,
         }
 
     def _default_args(self) -> List[ExecutionSynthesis]:
@@ -90,6 +90,9 @@ class ExecutionSynthetizer:
             variables = [v for v in variables if v.variable not in invs_vars]
         Log.log().info(f"Variáveis: {variables}")
         return variables
+
+    def _resolve_program(self) -> pd.DataFrame:
+        return pd.DataFrame(data={"programa": ["DECOMP"]})
 
     def _resolve_convergence(self) -> pd.DataFrame:
         with self.__uow:
@@ -170,6 +173,32 @@ class ExecutionSynthetizer:
         df_completo = df_completo.reset_index()
         return df_completo[["parcela", "mean", "std"]]
 
+    @classmethod
+    def _resolve_job_resources(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
+        # monitor-job.csv
+        with uow:
+            df = pd.read_csv("monitor-job.csv")
+        return df
+
+    @classmethod
+    def _resolve_cluster_resources(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        # Le o do job para saber tempo inicial e final
+        with uow:
+            df_job = pd.read_csv("monitor-job.csv")
+        jobTimeInstants = pd.to_datetime(df_job["timeInstant"]).tolist()
+        # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
+        # monitor-(hostname).csv
+        with set_directory(str(pathlib.Path.home())):
+            df = pd.read_csv(f"monitor-{socket.gethostname()}.csv")
+        df["timeInstant"] = pd.to_datetime(df["timeInstant"])
+        return df.loc[
+            (df["timeInstant"] >= jobTimeInstants[0])
+            & (df["timeInstant"] <= jobTimeInstants[-1])
+        ]
+
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
         with self.__uow:
             Log.log().info(f"Obtendo Inviabilidades")
@@ -190,6 +219,18 @@ class ExecutionSynthetizer:
         if self.__inviabilidades is None:
             self.__inviabilidades = self.__resolve_inviabilidades()
         return self.__inviabilidades
+
+    def _resolve_inviabilidades_completas(self) -> pd.DataFrame:
+        return pd.concat(
+            [
+                self._resolve_inviabilidades_codigo(),
+                self._resolve_inviabilidades_patamar(),
+                self._resolve_inviabilidades_patamar_limite(),
+                self._resolve_inviabilidades_limite(),
+                self._resolve_inviabilidades_submercado_patamar(),
+            ],
+            ignore_index=True,
+        )
 
     def _resolve_inviabilidades_codigo(self) -> pd.DataFrame:
         inviabs_codigo = [
@@ -215,13 +256,13 @@ class ExecutionSynthetizer:
 
         return pd.DataFrame(
             data={
-                "Tipo": tipos,
-                "Iteracao": iteracoes,
-                "Cenario": cenarios,
-                "Estagio": estagios,
-                "Codigo": codigos,
-                "Violacao": violacoes,
-                "Unidade": unidades,
+                "tipo": tipos,
+                "iteracao": iteracoes,
+                "cenario": cenarios,
+                "estagio": estagios,
+                "codigo": codigos,
+                "violacao": violacoes,
+                "unidade": unidades,
             }
         )
 
@@ -251,14 +292,14 @@ class ExecutionSynthetizer:
 
         return pd.DataFrame(
             data={
-                "Tipo": tipos,
-                "Iteracao": iteracoes,
-                "Cenario": cenarios,
-                "Estagio": estagios,
-                "Codigo": codigos,
-                "Violacao": violacoes,
-                "Unidade": unidades,
-                "Patamar": patamares,
+                "tipo": tipos,
+                "iteracao": iteracoes,
+                "cenario": cenarios,
+                "estagio": estagios,
+                "codigo": codigos,
+                "violacao": violacoes,
+                "unidade": unidades,
+                "patamar": patamares,
             }
         )
 
@@ -290,15 +331,15 @@ class ExecutionSynthetizer:
 
         return pd.DataFrame(
             data={
-                "Tipo": tipos,
-                "Iteracao": iteracoes,
-                "Cenario": cenarios,
-                "Estagio": estagios,
-                "Codigo": codigos,
-                "Violacao": violacoes,
-                "Unidade": unidades,
-                "Patamar": patamares,
-                "Limite": limites,
+                "tipo": tipos,
+                "iteracao": iteracoes,
+                "cenario": cenarios,
+                "estagio": estagios,
+                "codigo": codigos,
+                "violacao": violacoes,
+                "unidade": unidades,
+                "patamar": patamares,
+                "limite": limites,
             }
         )
 
@@ -328,14 +369,14 @@ class ExecutionSynthetizer:
 
         return pd.DataFrame(
             data={
-                "Tipo": tipos,
-                "Iteracao": iteracoes,
-                "Cenario": cenarios,
-                "Estagio": estagios,
-                "Codigo": codigos,
-                "Violacao": violacoes,
-                "Unidade": unidades,
-                "Limite": limites,
+                "tipo": tipos,
+                "iteracao": iteracoes,
+                "cenario": cenarios,
+                "estagio": estagios,
+                "codigo": codigos,
+                "violacao": violacoes,
+                "unidade": unidades,
+                "limite": limites,
             }
         )
 
@@ -367,15 +408,15 @@ class ExecutionSynthetizer:
 
         return pd.DataFrame(
             data={
-                "Tipo": tipos,
-                "Iteracao": iteracoes,
-                "Cenario": cenarios,
-                "Estagio": estagios,
-                "Codigo": codigos,
-                "Violacao": violacoes,
-                "Unidade": unidades,
-                "Submercado": submercados,
-                "Patamar": patamares,
+                "tipo": tipos,
+                "iteracao": iteracoes,
+                "cenario": cenarios,
+                "estagio": estagios,
+                "codigo": codigos,
+                "violacao": violacoes,
+                "unidade": unidades,
+                "submercado": submercados,
+                "patamar": patamares,
             }
         )
 
