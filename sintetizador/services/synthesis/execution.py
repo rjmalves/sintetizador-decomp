@@ -173,20 +173,16 @@ class ExecutionSynthetizer:
         df_completo = df_completo.reset_index()
         return df_completo[["parcela", "mean", "std"]]
 
-    @classmethod
-    def _resolve_job_resources(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+    def _resolve_job_resources(self) -> pd.DataFrame:
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
         # monitor-job.csv
-        with uow:
+        with self.__uow:
             df = pd.read_csv("monitor-job.csv")
         return df
 
-    @classmethod
-    def _resolve_cluster_resources(
-        cls, uow: AbstractUnitOfWork
-    ) -> pd.DataFrame:
+    def _resolve_cluster_resources(self) -> pd.DataFrame:
         # Le o do job para saber tempo inicial e final
-        with uow:
+        with self.__uow:
             df_job = pd.read_csv("monitor-job.csv")
         jobTimeInstants = pd.to_datetime(df_job["timeInstant"]).tolist()
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
