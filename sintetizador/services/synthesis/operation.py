@@ -16,6 +16,8 @@ class OperationSynthetizer:
     PROBABILITIES_FILE = "PROBABILIDADES"
 
     IDENTIFICATION_COLUMNS = [
+        "dataInicio",
+        "dataFim",
         "estagio",
         "submercado",
         "submercadoDe",
@@ -959,6 +961,10 @@ class OperationSynthetizer:
             for col in df.columns.tolist()
             if col not in self.IDENTIFICATION_COLUMNS
         ]
+        cols_cenarios = [
+            c for c in cols_cenarios if c not in ["min", "max", "median"]
+        ]
+        cols_cenarios = [c for c in cols_cenarios if "p" not in c]
         estagios = [int(e) for e in df["estagio"].unique()]
         if probabilities is not None:
             df["mean"] = 0.0
@@ -986,7 +992,7 @@ class OperationSynthetizer:
                 ].sum(axis=1)
         else:
             df["mean"] = df[cols_cenarios].mean(axis=1)
-        return df.drop(columns=cols_cenarios)
+        return df
 
     def _processa_quantis(
         self, df: pd.DataFrame, quantiles: List[float]
@@ -1006,7 +1012,7 @@ class OperationSynthetizer:
             else:
                 label = f"p{int(100 * q)}"
             df[label] = df[cols_cenarios].quantile(q, axis=1)
-        return df.drop(columns=cols_cenarios)
+        return df
 
     def _postprocess(
         self, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
