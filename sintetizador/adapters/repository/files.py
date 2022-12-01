@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Type, Optional
 import pathlib
+import asyncio
 
 from idecomp.decomp.caso import Caso
 from idecomp.decomp.arquivos import Arquivos
@@ -115,7 +116,7 @@ class RawFilesRepository(AbstractFilesRepository):
                 script = pathlib.Path(Settings().installdir).joinpath(
                     Settings().encoding_script
                 )
-                converte_codificacao(caminho, script)
+                asyncio.run(converte_codificacao(caminho, script))
                 Log.log().info(f"Lendo arquivo {self.arquivos.dadger}")
                 self.__dadger = Dadger.le_arquivo(
                     self.__tmppath, self.arquivos.dadger
