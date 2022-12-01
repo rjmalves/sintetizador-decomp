@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Type, Optional
+import pathlib
 
 from idecomp.decomp.caso import Caso
 from idecomp.decomp.arquivos import Arquivos
@@ -11,6 +12,8 @@ from idecomp.decomp.decomptim import DecompTim
 from idecomp.decomp.relgnl import RelGNL
 from idecomp.decomp.hidr import Hidr
 
+from sintetizador.model.settings import Settings
+from sintetizador.utils.encoding import converte_codificacao
 from sintetizador.utils.log import Log
 
 
@@ -106,6 +109,13 @@ class RawFilesRepository(AbstractFilesRepository):
         if self.__read_dadger is False:
             self.__read_dadger = True
             try:
+                caminho = pathlib.Path(self.__tmppath).joinpath(
+                    self.arquivos.dadger
+                )
+                script = pathlib.Path(Settings().installdir).joinpath(
+                    Settings().encoding_script
+                )
+                converte_codificacao(caminho, script)
                 Log.log().info(f"Lendo arquivo {self.arquivos.dadger}")
                 self.__dadger = Dadger.le_arquivo(
                     self.__tmppath, self.arquivos.dadger

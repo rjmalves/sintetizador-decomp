@@ -3,3 +3,4 @@ pandas
 pyarrow
 idecomp
 python-dotenv
+asyncio
