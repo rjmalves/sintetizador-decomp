@@ -177,23 +177,34 @@ class ExecutionSynthetizer:
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
         # monitor-job.csv
         with self.__uow:
-            df = pd.read_csv("monitor-job.csv")
-        return df
+            file = "monitor-job.csv"
+            if pathlib.Path(file).exists():
+                df = pd.read_csv("monitor-job.csv")
+                return df
+            return None
 
     def _resolve_cluster_resources(self) -> pd.DataFrame:
         # Le o do job para saber tempo inicial e final
+        df_job = None
         with self.__uow:
-            df_job = pd.read_csv("monitor-job.csv")
+            file = "monitor-job.csv"
+            if pathlib.Path(file).exists():
+                df_job = pd.read_csv("monitor-job.csv")
+        if not df_job:
+            return None
         jobTimeInstants = pd.to_datetime(df_job["timeInstant"]).tolist()
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
         # monitor-(hostname).csv
         with set_directory(str(pathlib.Path.home())):
-            df = pd.read_csv(f"monitor-{socket.gethostname()}.csv")
-        df["timeInstant"] = pd.to_datetime(df["timeInstant"])
-        return df.loc[
-            (df["timeInstant"] >= jobTimeInstants[0])
-            & (df["timeInstant"] <= jobTimeInstants[-1])
-        ]
+            file = f"monitor-{socket.gethostname()}.csv"
+            if pathlib.Path(file).exists():
+                df = pd.read_csv(file)
+                df["timeInstant"] = pd.to_datetime(df["timeInstant"])
+                return df.loc[
+                    (df["timeInstant"] >= jobTimeInstants[0])
+                    & (df["timeInstant"] <= jobTimeInstants[-1])
+                ]
+        return None
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
         with self.__uow:
@@ -426,5 +437,6 @@ class ExecutionSynthetizer:
             filename = str(s)
             Log.log().info(f"Realizando síntese de {filename}")
             df = self.__rules[s.variable]()
-            with self.__uow:
-                self.__uow.export.synthetize_df(df, filename)
+            if df is not None:
+                with self.__uow:
+                    self.__uow.export.synthetize_df(df, filename)
