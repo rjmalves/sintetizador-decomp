@@ -10,8 +10,7 @@ TIMEOUT_DEFAULT = 10.0
 
 async def converte_codificacao(path: str, script: str):
     _, out = await run_terminal_retry([f"file -i {path}"])
-    print(out)
-    cod = out[0].split("charset=")[1].strip()
+    cod = out.split("charset=")[1].strip()
     if "unknown" in cod:
         cod = "ISO-8859-1"
     if all([cod != "utf-8", cod != "us-ascii", cod != "binary"]):
