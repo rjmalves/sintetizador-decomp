@@ -115,6 +115,9 @@ class ExecutionSynthetizer:
         df_processed.drop(
             columns=["Tot. Def. Niv. Seg. (MWmes)"], inplace=True
         )
+        df_processed.loc[1:, "tempo"] = (
+            df_processed.loc[1:, "tempo"] - df_processed.at[0, "tempo"]
+        )
         return df_processed
 
     def _resolve_tempo(self) -> pd.DataFrame:
