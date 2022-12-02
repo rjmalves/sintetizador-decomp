@@ -120,12 +120,12 @@ class ExecutionSynthetizer:
             - df_processed["tempo"].to_numpy()[:-1]
         )
         df_processed["dZinf"] = df_processed["zinf"]
-        df_processed.at[0, "zinf"] = np.nan
         df_processed.loc[1:, "dZinf"] = (
             df_processed["zinf"].to_numpy()[1:]
             - df_processed["zinf"].to_numpy()[:-1]
         )
         df_processed.loc[1:, "dZinf"] /= df_processed["zinf"].to_numpy()[:-1]
+        df_processed.at[0, "zinf"] = np.nan
         return df_processed
 
     def _resolve_tempo(self) -> pd.DataFrame:
