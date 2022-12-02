@@ -116,7 +116,8 @@ class ExecutionSynthetizer:
             columns=["Tot. Def. Niv. Seg. (MWmes)"], inplace=True
         )
         df_processed.loc[1:, "tempo"] = (
-            df_processed.loc[1:, "tempo"] - df_processed.at[0, "tempo"]
+            df_processed["tempo"].to_numpy()[1:]
+            - df_processed["tempo"].to_numpy()[:-1]
         )
         return df_processed
 
