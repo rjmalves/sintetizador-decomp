@@ -44,6 +44,10 @@ class ExecutionSynthetizer:
         InviabilidadeDeficit,
     ]
 
+    CONVERGENCE_FILE = "CONVERGENCIA"
+    RUNTIME_FILE = "TEMPO"
+    INVIABS_FILE = "INVIABILIDADES"
+
     def __init__(self, uow: AbstractUnitOfWork) -> None:
         self.__uow = uow
         self.__inviabilidades: Optional[List[Inviabilidade]] = None
@@ -126,7 +130,14 @@ class ExecutionSynthetizer:
         )
         df_processed.loc[1:, "dZinf"] /= df_processed["zinf"].to_numpy()[:-1]
         df_processed.at[0, "dZinf"] = np.nan
-        return df_processed
+
+        conv = self.__uow.export.read_df(self.CONVERGENCE_FILE)
+        if conv is None:
+            df_processed["execucao"] = 0
+            return df_processed
+        else:
+            df_processed["execucao"] = conv["execucao"].max() + 1
+            return pd.concat([conv, df_processed], ignore_index=True)
 
     def _resolve_tempo(self) -> pd.DataFrame:
         with self.__uow:
@@ -134,7 +145,14 @@ class ExecutionSynthetizer:
         df = decomptim.tempos_etapas
         df = df.rename(columns={"Etapa": "etapa", "Tempo": "tempo"})
         df["tempo"] = df["tempo"].dt.total_seconds()
-        return df
+
+        tempo = self.__uow.export.read_df(self.RUNTIME_FILE)
+        if tempo is None:
+            df["execucao"] = 0
+            return df
+        else:
+            df["execucao"] = tempo["execucao"].max() + 1
+            return pd.concat([tempo, df], ignore_index=True)
 
     def _resolve_costs(self) -> pd.DataFrame:
         with self.__uow:
@@ -239,7 +257,7 @@ class ExecutionSynthetizer:
         return self.__inviabilidades
 
     def _resolve_inviabilidades_completas(self) -> pd.DataFrame:
-        return pd.concat(
+        df = pd.concat(
             [
                 self._resolve_inviabilidades_codigo(),
                 self._resolve_inviabilidades_patamar(),
@@ -249,6 +267,13 @@ class ExecutionSynthetizer:
             ],
             ignore_index=True,
         )
+        inviabs = self.__uow.export.read_df(self.INVIABS_FILE)
+        if inviabs is None:
+            df["execucao"] = 0
+            return df
+        else:
+            df["execucao"] = inviabs["execucao"].max() + 1
+            return pd.concat([inviabs, df], ignore_index=True)
 
     def _resolve_inviabilidades_codigo(self) -> pd.DataFrame:
         inviabs_codigo = [

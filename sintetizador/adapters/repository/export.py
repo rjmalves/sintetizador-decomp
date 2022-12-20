@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Type
+from typing import Dict, Type, Optional
 import pandas as pd  # type: ignore
+import os
 import pathlib
 
 from sintetizador.utils.log import Log
@@ -11,7 +12,7 @@ class AbstractExportRepository(ABC):
         super().__init__()
 
     @abstractmethod
-    def read_df(self, filename: str) -> pd.DataFrame:
+    def read_df(self, filename: str) -> Optional[pd.DataFrame]:
         pass
 
     @abstractmethod
@@ -27,8 +28,12 @@ class ParquetExportRepository(AbstractExportRepository):
     def path(self) -> pathlib.Path:
         return pathlib.Path(self.__path)
 
-    def read_df(self, filename: str) -> pd.DataFrame:
-        return pd.read_parquet(self.path.joinpath(filename + ".parquet.gzip"))
+    def read_df(self, filename: str) -> Optional[pd.DataFrame]:
+        arq = self.path.joinpath(filename + ".parquet.gzip")
+        if os.path.isfile(arq):
+            return pd.read_parquet(arq)
+        else:
+            return None
 
     def synthetize_df(self, df: pd.DataFrame, filename: str) -> bool:
         df.to_parquet(
@@ -45,8 +50,12 @@ class CSVExportRepository(AbstractExportRepository):
     def path(self) -> pathlib.Path:
         return pathlib.Path(self.__path)
 
-    def read_df(self, filename: str) -> pd.DataFrame:
-        return pd.read_parquet(self.path.joinpath(filename + ".csv"))
+    def read_df(self, filename: str) -> Optional[pd.DataFrame]:
+        arq = self.path.joinpath(filename + ".csv")
+        if os.path.isfile(arq):
+            return pd.read_csv(arq)
+        else:
+            return None
 
     def synthetize_df(self, df: pd.DataFrame, filename: str) -> bool:
         df.to_csv(self.path.joinpath(filename + ".csv"), index=False)
