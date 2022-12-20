@@ -267,6 +267,7 @@ class ExecutionSynthetizer:
             ],
             ignore_index=True,
         )
+        df = df.astype({"iteracao": int, "cenario": int, "estagio": int})
         inviabs = self.__uow.export.read_df(self.INVIABS_FILE)
         if inviabs is None:
             df["execucao"] = 0
