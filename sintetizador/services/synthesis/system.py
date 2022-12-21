@@ -70,8 +70,6 @@ class SystemSynthetizer:
         eolica = False
         Log.log().info(f"Caso com geração de cenários de eólica: {eolica}")
         for v in variables:
-            if v.variable in [Variable.PEE] and not eolica:
-                continue
             valid_variables.append(v)
         Log.log().info(f"Variáveis: {valid_variables}")
         return valid_variables
