@@ -30,10 +30,10 @@ class ExecutionSynthetizer:
         "PROGRAMA",
         "CONVERGENCIA",
         "TEMPO",
+        "INVIABILIDADES",
         "CUSTOS",
         "RECURSOS_JOB",
         "RECURSOS_CLUSTER",
-        "INVIABILIDADES",
     ]
 
     INVIABS_CODIGO = [InviabilidadeTI, InviabilidadeEV]
