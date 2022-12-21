@@ -150,7 +150,7 @@ class SystemSynthetizer:
         for uh in uhs:
             dados["id"].append(uh.codigo)
             dados["idREE"].append(uh.ree)
-            dados["nome"].append(uh.nome)
+            dados["nome"].append(hidr.cadastro.at[uh.codigo, "Nome"])
             dados["posto"].append(hidr.cadastro.at[uh.codigo, "Posto"])
             dados["volumeInicial"].append(uh.volume_inicial)
         return pd.DataFrame(data=dados)
