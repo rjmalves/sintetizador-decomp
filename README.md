@@ -10,7 +10,15 @@ No momento são tratadas apenas informações de saída. Desta forma, foram cria
 
 ### Sistema
 
-Informações da representação do sistema existente e alvo da otimização (TODO)
+Informações da representação do sistema existente e alvo da otimização.
+
+|          VARIÁVEL                   |     MNEMÔNICO     |
+| ----------------------------------- | ----------------- |
+| Estágios                            |       EST         |
+| Patamares                           |       PAT         |
+| Submercados                         |       SBM         |
+| Usina Termoelétrica                 |       UTE         |
+| Usina Hidroelétrica                 |       UHE         |
 
 ### Execução
 
@@ -113,7 +121,7 @@ Informações da operação fornecida como saída pelo modelo. Estas informaçõ
 | Patamar                |     PAT     |
 
 
-Vale destacar que nem todas as combinações de mnemônicos estão disponíveis para o modelo NEWAVE. Até o momento as implementações são:
+Vale destacar que nem todas as combinações de mnemônicos estão disponíveis para o modelo DECOMP. Até o momento as implementações são:
 
 |          VARIÁVEL          | AGERGAÇÃO ESPACIAL | AGREGAÇÃO TEMPORAL |
 | -------------------------- | ------------------ | ------------------ |
@@ -158,4 +166,4 @@ Exemplos de chaves de dados:
 
 ## Guia de Uso
 
-Para usar o `sintetizador-newave`, ...
+Para usar o `sintetizador-decomp`, ...

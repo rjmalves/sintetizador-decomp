@@ -16,6 +16,31 @@ def app():
     pass
 
 
+@click.command("sistema")
+@click.argument(
+    "variaveis",
+    nargs=-1,
+)
+@click.option(
+    "--formato", default="PARQUET", help="formato para escrita da síntese"
+)
+def sistema(variaveis, formato):
+    """
+    Realiza a síntese dos dados do sistema do DECOMP.
+    """
+    os.environ["FORMATO_SINTESE"] = formato
+    Log.log().info("# Realizando síntese do SISTEMA #")
+
+    uow = factory(
+        "FS",
+        Settings().synthesis_dir,
+    )
+    command = commands.SynthetizeSystem(variaveis)
+    handlers.synthetize_system(command, uow)
+
+    Log.log().info("# Fim da síntese #")
+
+
 @click.command("execucao")
 @click.argument(
     "variaveis",
@@ -64,6 +89,7 @@ def cenarios(variaveis, formato):
     handlers.synthetize_scenario(command, uow)
     Log.log().info("# Fim da síntese #")
 
+
 @click.command("operacao")
 @click.argument(
     "variaveis",
@@ -99,6 +125,9 @@ def limpeza():
 
 @click.command("completa")
 @click.option(
+    "--sistema", multiple=True, help="variável do sistema para síntese"
+)
+@click.option(
     "--execucao", multiple=True, help="variável da execução para síntese"
 )
 @click.option(
@@ -110,7 +139,7 @@ def limpeza():
 @click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def completa(execucao, cenarios, operacao, formato):
+def completa(sistema, execucao, cenarios, operacao, formato):
     """
     Realiza a síntese completa do DECOMP.
     """
@@ -121,6 +150,8 @@ def completa(execucao, cenarios, operacao, formato):
         "FS",
         Settings().synthesis_dir,
     )
+    command = commands.SynthetizeSystem(sistema)
+    handlers.synthetize_system(command, uow)
     command = commands.SynthetizeExecution(execucao)
     handlers.synthetize_execution(command, uow)
     command = commands.SynthetizeScenario(cenarios)
@@ -132,6 +163,7 @@ def completa(execucao, cenarios, operacao, formato):
 
 
 app.add_command(completa)
+app.add_command(sistema)
 app.add_command(execucao)
 app.add_command(cenarios)
 app.add_command(operacao)
