@@ -83,7 +83,7 @@ class SystemSynthetizer:
         )
         datas = [data_inicial]
         for dp in dps:
-            datas.append(datas[-1] + timedelta(hours=dp.duracoes.sum()))
+            datas.append(datas[-1] + timedelta(hours=sum(dp.duracoes)))
         datas_iniciais = datas[:-1]
         datas_finais = datas[1:]
         return pd.DataFrame(
