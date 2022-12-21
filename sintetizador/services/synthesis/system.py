@@ -79,7 +79,7 @@ class SystemSynthetizer:
             dadger = self.__uow.files.get_dadger()
         dps = dadger.dp(subsistema=1)
         data_inicial = datetime(
-            year=dadger.dt.ano, month=dadger.dt.mes, day=dadger.dt.ia
+            year=dadger.dt.ano, month=dadger.dt.mes, day=dadger.dt.dia
         )
         datas = [data_inicial]
         for dp in dps:
