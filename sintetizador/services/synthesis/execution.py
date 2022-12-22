@@ -434,7 +434,6 @@ class ExecutionSynthetizer:
         iteracoes: List[int] = []
         cenarios: List[int] = []
         estagios: List[int] = []
-        codigos: List[int] = []
         violacoes: List[float] = []
         unidades: List[str] = []
         submercados: List[str] = []
@@ -444,7 +443,6 @@ class ExecutionSynthetizer:
             iteracoes.append(i._iteracao)
             cenarios.append(i._cenario)
             estagios.append(i._estagio)
-            codigos.append(i._codigo)
             violacoes.append(i._violacao_percentual)
             unidades.append(i._unidade)
             submercados.append(i._subsistema)
@@ -456,7 +454,6 @@ class ExecutionSynthetizer:
                 "iteracao": iteracoes,
                 "cenario": cenarios,
                 "estagio": estagios,
-                "codigo": codigos,
                 "violacao": violacoes,
                 "unidade": unidades,
                 "submercado": submercados,
