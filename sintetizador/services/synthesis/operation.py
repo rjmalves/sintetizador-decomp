@@ -44,6 +44,8 @@ class OperationSynthetizer:
         "GTER_SBM_PAT",
         "GTER_SIN_EST",
         "GTER_SIN_PAT",
+        "GHID_UHE_EST",
+        "GHID_UHE_PAT",
         "GHID_SBM_EST",
         "GHID_SBM_PAT",
         "GHID_SIN_EST",
@@ -63,8 +65,8 @@ class OperationSynthetizer:
         "VARPF_UHE_EST",
         "QAFL_UHE_EST",
         "QDEF_UHE_EST",
-        "GHID_UHE_EST",
-        "GHID_UHE_PAT",
+        "QTUR_UHE_EST",
+        "QVER_UHE_EST",
         "EVERT_UHE_EST",
         "EVERNT_UHE_EST",
         "GTER_UTE_EST",
@@ -379,6 +381,16 @@ class OperationSynthetizer:
                 "Vertimento Não-Turbinável"
             ),
             (
+                Variable.VAZAO_TURBINADA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_relatorio_operacao_uhe_csv("vazaoTurbinadaM3S"),
+            (
+                Variable.VAZAO_VERTIDA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): self.__processa_relatorio_operacao_uhe_csv("vazaoVertidaM3S"),
+            (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
                 TemporalResolution.PATAMAR,
@@ -567,6 +579,22 @@ class OperationSynthetizer:
         df_final = df_final[["patamar"] + cols_df_p]
         return df_final
 
+    def __processa_relatorio_operacao_uhe_csv(self, col: str) -> pd.DataFrame:
+        with self.__uow:
+            df = self.__uow.files.get_dec_oper_usih().tabela
+        df = df.loc[pd.isna(df["patamar"])]
+        usinas_relatorio = df["nomeUsina"].unique()
+        df_final = pd.DataFrame()
+        for u in usinas_relatorio:
+            df_u = self.__process_df_decomp_csv(
+                df.loc[df["nomeUsina"] == u, :], col
+            )
+            cols_df_u = df_u.columns.to_list()
+            df_u["usina"] = u
+            df_final = pd.concat([df_final, df_u], ignore_index=True)
+        df_final = df_final[["usina"] + cols_df_u]
+        return df_final
+
     ##  ---------------  DADOS DO BALANCO ENERGETICO --------------   ##
 
     def __processa_bloco_relatorio_balanco_energetico_earm_sin_percentual(
@@ -724,6 +752,36 @@ class OperationSynthetizer:
         return df_final
 
     ## -------------- FUNCOES GERAIS ------------- ##
+
+    def __process_df_decomp_csv(
+        self, df: pd.DataFrame, col: str
+    ) -> pd.DataFrame:
+        estagios = df["periodo"].unique().tolist()
+        start_dates = [self.stages_start_date[i - 1] for i in estagios]
+        end_dates = [self.stages_end_date[i - 1] for i in estagios]
+        scenarios = df["cenario"].unique().tolist()
+        cols_scenarios = [str(c) for c in scenarios]
+        empty_table = np.zeros((len(start_dates), len(scenarios)))
+        df_processed = pd.DataFrame(empty_table, columns=cols_scenarios)
+        df_processed["estagio"] = estagios
+        df_processed["dataInicio"] = start_dates
+        df_processed["dataFim"] = end_dates
+        for e in estagios:
+            dados_estagio = df.loc[df["periodo"] == e, col]
+            if dados_estagio.shape[0] == 1:
+                df_processed.loc[
+                    df_processed["estagio"] == e,
+                    cols_scenarios,
+                ] = float(df.loc[df["periodo"] == e, col])
+            else:
+                df_processed.loc[
+                    df_processed["estagio"] == e,
+                    cols_scenarios,
+                ] = df.loc[df["periodo"] == e, col].to_numpy()
+        df_processed = df_processed[
+            ["estagio", "dataInicio", "dataFim"] + cols_scenarios
+        ]
+        return df_processed
 
     def __process_df_relato1_relato2(
         self, df1: pd.DataFrame, df2: pd.DataFrame, col: str

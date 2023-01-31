@@ -12,6 +12,7 @@ from idecomp.decomp.relato import Relato
 from idecomp.decomp.decomptim import DecompTim
 from idecomp.decomp.relgnl import RelGNL
 from idecomp.decomp.hidr import Hidr
+from idecomp.decomp.dec_oper_usih import DecOperUsih
 
 from sintetizador.model.settings import Settings
 from sintetizador.utils.encoding import converte_codificacao
@@ -61,6 +62,10 @@ class AbstractFilesRepository(ABC):
     def get_hidr(self) -> Hidr:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_dec_oper_usih(self) -> DecOperUsih:
+        raise NotImplementedError
+
 
 class RawFilesRepository(AbstractFilesRepository):
     def __init__(self, tmppath: str):
@@ -87,6 +92,8 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_relgnl = False
         self.__hidr: Optional[Hidr] = None
         self.__read_hidr = False
+        self.__dec_oper_usih: Optional[DecOperUsih] = None
+        self.__read_dec_oper_usih = False
 
     @property
     def caso(self) -> Caso:
@@ -252,6 +259,17 @@ class RawFilesRepository(AbstractFilesRepository):
                 )
                 raise e
         return self.__hidr
+
+    def get_dec_oper_usih(self) -> DecOperUsih:
+        if self.__read_dec_oper_usih is False:
+            self.__read_dec_oper_usih = True
+            try:
+                Log.log().info("Lendo arquivo dec_oper_usih.csv")
+                self.__dec_oper_usih = DecOperUsih.le_arquivo(self.__tmppath)
+            except Exception as e:
+                Log.log().error(f"Erro na leitura do dec_oper_usih.csv: {e}")
+                raise e
+        return self.__dec_oper_usih
 
 
 def factory(kind: str, *args, **kwargs) -> AbstractFilesRepository:
