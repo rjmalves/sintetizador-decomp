@@ -759,7 +759,7 @@ class OperationSynthetizer:
     ) -> pd.DataFrame:
         with self.__uow:
             relato = self.__uow.files.get_relato()
-            uhes_rees = relato.uhes_rees_submercados
+            uhes_rees = relato.uhes_rees_subsistemas
 
             df["group"] = df.apply(
                 lambda linha: int(
