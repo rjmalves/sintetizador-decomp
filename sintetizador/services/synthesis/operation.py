@@ -50,6 +50,10 @@ class OperationSynthetizer:
         "GHID_SBM_PAT",
         "GHID_SIN_EST",
         "GHID_SIN_PAT",
+        "GEOL_SBM_EST",
+        "GEOL_SBM_PAT",
+        "GEOL_SIN_EST",
+        "GEOL_SIN_PAT",
         "ENAA_SBM_EST",
         "ENAA_SIN_EST",
         "ENAM_SBM_EST",
@@ -256,6 +260,40 @@ class OperationSynthetizer:
             ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Ghid", "Itaipu60"],
+                self.patamares,
+            ),
+            (
+                Variable.GERACAO_EOLICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Geol"],
+            ),
+            (
+                Variable.GERACAO_EOLICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_submercado,
+                ["Geol"],
+                self.patamares,
+            ),
+            (
+                Variable.GERACAO_EOLICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Geol"],
+            ),
+            (
+                Variable.GERACAO_EOLICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
+                self.__processa_bloco_relatorio_balanco_energetico_sin,
+                ["Geol"],
                 self.patamares,
             ),
             (
