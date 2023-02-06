@@ -770,8 +770,6 @@ class OperationSynthetizer:
                 axis=1,
             )
 
-            print(df)
-
             if s == SpatialResolution.RESERVATORIO_EQUIVALENTE:
                 df["group"] = df.apply(
                     lambda linha: uhes_rees.loc[
