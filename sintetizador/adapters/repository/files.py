@@ -13,6 +13,8 @@ from idecomp.decomp.decomptim import DecompTim
 from idecomp.decomp.relgnl import RelGNL
 from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.dec_oper_usih import DecOperUsih
+from idecomp.decomp.dec_oper_usit import DecOperUsit
+from idecomp.decomp.dec_oper_ree import DecOperRee
 
 from sintetizador.model.settings import Settings
 from sintetizador.utils.encoding import converte_codificacao
@@ -66,6 +68,14 @@ class AbstractFilesRepository(ABC):
     def get_dec_oper_usih(self) -> DecOperUsih:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_dec_oper_usit(self) -> DecOperUsit:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_dec_oper_ree(self) -> DecOperRee:
+        raise NotImplementedError
+
 
 class RawFilesRepository(AbstractFilesRepository):
     def __init__(self, tmppath: str):
@@ -94,6 +104,10 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_hidr = False
         self.__dec_oper_usih: Optional[DecOperUsih] = None
         self.__read_dec_oper_usih = False
+        self.__dec_oper_usit: Optional[DecOperUsit] = None
+        self.__read_dec_oper_usit = False
+        self.__dec_oper_ree: Optional[DecOperRee] = None
+        self.__read_dec_oper_ree = False
 
     @property
     def caso(self) -> Caso:
@@ -270,6 +284,28 @@ class RawFilesRepository(AbstractFilesRepository):
                 Log.log().error(f"Erro na leitura do dec_oper_usih.csv: {e}")
                 raise e
         return self.__dec_oper_usih
+
+    def get_dec_oper_usit(self) -> DecOperUsit:
+        if self.__read_dec_oper_usit is False:
+            self.__read_dec_oper_usit = True
+            try:
+                Log.log().info("Lendo arquivo dec_oper_usit.csv")
+                self.__dec_oper_usit = DecOperUsit.le_arquivo(self.__tmppath)
+            except Exception as e:
+                Log.log().error(f"Erro na leitura do dec_oper_usit.csv: {e}")
+                raise e
+        return self.__dec_oper_usit
+
+    def get_dec_oper_ree(self) -> DecOperRee:
+        if self.__read_dec_oper_ree is False:
+            self.__read_dec_oper_ree = True
+            try:
+                Log.log().info("Lendo arquivo dec_oper_ree.csv")
+                self.__dec_oper_ree = DecOperRee.le_arquivo(self.__tmppath)
+            except Exception as e:
+                Log.log().error(f"Erro na leitura do dec_oper_ree.csv: {e}")
+                raise e
+        return self.__dec_oper_ree
 
 
 def factory(kind: str, *args, **kwargs) -> AbstractFilesRepository:

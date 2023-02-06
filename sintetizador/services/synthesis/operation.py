@@ -63,12 +63,26 @@ class OperationSynthetizer:
         "DEF_SIN_PAT",
         "VARPI_UHE_EST",
         "VARPF_UHE_EST",
+        "VARMI_UHE_EST",
+        "VARMF_UHE_EST",
+        "VARMI_REE_EST",
+        "VARMF_REE_EST",
+        "VARMI_SBM_EST",
+        "VARMF_SBM_EST",
+        "VARMI_SIN_EST",
+        "VARMF_SIN_EST",
         "QAFL_UHE_EST",
         "QDEF_UHE_EST",
         "QTUR_UHE_EST",
         "QVER_UHE_EST",
         "EVERT_UHE_EST",
         "EVERNT_UHE_EST",
+        "EVERT_REE_EST",
+        "EVERNT_REE_EST",
+        "EVERT_SBM_EST",
+        "EVERNT_SBM_EST",
+        "EVERT_SIN_EST",
+        "EVERNT_SIN_EST",
         "GTER_UTE_EST",
         "GTER_UTE_PAT",
         "CTER_UTE_EST",
@@ -92,29 +106,33 @@ class OperationSynthetizer:
                 Variable.CUSTO_MARGINAL_OPERACAO,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_cmo(),
+            ): lambda: self.__processa_bloco_relatorio_operacao_cmo(),
             (
                 Variable.CUSTO_GERACAO_TERMICA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao("Geração Térmica"),
+            ): lambda: self.__processa_bloco_relatorio_operacao(
+                "Geração Térmica"
+            ),
             (
                 Variable.CUSTO_OPERACAO,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao(
+            ): lambda: self.__processa_bloco_relatorio_operacao(
                 "Custo Total no Estágio"
             ),
             (
                 Variable.CUSTO_FUTURO,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao("Custo Futuro"),
+            ): lambda: self.__processa_bloco_relatorio_operacao(
+                "Custo Futuro"
+            ),
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Earm Inicial Absoluto"],
             ),
@@ -122,7 +140,7 @@ class OperationSynthetizer:
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Earm Inicial Percentual"],
             ),
@@ -130,7 +148,7 @@ class OperationSynthetizer:
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Earm Inicial Absoluto"],
             ),
@@ -138,14 +156,14 @@ class OperationSynthetizer:
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_energetico_earm_sin_percentual(
+            ): lambda: self.__processa_bloco_relatorio_balanco_energetico_earm_sin_percentual(
                 "Earm Inicial Absoluto"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Earm Final Absoluto"],
             ),
@@ -153,7 +171,7 @@ class OperationSynthetizer:
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Earm Final Percentual"],
             ),
@@ -161,7 +179,7 @@ class OperationSynthetizer:
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Earm Final Absoluto"],
             ),
@@ -169,14 +187,14 @@ class OperationSynthetizer:
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_energetico_earm_sin_percentual(
+            ): lambda: self.__processa_bloco_relatorio_balanco_energetico_earm_sin_percentual(
                 "Earm Final Absoluto"
             ),
             (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Gter", "GterAT"],
             ),
@@ -184,7 +202,7 @@ class OperationSynthetizer:
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Gter", "GterAT"],
                 self.patamares,
@@ -193,7 +211,7 @@ class OperationSynthetizer:
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Gter", "GterAT"],
             ),
@@ -201,7 +219,7 @@ class OperationSynthetizer:
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Gter", "GterAT"],
                 self.patamares,
@@ -210,7 +228,7 @@ class OperationSynthetizer:
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Ghid", "Itaipu60"],
             ),
@@ -218,7 +236,7 @@ class OperationSynthetizer:
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Ghid", "Itaipu60"],
                 self.patamares,
@@ -227,7 +245,7 @@ class OperationSynthetizer:
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Ghid", "Itaipu60"],
             ),
@@ -235,7 +253,7 @@ class OperationSynthetizer:
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Ghid", "Itaipu60"],
                 self.patamares,
@@ -244,7 +262,7 @@ class OperationSynthetizer:
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["ENA Absoluta"],
             ),
@@ -252,7 +270,7 @@ class OperationSynthetizer:
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["ENA Absoluta"],
             ),
@@ -260,7 +278,7 @@ class OperationSynthetizer:
                 Variable.ENERGIA_NATURAL_AFLUENTE_MLT,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["ENA Percentual"],
             ),
@@ -268,7 +286,7 @@ class OperationSynthetizer:
                 Variable.MERCADO,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Mercado"],
                 self.patamares,
@@ -277,7 +295,7 @@ class OperationSynthetizer:
                 Variable.MERCADO,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Mercado"],
             ),
@@ -285,7 +303,7 @@ class OperationSynthetizer:
                 Variable.MERCADO,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Mercado"],
                 self.patamares,
@@ -294,7 +312,7 @@ class OperationSynthetizer:
                 Variable.MERCADO,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Mercado"],
             ),
@@ -302,7 +320,7 @@ class OperationSynthetizer:
                 Variable.DEFICIT,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Deficit"],
                 self.patamares,
@@ -311,7 +329,7 @@ class OperationSynthetizer:
                 Variable.DEFICIT,
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_sin,
                 ["Deficit"],
             ),
@@ -319,7 +337,7 @@ class OperationSynthetizer:
                 Variable.DEFICIT,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Deficit"],
                 self.patamares,
@@ -328,7 +346,7 @@ class OperationSynthetizer:
                 Variable.DEFICIT,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_balanco_estagio(
+            ): lambda: self.__processa_bloco_relatorio_balanco_estagio(
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Deficit"],
             ),
@@ -336,106 +354,242 @@ class OperationSynthetizer:
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_uhe(
+            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
                 "Volume Ini (% V.U)"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_uhe(
+            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
                 "Volume Fin (% V.U)"
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__processa_relatorio_operacao_uhe_csv(
+                "volumeUtilInicialHm3"
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__processa_relatorio_operacao_uhe_csv(
+                "volumeUtilFinalHm3"
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_relatorio_operacao_uhe_csv(
+                    "volumeUtilInicialHm3"
+                ),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_relatorio_operacao_uhe_csv(
+                    "volumeUtilFinalHm3"
+                ),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_relatorio_operacao_uhe_csv(
+                    "volumeUtilInicialHm3"
+                ),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_relatorio_operacao_uhe_csv(
+                    "volumeUtilFinalHm3"
+                ),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_relatorio_operacao_uhe_csv(
+                    "volumeUtilInicialHm3"
+                ),
+                SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_relatorio_operacao_uhe_csv(
+                    "volumeUtilFinalHm3"
+                ),
+                SpatialResolution.SISTEMA_INTERLIGADO,
             ),
             (
                 Variable.VAZAO_AFLUENTE,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_uhe("Qafl (m3/s)"),
+            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
+                "Qafl (m3/s)"
+            ),
             (
                 Variable.VAZAO_DEFLUENTE,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_uhe("Qdef (m3/s)"),
+            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
+                "Qdef (m3/s)"
+            ),
             (
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_uhe_patamares(self.patamares),
+            ): lambda: self.__processa_bloco_relatorio_uhe_patamares(
+                self.patamares
+            ),
             (
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_uhe("Geração Média"),
+            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
+                "Geração Média"
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.PATAMAR,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_bloco_relatorio_uhe_patamares(self.patamares),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_bloco_relatorio_operacao_uhe("Geração Média"),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
             (
                 Variable.ENERGIA_VERTIDA_TURBINAVEL,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_uhe(
+            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
                 "Vertimento Turbinável"
             ),
             (
                 Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_uhe(
+            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
                 "Vertimento Não-Turbinável"
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_bloco_relatorio_operacao_uhe(
+                    "Vertimento Turbinável"
+                ),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_bloco_relatorio_operacao_uhe(
+                    "Vertimento Não-Turbinável"
+                ),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_bloco_relatorio_operacao_uhe(
+                    "Vertimento Turbinável"
+                ),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_bloco_relatorio_operacao_uhe(
+                    "Vertimento Não-Turbinável"
+                ),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_bloco_relatorio_operacao_uhe(
+                    "Vertimento Turbinável"
+                ),
+                SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__processa_bloco_relatorio_operacao_uhe(
+                    "Vertimento Não-Turbinável"
+                ),
+                SpatialResolution.SISTEMA_INTERLIGADO,
             ),
             (
                 Variable.VAZAO_TURBINADA,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_relatorio_operacao_uhe_csv("vazaoTurbinadaM3S"),
+            ): lambda: self.__processa_relatorio_operacao_uhe_csv(
+                "vazaoTurbinadaM3S"
+            ),
             (
                 Variable.VAZAO_VERTIDA,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_relatorio_operacao_uhe_csv("vazaoVertidaM3S"),
+            ): lambda: self.__processa_relatorio_operacao_uhe_csv(
+                "vazaoVertidaM3S"
+            ),
             (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
                 TemporalResolution.PATAMAR,
-            ): self.__processa_bloco_relatorio_ute_patamares(self.patamares),
+            ): lambda: self.__processa_bloco_relatorio_ute_patamares(
+                self.patamares
+            ),
             (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_ute("Patamar Medio"),
+            ): lambda: self.__processa_bloco_relatorio_operacao_ute(
+                "Patamar Medio"
+            ),
             (
                 Variable.CUSTO_GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
                 TemporalResolution.ESTAGIO,
-            ): self.__processa_bloco_relatorio_operacao_ute("Custo"),
+            ): lambda: self.__processa_bloco_relatorio_operacao_ute("Custo"),
         }
-
-    # def __processa_bloco_cmo(
-    #     self, submercado: str, patamares: List[str]
-    # ) -> pd.DataFrame:
-    #     with self.__uow:
-    #         r = self.__uow.files.get_relato()
-    #         df = r.cmo_medio_subsistema
-    #     stage_cols = [c for c in df.columns if "Estágio" in c]
-    #     df_completo = pd.DataFrame()
-    #     for p in patamares:
-    #         cmos = (
-    #             df.loc[
-    #                 (df["Subsistema"] == submercado) & (df["Patamar"] == p),
-    #                 stage_cols,
-    #             ]
-    #             .to_numpy()
-    #             .flatten()
-    #         )
-    #         df_cmo = pd.DataFrame(data={"1": cmos})
-    #         df_cmo["dataInicio"] = self.stages_start_date
-    #         df_cmo["dataFim"] = self.stages_end_date
-    #         df_cmo["Submercado"] = submercado
-    #         df_completo = pd.concat(
-    #             [
-    #                 df_completo,
-    #                 df_cmo[["dataInicio", "dataFim", "Submercado", "1"]],
-    #             ],
-    #             ignore_index=True,
-    #         )
-    #     return df_completo
 
     ##  ---------------  DADOS DA OPERACAO DAS UTE   --------------   ##
 
@@ -579,10 +733,15 @@ class OperationSynthetizer:
         df_final = df_final[["patamar"] + cols_df_p]
         return df_final
 
-    def __processa_relatorio_operacao_uhe_csv(self, col: str) -> pd.DataFrame:
+    def __processa_relatorio_operacao_uhe_csv(
+        self, col: str, patamar=None
+    ) -> pd.DataFrame:
         with self.__uow:
             df = self.__uow.files.get_dec_oper_usih().tabela
-        df = df.loc[pd.isna(df["patamar"])]
+        if patamar is None:
+            df = df.loc[pd.isna(df["patamar"])]
+        else:
+            df = df.loc[df["patamar"] == patamar]
         usinas_relatorio = df["nomeUsina"].unique()
         df_final = pd.DataFrame()
         for u in usinas_relatorio:
@@ -594,6 +753,57 @@ class OperationSynthetizer:
             df_final = pd.concat([df_final, df_u], ignore_index=True)
         df_final = df_final[["usina"] + cols_df_u]
         return df_final
+
+    def __agrupa_uhes(
+        self, df: pd.DataFrame, s: SpatialResolution
+    ) -> pd.DataFrame:
+        with self.__uow:
+            relato = self.__uow.files.get_relato()
+            uhes_rees = relato.uhes_rees_submercados
+
+            df["group"] = df.apply(
+                lambda linha: int(
+                    uhes_rees.loc[
+                        uhes_rees["Nome UHE"] == linha["usina"], "Numero REE"
+                    ]
+                ),
+                axis=1,
+            )
+
+            if s == SpatialResolution.RESERVATORIO_EQUIVALENTE:
+                df["group"] = df.apply(
+                    lambda linha: uhes_rees.loc[
+                        uhes_rees["Numero REE"] == linha["group"], "Nome REE"
+                    ],
+                    axis=1,
+                )
+            elif s == SpatialResolution.SUBMERCADO:
+                df["group"] = df.apply(
+                    lambda linha: uhes_rees.loc[
+                        uhes_rees["Numero REE"] == linha["group"],
+                        "Nome Subsistema",
+                    ],
+                    axis=1,
+                )
+            elif s == SpatialResolution.SISTEMA_INTERLIGADO:
+                df["group"] = 1
+
+            cols_group = ["group"] + [
+                c
+                for c in df.columns
+                if c in self.IDENTIFICATION_COLUMNS and c != "usina"
+            ]
+            df_group = df.groupby(cols_group).sum().reset_index()
+
+            group_name = {
+                SpatialResolution.RESERVATORIO_EQUIVALENTE: "ree",
+                SpatialResolution.SUBMERCADO: "submercado",
+            }
+            if s == SpatialResolution.SISTEMA_INTERLIGADO:
+                df_group = df_group.drop(columns=["group"])
+            else:
+                df_group = df_group.rename(columns={"group": group_name[s]})
+            return df_group
 
     ##  ---------------  DADOS DO BALANCO ENERGETICO --------------   ##
 
@@ -715,6 +925,22 @@ class OperationSynthetizer:
             ],
             ignore_index=True,
         )
+
+    def __processa_relatorio_operacao_ree_csv(self, col: str) -> pd.DataFrame:
+        with self.__uow:
+            df = self.__uow.files.get_dec_oper_ree().tabela
+        df = df.loc[pd.isna(df["patamar"])]
+        rees_relatorio = df["nomeRee"].unique()
+        df_final = pd.DataFrame()
+        for u in rees_relatorio:
+            df_u = self.__process_df_decomp_csv(
+                df.loc[df["nomeRee"] == u, :], col
+            )
+            cols_df_u = df_u.columns.to_list()
+            df_u["ree"] = u
+            df_final = pd.concat([df_final, df_u], ignore_index=True)
+        df_final = df_final[["ree"] + cols_df_u]
+        return df_final
 
     ##  ---------------  DADOS DA OPERACAO GERAL     --------------   ##
 
@@ -1103,7 +1329,9 @@ class OperationSynthetizer:
             Log.log().info(f"Realizando síntese de {filename}")
             df = self.__rules[
                 (s.variable, s.spatial_resolution, s.temporal_resolution)
-            ]
+            ]()
+            if df is None:
+                continue
             with self.__uow:
                 probs = self.__uow.export.read_df(self.PROBABILITIES_FILE)
                 df = self._postprocess(df, probs)
