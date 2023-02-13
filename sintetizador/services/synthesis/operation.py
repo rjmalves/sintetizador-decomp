@@ -1365,9 +1365,12 @@ class OperationSynthetizer:
         for s in valid_synthesis:
             filename = str(s)
             Log.log().info(f"Realizando síntese de {filename}")
-            df = self.__rules[
-                (s.variable, s.spatial_resolution, s.temporal_resolution)
-            ]()
+            try:
+                df = self.__rules[
+                    (s.variable, s.spatial_resolution, s.temporal_resolution)
+                ]()
+            except Exception:
+                continue
             if df is None:
                 continue
             with self.__uow:
