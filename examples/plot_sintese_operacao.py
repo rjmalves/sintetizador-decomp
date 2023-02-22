@@ -4,19 +4,17 @@ Síntese da Operação
 ========================================
 """
 
-#%%
-# Para realizar a síntese da operação de um caso do NEWAVE é necessário estar em um diretório
+# %%
+# Para realizar a síntese da operação de um caso do DECOMP é necessário estar em um diretório
 # no qual estão os principais arquivos de saída do modelo. Em geral, as variáveis da operação
-# são extraídas das saídas do programa auxiliar NWLISTOP, no modo TABELAS (opção 2).
-# Para a síntese do CMO por submercado, por estágio, são necessários os arquivos cmargXXX-med.out.
-# Para a síntese do EARM para o SIN, é necessário o earmfsin.out.
+# são extraídas dos arquivos relato.rvX e relato2.rvX.
 # Além dos arquivos dos quais são extraídas as variáveis em si, são lidos também alguns arquivos de entrada
-# do modelo, como o `dger.dat`, `ree.dat` e `sistema.dat`. Neste contexto, basta fazer::
+# do modelo, como o `dadger.rvX` e `hidr.dat``. Neste contexto, basta fazer::
 #
 #    $ sintetizador-newave operacao CMO_SBM_EST EARMF_SIN_EST
 #
 
-#%%
+# %%
 # O sintetizador irá exibir o log da sua execução::
 #
 #    >>> 2023-02-10 02:02:05,214 INFO: # Realizando síntese da OPERACAO #
@@ -36,7 +34,7 @@ Síntese da Operação
 #    >>> 2023-02-10 02:02:06,636 INFO: # Fim da síntese #
 
 
-#%%
+# %%
 # Os arquivos serão salvos no subdiretório `sintese`. Para realizar o processamento,
 # pode ser utilizado o próprio `python`:
 import plotly.express as px
@@ -46,15 +44,15 @@ import pandas as pd
 cmo = pd.read_parquet("sintese/CMO_SBM_EST.parquet.gzip")
 earm = pd.read_parquet("sintese/EARMF_SIN_EST.parquet.gzip")
 
-#%%
+# %%
 # O formato dos dados de CMO:
 cmo.head(10)
 
-#%%
+# %%
 # O formato dos dados de EARM:
 earm.head(10)
 
-#%%
+# %%
 # De modo geral, os arquivos das sínteses de operação sempre possuem as colunas
 # `estagio`, `dataInicio`, `dataFim`, `cenario` e `valor`. A depender se o arquivo é
 # relativo a uma agregação espacial diferente de todo o SIN ou agregação temporal
@@ -62,7 +60,7 @@ earm.head(10)
 # de qual subconjunto da agregação o dado pertence. Por exemplo, no arquivo da síntese de
 # CMO_SBM_EST, existe uma coluna adicional de nome `submercado`.
 
-#%%
+# %%
 # A coluna de cenários contém não somente inteiros de 1 a N, onde N é o número de séries da
 # simulação final do modelo, mas também algumas outras palavras especiais, associadas a estatísticas
 # processadas sobre os cenários: `min`, `max`, `mean`, `p5`, `p10`, ..., `p95`.
@@ -73,7 +71,7 @@ cenarios_estatisticas = [
 ]
 print(cenarios_estatisticas)
 
-#%%
+# %%
 # Através das estatísticas é possível fazer um gráfico de quantis, para ilustrar a dispersão
 # da variável da operação com os cenários:
 fig = go.Figure()
@@ -93,7 +91,7 @@ for p in range(10, 91, 10):
     )
 fig
 
-#%%
+# %%
 # Também é possível fazer uma análise por meio de gráficos de linhas com áreas sombreadas,
 # para ilustrar a cobertura dos cenários no domínio da variável:
 fig = go.Figure()
@@ -139,7 +137,7 @@ fig.add_trace(
 )
 fig
 
-#%%
+# %%
 # Para variáveis da operação que possuam diferentes subconjuntos, como os submercados, podem ser utilizados
 # gráficos de violino para avaliação da dispersão:
 cenarios = [str(c) for c in list(range(1, 2001))]
