@@ -2,168 +2,32 @@
 Programa auxiliar para realizar a síntese de dados do programa DECOMP em arquivos ou banco de dados.
 
 
+## Instalação
+
+A instalação pode ser feita diretamente a partir do repositório:
+```
+$ git clone https://github.com/rjmalves/sintetizador-decomp
+$ cd sintetizador-decomp
+$ python setup.py install
+```
+
 ## Modelo Unificado de Dados
 
 O `sintetizador-decomp` busca organizar as informações de entrada e saída do modelo DECOMP em um modelo padronizado para lidar com os modelos do planejamento energético do SIN.
 
-No momento são tratadas apenas informações de saída. Desta forma, foram criadas as categorias:
+## Comandos
 
-### Sistema
+O `sintetizador-decomp` é uma aplicação CLI, que pode ser utilizada diretamente no terminal após a instalação:
 
-Informações da representação do sistema existente e alvo da otimização.
+```
+$ sintetizador-decomp completa
 
-|          VARIÁVEL                   |     MNEMÔNICO     |
-| ----------------------------------- | ----------------- |
-| Estágios                            |       EST         |
-| Patamares                           |       PAT         |
-| Submercados                         |       SBM         |
-| Usina Termoelétrica                 |       UTE         |
-| Usina Hidroelétrica                 |       UHE         |
+> 2023-02-10 02:02:05,214 INFO: # Realizando síntese da OPERACAO #
+> 2023-02-10 02:02:05,225 INFO: Lendo arquivo relato.rv0
+...
+> 2023-02-10 02:02:06,636 INFO: # Fim da síntese #
+```
 
-### Execução
+## Documentação
 
-Informações da execução do modelo, como ambiente escolhido, recursos computacionais disponíveis, convergência, tempo gasto, etc.
-
-|          VARIÁVEL          |           MNEMÔNICO            |
-| -------------------------- | ------------------------------ |
-| Tempo de Execução          |  TEMPO                         |
-| Convergência               |  CONVERGENCIA                  |
-| Composição de Custos       |  CUSTOS                        |
-| Inviabilidades por Código  |  INVIABILIDADES_CODIGO         |
-| Inviabilidades por Código  |  INVIABILIDADES_PATAMAR        |
-| Inviabilidades por Código  |  INVIABILIDADES_PATAMAR_LIMITE |
-| Inviabilidades por Código  |  INVIABILIDADES_LIMITE         |
-| Inviabilidades por Código  |  INVIABILIDADES_SBM_PATAMAR    |
-
-Para síntese da informações da execução, as chaves de dados a serem sintetizados contém apenas os nomes das variáveis.
-
-### Cenários
-
-Informações sobre os cenários visitados (gerados, fornecidos, processados, etc.) durante o processo de otimização. (TODO)
-
-|          VARIÁVEL          |     MNEMÔNICO     |
-| -------------------------- | ----------------- |
-|       Probabilidades       |   PROBABILIDADES  |
-
-### Política
-
-Informações sobre a política operativa construída (ou lida) pelo modelo (TODO)
-
-### Operação
-
-Informações da operação fornecida como saída pelo modelo. Estas informações são formadas a partir de três especificações: 
-
-#### Variável
-
-
-
-|                      VARIÁVEL                     |  MNEMÔNICO |
-| ------------------------------------------------- | ---------- |
-| Custo de Operação                                 |  COP       |
-| Custo Futuro                                      |  CFU       |
-| Custo Marginal de Operação                        |  CMO       |
-| Valor da Água                                     |  VAGUA     |
-| Custo da Geração Térmica                          |  CTER      |
-| Energia Natural Afluente Absoluta                 |  ENAA      |
-| Energia Natural Afluente MLT                      |  ENAM      |
-| Energia Armazenada Inicial                        |  EARMI     |
-| Energia Armazenada Inicial (%)                    |  EARPI     |
-| Energia Armazenada Final                          |  EARMF     |
-| Energia Armazenada Final (%)                      |  EARPF     |
-| Geração Hidráulica                                |  GHID      |
-| Geração Térmica                                   |  GTER      |
-| Geração Eólica                                    |  GEOL      |
-| Energia Vertida                                   |  EVER      |
-| Energia Vertida Turbinável                        |  EVERT     |
-| Energia Vertida Não-Turbinável                    |  EVERNT    |
-| Energia Vertida em Reservatórios                  |  EVERR     |
-| Energia Vertida Turbinável em Reservatórios       |  EVERRT    |
-| Energia Vertida Não-Turbinável em Reservatórios   |  EVERRNT   |
-| Energia Vertida em Fio d'Água                     |  EVERF     |
-| Energia Vertida Turbinável em Fio d'Água          |  EVERFT    |
-| Energia Vertida Não-Turbinável em Fio d'Água      |  EVERFNT   |
-| Vazão Afluente                                    |  QAFL      |
-| Vazão Defluente                                   |  QDEF      |
-| Vazão Incremental                                 |  QINC      |
-| Vazão Turbinada                                   |  QTUR      |
-| Velocidade do Vento                               |  VENTO     |
-| Vazão Vertida                                     |  VVER      |
-| Déficit                                           |  DEF       |
-| Intercâmbio                                       |  INT       |
-| Volume Armazenado Inicial                         |  VARMI     |
-| Volume Armazenado Inicial (%)                     |  VARPI     |
-| Volume Armazenado Final                           |  VARMF     |
-| Volume Armazenado Final (%)                       |  VARPF     |
-| Volume Vertido                                    |  VVER      |
-| Volume Turbinado                                  |  VTUR      |
-
-
-
-#### Agregação Espacial
-
-
-|   AGERGAÇÃO ESPACIAL     |  MNEMÔNICO |
-| ------------------------ | ---------- |
-| Sistema Interligado      |     SIN    |
-| Submercado               |     SBM    |
-| Reservatório Equivalente |     REE    |
-| Usina Hidroelétrica      |     UHE    |
-| Usina Termelétrica       |     UTE    |
-| Usina Eólica             |     UEE    |
-| Par de Submercados       |     SBP    |
-
-
-#### Agregação Temporal
-
-|   AGERGAÇÃO TEMPORAL   |  MNEMÔNICO  |
-| ---------------------- | ----------- |
-| Estágio                |     EST     |
-| Patamar                |     PAT     |
-
-
-Vale destacar que nem todas as combinações de mnemônicos estão disponíveis para o modelo DECOMP. Até o momento as implementações são:
-
-|          VARIÁVEL          | AGERGAÇÃO ESPACIAL | AGREGAÇÃO TEMPORAL |
-| -------------------------- | ------------------ | ------------------ |
-| COP                        | SIN                | EST                |
-| CFU                        | SIN                | EST                |
-| CMO                        | SBM                | EST                |
-| VAGUA                      |                    |                    |
-| CTER                       | SIN, UTE           | EST                |
-| ENAA                       | SBM, SIN           | EST                |
-| ENAM                       | SBM                | EST                |
-| EARMI                      | SIN, SBM           | EST                |
-| EARPI                      | SIN, SBM           | EST                |
-| EARMF                      | SIN, SBM           | EST                |
-| EARPF                      | SIN, SBM           | EST                |
-| GHID                       | UHE, SBM, SIN      | EST, PAT           |
-| GTER                       | UTE, SBM, SIN      | EST, PAT           |
-| GEOL                       |                    |                    |
-| EVERT                      | UHE                | EST                |
-| EVERNT                     | UHE                | EST                |
-| QAFL                       | UHE                | EST                |
-| QDEF                       | UHE                | EST                |
-| QTUR                       |                    |                    |
-| VENTO                      |                    |                    |
-| INT                        | SBP                | EST, PAT           |
-| VARMI                      |                    |                    |
-| VARPI                      |                    |                    |
-| VARMF                      | UHE                | EST                |
-| VARPF                      | UHE                | EST                |
-| VVER                       | UHE                | EST                |
-| VTUR                       | UHE                | EST                |
-| MER                        | SBM, SIN           | EST, PAT           |
-| DEF                        | SBM, SIN           | EST, PAT           |
-
-
-Exemplos de chaves de dados:
-- EARPI_SBM_EST
-- VARPF_UHE_EST
-- GHID_UHE_PAT
-- CMO_SBM_EST
-- QDEF_UHE_EST
-
-
-## Guia de Uso
-
-Para usar o `sintetizador-decomp`, ...
+Guias, tutoriais e as referências podem ser encontrados no site oficial do pacote: https://rjmalves.github.io/sintetizador-decomp
