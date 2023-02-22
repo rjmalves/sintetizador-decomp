@@ -21,6 +21,12 @@ from sintetizador.utils.encoding import converte_codificacao
 from sintetizador.utils.log import Log
 
 
+import platform
+
+if platform.system() == "Windows":
+    Dadger.ENCODING = "iso-8859-1"
+
+
 class AbstractFilesRepository(ABC):
     @property
     @abstractmethod

@@ -5,12 +5,8 @@ from os import getenv
 class Settings(metaclass=Singleton):
     def __init__(self):
         # Execution parameters
-        self.basedir = getenv("APP_BASEDIR")
         self.installdir = getenv("APP_INSTALLDIR")
+        self.basedir = getenv("APP_BASEDIR")
         self.encoding_script = "sintetizador/static/converte_utf8.sh"
-        self.newave_deck_pattern = getenv("PADRAO_DECK")
-        self.newave_output_pattern = getenv("PADRAO_SAIDAS")
-        self.nwlistop_pattern = getenv("PADRAO_NWLISTOP")
-        self.nwlistcf_pattern = getenv("PADRAO_NWLISTCF")
-        self.synthesis_format = getenv("FORMATO_SINTESE")
-        self.synthesis_dir = getenv("DIRETORIO_SINTESE")
+        self.synthesis_format = getenv("FORMATO_SINTESE", "PARQUET")
+        self.synthesis_dir = getenv("DIRETORIO_SINTESE", "sintese")
