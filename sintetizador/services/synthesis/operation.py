@@ -12,7 +12,6 @@ from sintetizador.model.operation.operationsynthesis import OperationSynthesis
 
 
 class OperationSynthetizer:
-
     PROBABILITIES_FILE = "PROBABILIDADES"
 
     IDENTIFICATION_COLUMNS = [
@@ -803,7 +802,7 @@ class OperationSynthetizer:
                 lambda linha: int(
                     uhes_rees.loc[
                         uhes_rees["Nome UHE"] == linha["usina"], "Numero REE"
-                    ].tolist()[0]
+                    ].iloc[0]
                 ),
                 axis=1,
             )
@@ -812,7 +811,7 @@ class OperationSynthetizer:
                 df["group"] = df.apply(
                     lambda linha: uhes_rees.loc[
                         uhes_rees["Numero REE"] == linha["group"], "Nome REE"
-                    ].tolist()[0],
+                    ].iloc[0],
                     axis=1,
                 )
             elif s == SpatialResolution.SUBMERCADO:
@@ -820,7 +819,7 @@ class OperationSynthetizer:
                     lambda linha: uhes_rees.loc[
                         uhes_rees["Numero REE"] == linha["group"],
                         "Nome Subsistema",
-                    ].tolist()[0],
+                    ].iloc[0],
                     axis=1,
                 )
             elif s == SpatialResolution.SISTEMA_INTERLIGADO:
@@ -1036,7 +1035,7 @@ class OperationSynthetizer:
                 df_processed.loc[
                     df_processed["estagio"] == e,
                     cols_scenarios,
-                ] = float(df.loc[df["periodo"] == e, col])
+                ] = float(df.loc[df["periodo"] == e, col].iloc[0])
             else:
                 df_processed.loc[
                     df_processed["estagio"] == e,
@@ -1068,7 +1067,7 @@ class OperationSynthetizer:
             df_processed.loc[
                 df_processed["estagio"] == e,
                 cols_scenarios,
-            ] = float(df1.loc[df1["Estágio"] == e, col])
+            ] = float(df1.loc[df1["Estágio"] == e, col].iloc[0])
         for e in estagios_r2:
             df_processed.loc[
                 df_processed["estagio"] == e,
