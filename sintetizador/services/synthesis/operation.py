@@ -859,8 +859,8 @@ class OperationSynthetizer:
             )
             df_final = pd.DataFrame()
             for p in patamares:
-                df = __processa_dados_intercambio(df, p)
-                df_final = pd.concat([df_final, df], ignore_index=True)
+                df_p = __processa_dados_intercambio(df, p)
+                df_final = pd.concat([df_final, df_p], ignore_index=True)
         return df_final
 
     def __agrupa_uhes(
