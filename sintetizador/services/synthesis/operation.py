@@ -641,8 +641,7 @@ class OperationSynthetizer:
                 SpatialResolution.PAR_SUBMERCADOS,
                 TemporalResolution.PATAMAR,
             ): lambda: self.__processa_relatorio_intercambios_csv(
-                "intercambio_origem_MW",
-                self.patamares
+                "intercambio_origem_MW", self.patamares
             ),
         }
 
@@ -857,6 +856,7 @@ class OperationSynthetizer:
             patamares = (
                 df["patamar"].loc[~df["patamar"].isna()].unique().tolist()
             )
+            patamares = [int(p) for p in patamares]
             df_final = pd.DataFrame()
             for p in patamares:
                 df_p = __processa_dados_intercambio(df, p)
