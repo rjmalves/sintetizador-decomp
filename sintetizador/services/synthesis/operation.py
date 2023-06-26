@@ -641,7 +641,8 @@ class OperationSynthetizer:
                 SpatialResolution.PAR_SUBMERCADOS,
                 TemporalResolution.PATAMAR,
             ): lambda: self.__processa_relatorio_intercambios_csv(
-                "intercambio_origem_MW"
+                "intercambio_origem_MW",
+                self.patamares
             ),
         }
 
