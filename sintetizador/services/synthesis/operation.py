@@ -1,6 +1,7 @@
 from typing import Callable, Dict, List, Tuple, Optional
 import pandas as pd
 import numpy as np
+from traceback import print_exc
 from datetime import datetime, timedelta
 
 from sintetizador.services.unitofwork import AbstractUnitOfWork
@@ -852,7 +853,9 @@ class OperationSynthetizer:
             df_final = __processa_dados_intercambio(df, None)
             df = df.loc[pd.isna(df["patamar"])]
         else:
-            patamares = df["patamar"].loc[~df["patamar"].isna()].unique().tolist()
+            patamares = (
+                df["patamar"].loc[~df["patamar"].isna()].unique().tolist()
+            )
             df_final = pd.DataFrame()
             for p in patamares:
                 df = __processa_dados_intercambio(df, p)
@@ -1437,6 +1440,7 @@ class OperationSynthetizer:
                     (s.variable, s.spatial_resolution, s.temporal_resolution)
                 ]()
             except Exception:
+                print_exc()
                 continue
             if df is None:
                 continue
