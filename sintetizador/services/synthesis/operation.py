@@ -813,12 +813,12 @@ class OperationSynthetizer:
         self, col: str, patamar=None
     ) -> pd.DataFrame:
         def __processa_dados_intercambio(
-            df: pd.DataFrame, patamar: Optional[int]
+            df_dados: pd.DataFrame, patamar: Optional[int]
         ) -> pd.DataFrame:
             if patamar is None:
-                df = df.loc[pd.isna(df["patamar"])]
+                df = df_dados.loc[pd.isna(df_dados["patamar"])]
             else:
-                df = df.loc[df["patamar"] == patamar]
+                df = df_dados.loc[df_dados["patamar"] == patamar]
             submercados = df["nome_submercado_de"].unique()
             df_final = pd.DataFrame()
             for s_de in submercados:
