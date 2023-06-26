@@ -818,7 +818,7 @@ class OperationSynthetizer:
                 df = df.loc[pd.isna(df["patamar"])]
             else:
                 df = df.loc[df["patamar"] == patamar]
-            submercados = df["nome_submercado_de "].unique()
+            submercados = df["nome_submercado_de"].unique()
             df_final = pd.DataFrame()
             for s_de in submercados:
                 for s_para in submercados:
