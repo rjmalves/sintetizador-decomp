@@ -89,6 +89,8 @@ class OperationSynthetizer:
         "GTER_UTE_EST",
         "GTER_UTE_PAT",
         "CTER_UTE_EST",
+        "INT_SBP_EST",
+        "INT_SBP_PAT",
     ]
 
     def __init__(self, uow: AbstractUnitOfWork) -> None:
@@ -626,6 +628,20 @@ class OperationSynthetizer:
                 SpatialResolution.USINA_TERMELETRICA,
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__processa_bloco_relatorio_operacao_ute("Custo"),
+            (
+                Variable.INTERCAMBIO,
+                SpatialResolution.PAR_SUBMERCADOS,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__processa_relatorio_intercambios_csv(
+                "intercambio_origem_MW"
+            ),
+            (
+                Variable.INTERCAMBIO,
+                SpatialResolution.PAR_SUBMERCADOS,
+                TemporalResolution.PATAMAR,
+            ): lambda: self.__processa_relatorio_intercambios_csv(
+                "intercambio_origem_MW"
+            ),
         }
 
     ##  ---------------  DADOS DA OPERACAO DAS UTE   --------------   ##
@@ -789,6 +805,58 @@ class OperationSynthetizer:
             df_u["usina"] = u
             df_final = pd.concat([df_final, df_u], ignore_index=True)
         df_final = df_final[["usina"] + cols_df_u]
+        return df_final
+
+    def __processa_relatorio_intercambios_csv(
+        self, col: str, patamar=None
+    ) -> pd.DataFrame:
+        def __processa_dados_intercambio(
+            df: pd.DataFrame, patamar: Optional[int]
+        ) -> pd.DataFrame:
+            if patamar is None:
+                df = df.loc[pd.isna(df["patamar"])]
+            else:
+                df = df.loc[df["patamar"] == patamar]
+            submercados = df["nome_submercado_de "].unique()
+            df_final = pd.DataFrame()
+            for s_de in submercados:
+                for s_para in submercados:
+                    if s_de == s_para:
+                        continue
+                    df_s = self.__process_df_decomp_csv(
+                        df.loc[
+                            (df["nome_submercado_de"] == s_de)
+                            & (df["nome_submercado_para"] == s_para),
+                            :,
+                        ],
+                        col,
+                    )
+                    cols_df_s = df_s.columns.to_list()
+                    df_s["submercadoDe"] = s_de
+                    df_s["submercadoPara"] = s_para
+                    df_final = pd.concat([df_final, df_s], ignore_index=True)
+            if patamar is not None:
+                df_final["patamar"] = patamar
+                df_final = df_final[
+                    ["submercadoDe", "submercadoPara", "patamar"] + cols_df_s
+                ]
+            else:
+                df_final = df_final[
+                    ["submercadoDe", "submercadoPara"] + cols_df_s
+                ]
+            return df_final
+
+        with self.__uow:
+            df = self.__uow.files.get_dec_oper_interc().tabela
+        if patamar is None:
+            df_final = __processa_dados_intercambio(df, None)
+            df = df.loc[pd.isna(df["patamar"])]
+        else:
+            patamares = df["patamar"].loc[~df["patamar"].isna()].unique().tolist()
+            df_final = pd.DataFrame()
+            for p in patamares:
+                df = __processa_dados_intercambio(df, p)
+                df_final = pd.concat([df_final, df], ignore_index=True)
         return df_final
 
     def __agrupa_uhes(

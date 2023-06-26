@@ -15,6 +15,7 @@ from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.dec_oper_usih import DecOperUsih
 from idecomp.decomp.dec_oper_usit import DecOperUsit
 from idecomp.decomp.dec_oper_ree import DecOperRee
+from idecomp.decomp.dec_oper_interc import DecOperInterc
 
 from sintetizador.model.settings import Settings
 from sintetizador.utils.encoding import converte_codificacao
@@ -82,6 +83,10 @@ class AbstractFilesRepository(ABC):
     def get_dec_oper_ree(self) -> DecOperRee:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_dec_oper_interc(self) -> DecOperInterc:
+        raise NotImplementedError
+
 
 class RawFilesRepository(AbstractFilesRepository):
     def __init__(self, tmppath: str):
@@ -114,6 +119,8 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_dec_oper_usit = False
         self.__dec_oper_ree: Optional[DecOperRee] = None
         self.__read_dec_oper_ree = False
+        self.__dec_oper_interc: Optional[DecOperInterc] = None
+        self.__read_dec_oper_interc = False
 
     @property
     def caso(self) -> Caso:
@@ -312,6 +319,19 @@ class RawFilesRepository(AbstractFilesRepository):
                 Log.log().error(f"Erro na leitura do dec_oper_ree.csv: {e}")
                 raise e
         return self.__dec_oper_ree
+
+    def get_dec_oper_interc(self) -> DecOperRee:
+        if self.__read_dec_oper_interc is False:
+            self.__read_dec_oper_interc = True
+            try:
+                Log.log().info("Lendo arquivo dec_oper_interc.csv")
+                self.__dec_oper_interc = DecOperInterc.le_arquivo(
+                    self.__tmppath
+                )
+            except Exception as e:
+                Log.log().error(f"Erro na leitura do dec_oper_interc.csv: {e}")
+                raise e
+        return self.__dec_oper_interc
 
 
 def factory(kind: str, *args, **kwargs) -> AbstractFilesRepository:
