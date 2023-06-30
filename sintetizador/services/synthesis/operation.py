@@ -75,6 +75,7 @@ class OperationSynthetizer:
         "VARMF_SBM_EST",
         "VARMI_SIN_EST",
         "VARMF_SIN_EST",
+        "QINC_UHE_EST",
         "QAFL_UHE_EST",
         "QDEF_UHE_EST",
         "QTUR_UHE_EST",
@@ -409,14 +410,14 @@ class OperationSynthetizer:
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__processa_relatorio_operacao_uhe_csv(
-                "volumeUtilInicialHm3"
+                "volume_util_inicial_hm3"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__processa_relatorio_operacao_uhe_csv(
-                "volumeUtilFinalHm3"
+                "volume_util_final_hm3"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
@@ -424,7 +425,7 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__agrupa_uhes(
                 self.__processa_relatorio_operacao_uhe_csv(
-                    "volumeUtilInicialHm3"
+                    "volume_util_inicial_hm3"
                 ),
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
             ),
@@ -434,7 +435,7 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__agrupa_uhes(
                 self.__processa_relatorio_operacao_uhe_csv(
-                    "volumeUtilFinalHm3"
+                    "volume_util_final_hm3"
                 ),
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
             ),
@@ -444,7 +445,7 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__agrupa_uhes(
                 self.__processa_relatorio_operacao_uhe_csv(
-                    "volumeUtilInicialHm3"
+                    "volume_util_inicial_hm3"
                 ),
                 SpatialResolution.SUBMERCADO,
             ),
@@ -454,7 +455,7 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__agrupa_uhes(
                 self.__processa_relatorio_operacao_uhe_csv(
-                    "volumeUtilFinalHm3"
+                    "volume_util_final_hm3"
                 ),
                 SpatialResolution.SUBMERCADO,
             ),
@@ -464,7 +465,7 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__agrupa_uhes(
                 self.__processa_relatorio_operacao_uhe_csv(
-                    "volumeUtilInicialHm3"
+                    "volume_util_inicial_hm3"
                 ),
                 SpatialResolution.SISTEMA_INTERLIGADO,
             ),
@@ -474,9 +475,16 @@ class OperationSynthetizer:
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__agrupa_uhes(
                 self.__processa_relatorio_operacao_uhe_csv(
-                    "volumeUtilFinalHm3"
+                    "volume_util_final_hm3"
                 ),
                 SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.VAZAO_INCREMENTAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__processa_relatorio_operacao_uhe_csv(
+                "vazao_incremental_m3s"
             ),
             (
                 Variable.VAZAO_AFLUENTE,
