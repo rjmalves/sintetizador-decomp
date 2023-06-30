@@ -804,11 +804,11 @@ class OperationSynthetizer:
             df = df.loc[pd.isna(df["patamar"])]
         else:
             df = df.loc[df["patamar"] == patamar]
-        usinas_relatorio = df["nomeUsina"].unique()
+        usinas_relatorio = df["nome_usina"].unique()
         df_final = pd.DataFrame()
         for u in usinas_relatorio:
             df_u = self.__process_df_decomp_csv(
-                df.loc[df["nomeUsina"] == u, :], col
+                df.loc[df["nome_usina"] == u, :], col
             )
             cols_df_u = df_u.columns.to_list()
             df_u["usina"] = u
