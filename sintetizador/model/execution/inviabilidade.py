@@ -6,7 +6,6 @@ from idecomp.decomp.relato import Relato
 
 
 class Inviabilidade:
-
     NOME = ""
 
     def __init__(
@@ -82,6 +81,16 @@ class Inviabilidade:
                 unidade,
                 hidr,
             )
+        elif "VERT. PERIODO" in mensagem_restricao:
+            return InviabilidadeVertimento(
+                iteracao,
+                estagio,
+                cenario,
+                mensagem_restricao,
+                violacao,
+                unidade,
+                hidr,
+            )
         elif "RHV" in mensagem_restricao:
             return InviabilidadeRHV(
                 iteracao,
@@ -149,7 +158,6 @@ class Inviabilidade:
 
 
 class InviabilidadeTI(Inviabilidade):
-
     NOME = "TI"
 
     def __init__(
@@ -162,7 +170,6 @@ class InviabilidadeTI(Inviabilidade):
         unidade: str,
         hidr: Hidr,
     ):
-
         super().__init__(
             iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
         )
@@ -187,8 +194,48 @@ class InviabilidadeTI(Inviabilidade):
         return [codigo, nome]
 
 
-class InviabilidadeRHA(Inviabilidade):
+class InviabilidadeVertimento(Inviabilidade):
+    NOME = "VERT"
 
+    def __init__(
+        self,
+        iteracao: int,
+        estagio: int,
+        cenario: int,
+        mensagem_restricao: str,
+        violacao: float,
+        unidade: str,
+        hidr: Hidr,
+    ):
+        super().__init__(
+            iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
+        )
+        dados = self.processa_mensagem(hidr)
+        self._codigo = dados[0]
+        self._nome_usina = dados[1]
+        self._patamar = dados[2]
+
+    def __str__(self) -> str:
+        return (
+            f"VERT {self._codigo} ({self._nome_usina}) "
+            + f"- Estágio {self._estagio} - Patamar {self._patamar}"
+            + f" - It {self._iteracao} - Cenário {self._cenario}"
+            + f" - Viol. {self._violacao} {self._unidade}"
+        )
+
+    def processa_mensagem(self, *args) -> list:
+        hidr: Hidr = args[0]
+        patamar = int(
+            self._mensagem_restricao.split("USINA")[0].split("PAT. ").strip()
+        )
+        nome = self._mensagem_restricao.split("USINA")[1].strip()
+        codigo = int(
+            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+        )
+        return [codigo, nome, patamar]
+
+
+class InviabilidadeRHA(Inviabilidade):
     NOME = "RHA"
 
     def __init__(
@@ -200,7 +247,6 @@ class InviabilidadeRHA(Inviabilidade):
         violacao: float,
         unidade: str,
     ):
-
         super().__init__(
             iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
         )
@@ -223,7 +269,6 @@ class InviabilidadeRHA(Inviabilidade):
 
 
 class InviabilidadeRHQ(Inviabilidade):
-
     NOME = "RHQ"
 
     def __init__(
@@ -235,7 +280,6 @@ class InviabilidadeRHQ(Inviabilidade):
         violacao: float,
         unidade: str,
     ):
-
         super().__init__(
             iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
         )
@@ -260,7 +304,6 @@ class InviabilidadeRHQ(Inviabilidade):
 
 
 class InviabilidadeRHV(Inviabilidade):
-
     NOME = "RHV"
 
     def __init__(
@@ -272,7 +315,6 @@ class InviabilidadeRHV(Inviabilidade):
         violacao: float,
         unidade: str,
     ):
-
         super().__init__(
             iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
         )
@@ -295,7 +337,6 @@ class InviabilidadeRHV(Inviabilidade):
 
 
 class InviabilidadeRHE(Inviabilidade):
-
     NOME = "RHE"
 
     def __init__(
@@ -333,7 +374,6 @@ class InviabilidadeRHE(Inviabilidade):
 
 
 class InviabilidadeRE(Inviabilidade):
-
     NOME = "RE"
 
     def __init__(
@@ -370,7 +410,6 @@ class InviabilidadeRE(Inviabilidade):
 
 
 class InviabilidadeEV(Inviabilidade):
-
     NOME = "EV"
 
     def __init__(
@@ -383,7 +422,6 @@ class InviabilidadeEV(Inviabilidade):
         unidade: str,
         hidr: Hidr,
     ):
-
         super().__init__(
             iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
         )
@@ -409,7 +447,6 @@ class InviabilidadeEV(Inviabilidade):
 
 
 class InviabilidadeDEFMIN(Inviabilidade):
-
     NOME = "DEFMIN"
 
     def __init__(
@@ -459,7 +496,6 @@ class InviabilidadeDEFMIN(Inviabilidade):
 
 
 class InviabilidadeFP(Inviabilidade):
-
     NOME = "FP"
 
     def __init__(
@@ -501,7 +537,6 @@ class InviabilidadeFP(Inviabilidade):
 
 
 class InviabilidadeDeficit(Inviabilidade):
-
     NOME = "DEFICIT"
 
     def __init__(
@@ -514,7 +549,6 @@ class InviabilidadeDeficit(Inviabilidade):
         unidade: str,
         relato: Relato,
     ):
-
         super().__init__(
             iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
         )
