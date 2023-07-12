@@ -203,15 +203,15 @@ class ExecutionSynthetizer:
 
     def _resolve_job_resources(self) -> pd.DataFrame:
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
-        # monitor-job.csv
+        # monitor-job.parquet.gzip
         with self.__uow:
-            file = "monitor-job.csv"
+            file = "monitor-job.parquet.gzip"
             if pathlib.Path(file).exists():
                 try:
-                    df = pd.read_csv("monitor-job.csv")
+                    df = pd.read_parquet("monitor-job.parquet.gzip")
                 except Exception as e:
                     Log.log().info(
-                        f"Erro ao acessar arquivo monitor-job.csv: {str(e)}"
+                        f"Erro ao acessar arquivo monitor-job.parquet.gzip: {str(e)}"
                     )
                     return None
                 return df
@@ -221,13 +221,13 @@ class ExecutionSynthetizer:
         # Le o do job para saber tempo inicial e final
         df_job = None
         with self.__uow:
-            file = "monitor-job.csv"
+            file = "monitor-job.parquet.gzip"
             if pathlib.Path(file).exists():
                 try:
-                    df_job = pd.read_csv("monitor-job.csv")
+                    df_job = pd.read_parquet("monitor-job.parquet.gzip")
                 except Exception as e:
                     Log.log().info(
-                        f"Erro ao acessar arquivo monitor-job.csv: {str(e)}"
+                        f"Erro ao acessar arquivo monitor-job.parquet.gzip: {str(e)}"
                     )
                     return None
         if df_job is None:
@@ -236,12 +236,12 @@ class ExecutionSynthetizer:
             df_job["timeInstant"], format="ISO8601"
         ).tolist()
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
-        # monitor-(hostname).csv
+        # monitor-(hostname).parquet.gzip
         with set_directory(str(pathlib.Path.home())):
-            file = f"monitor-{socket.gethostname()}.csv"
+            file = f"monitor-{socket.gethostname()}.parquet.gzip"
             if pathlib.Path(file).exists():
                 try:
-                    df = pd.read_csv(file)
+                    df = pd.read_parquet(file)
                 except Exception as e:
                     Log.log().info(f"Erro ao acessar arquivo {file}: {str(e)}")
                     return None
