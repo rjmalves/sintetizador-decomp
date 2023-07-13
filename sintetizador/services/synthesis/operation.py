@@ -609,14 +609,14 @@ class OperationSynthetizer:
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__processa_relatorio_operacao_uhe_csv(
-                "vazaoTurbinadaM3S"
+                "vazao_turbinada_m3s"
             ),
             (
                 Variable.VAZAO_VERTIDA,
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__processa_relatorio_operacao_uhe_csv(
-                "vazaoVertidaM3S"
+                "vazao_vertida_m3s"
             ),
             (
                 Variable.GERACAO_TERMICA,
