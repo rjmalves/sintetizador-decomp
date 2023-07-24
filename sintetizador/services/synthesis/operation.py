@@ -962,6 +962,7 @@ class OperationSynthetizer:
         evernt = self.__processa_bloco_relatorio_operacao_uhe(
             "Vertimento Não-Turbinável"
         )
+        print(evert)
         evert["valor"] += evernt["valor"]
         return evert
 
