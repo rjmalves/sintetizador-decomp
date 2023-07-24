@@ -1116,7 +1116,7 @@ class OperationSynthetizer:
             ignore_index=True,
         )
 
-    def __stub_mercl_sbm(self, patamares=["Médio"]):
+    def __stub_mercl_sbm(self, patamares=["Medio"]):
         mercado = self.__processa_bloco_relatorio_balanco_estagio(
             self.__processa_bloco_relatorio_balanco_energetico_submercado,
             ["Mercado"],
