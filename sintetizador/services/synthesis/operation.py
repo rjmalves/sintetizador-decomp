@@ -965,10 +965,11 @@ class OperationSynthetizer:
         cols_cenarios = [
             c
             for c in evert.columns
-            if c not in ["usina", "estagio", "dataInicio", "dataFim", "patamar"]
+            if c
+            not in ["usina", "estagio", "dataInicio", "dataFim", "patamar"]
         ]
         evert[cols_cenarios] += evernt[cols_cenarios]
-        return evert
+        return evert.copy()
 
     ##  ---------------  DADOS DO BALANCO ENERGETICO --------------   ##
 
