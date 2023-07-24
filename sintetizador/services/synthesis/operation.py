@@ -61,6 +61,10 @@ class OperationSynthetizer:
         "MER_SBM_PAT",
         "MER_SIN_EST",
         "MER_SIN_PAT",
+        "MERL_SBM_EST",
+        "MERL_SBM_PAT",
+        "MERL_SIN_EST",
+        "MERL_SIN_PAT",
         "DEF_SBM_EST",
         "DEF_SBM_PAT",
         "DEF_SIN_EST",
@@ -361,6 +365,26 @@ class OperationSynthetizer:
                 self.__processa_bloco_relatorio_balanco_energetico_submercado,
                 ["Mercado"],
             ),
+            (
+                Variable.MERCADO_LIQUIDO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): lambda: self.__stub_mercl_sin(self.patamares),
+            (
+                Variable.MERCADO_LIQUIDO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__stub_mercl_sin(),
+            (
+                Variable.MERCADO_LIQUIDO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda: self.__stub_mercl_sbm(self.patamares),
+            (
+                Variable.MERCADO_LIQUIDO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__stub_mercl_sbm(),
             (
                 Variable.DEFICIT,
                 SpatialResolution.SISTEMA_INTERLIGADO,
@@ -1092,15 +1116,68 @@ class OperationSynthetizer:
             ignore_index=True,
         )
 
+    def __stub_mercl_sbm(self, patamares="Médio"):
+        mercado = self.__processa_bloco_relatorio_balanco_estagio(
+            self.__processa_bloco_relatorio_balanco_energetico_submercado,
+            ["Mercado"],
+            patamares,
+        )
+        unsi = self.__processa_bloco_relatorio_balanco_estagio(
+            self.__processa_bloco_relatorio_balanco_energetico_submercado,
+            ["PQUsi"],
+            patamares,
+        )
+
+        cols_cenarios = [
+            c
+            for c in mercado.columns
+            if c
+            not in [
+                "submercado",
+                "estagio",
+                "dataInicio",
+                "dataFim",
+                "patamar",
+            ]
+        ]
+        mercado[cols_cenarios] -= unsi[cols_cenarios]
+        return mercado.copy()
+
+    def __stub_mercl_sin(self, patamares="Médio"):
+        mercado = self.__processa_bloco_relatorio_balanco_estagio(
+            self.__processa_bloco_relatorio_balanco_energetico_sin,
+            ["Mercado"],
+            patamares,
+        )
+        unsi = self.__processa_bloco_relatorio_balanco_estagio(
+            self.__processa_bloco_relatorio_balanco_energetico_sin,
+            ["PQUsi"],
+            patamares,
+        )
+
+        cols_cenarios = [
+            c
+            for c in mercado.columns
+            if c
+            not in [
+                "estagio",
+                "dataInicio",
+                "dataFim",
+                "patamar",
+            ]
+        ]
+        mercado[cols_cenarios] -= unsi[cols_cenarios]
+        return mercado.copy()
+
     def __processa_relatorio_operacao_ree_csv(self, col: str) -> pd.DataFrame:
         with self.__uow:
             df = self.__uow.files.get_dec_oper_ree().tabela
         df = df.loc[pd.isna(df["patamar"])]
-        rees_relatorio = df["nomeRee"].unique()
+        rees_relatorio = df["nome_ree"].unique()
         df_final = pd.DataFrame()
         for u in rees_relatorio:
             df_u = self.__process_df_decomp_csv(
-                df.loc[df["nomeRee"] == u, :], col
+                df.loc[df["nome_ree"] == u, :], col
             )
             cols_df_u = df_u.columns.to_list()
             df_u["ree"] = u

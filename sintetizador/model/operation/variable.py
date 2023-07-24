@@ -33,6 +33,7 @@ class Variable(Enum):
     VOLUME_TURBINADO = "VTUR"
     INTERCAMBIO = "INT"
     MERCADO = "MER"
+    MERCADO_LIQUIDO = "MERL"
     DEFICIT = "DEF"
 
     @classmethod
