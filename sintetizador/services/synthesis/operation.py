@@ -1141,6 +1141,7 @@ class OperationSynthetizer:
             ]
         ]
         mercado[cols_cenarios] -= unsi[cols_cenarios]
+        print(mercado)
         return mercado.copy()
 
     def __stub_mercl_sin(self, patamares="Médio"):
@@ -1167,6 +1168,7 @@ class OperationSynthetizer:
             ]
         ]
         mercado[cols_cenarios] -= unsi[cols_cenarios]
+        print(mercado)
         return mercado.copy()
 
     def __processa_relatorio_operacao_ree_csv(self, col: str) -> pd.DataFrame:
