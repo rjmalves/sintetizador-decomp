@@ -1127,9 +1127,6 @@ class OperationSynthetizer:
             ["PQUsi"],
             patamares,
         )
-
-        print(mercado)
-        print(unsi)
         cols_cenarios = [
             c
             for c in mercado.columns
@@ -1143,10 +1140,9 @@ class OperationSynthetizer:
             ]
         ]
         mercado[cols_cenarios] -= unsi[cols_cenarios]
-        print(mercado)
         return mercado.copy()
 
-    def __stub_mercl_sin(self, patamares="Médio"):
+    def __stub_mercl_sin(self, patamares=["Medio"]):
         mercado = self.__processa_bloco_relatorio_balanco_estagio(
             self.__processa_bloco_relatorio_balanco_energetico_sin,
             ["Mercado"],
@@ -1170,7 +1166,6 @@ class OperationSynthetizer:
             ]
         ]
         mercado[cols_cenarios] -= unsi[cols_cenarios]
-        print(mercado)
         return mercado.copy()
 
     def __processa_relatorio_operacao_ree_csv(self, col: str) -> pd.DataFrame:
