@@ -82,12 +82,16 @@ class OperationSynthetizer:
         "QVER_UHE_EST",
         "EVERT_UHE_EST",
         "EVERNT_UHE_EST",
+        "EVER_UHE_EST",
         "EVERT_REE_EST",
         "EVERNT_REE_EST",
+        "EVER_REE_EST",
         "EVERT_SBM_EST",
         "EVERNT_SBM_EST",
+        "EVER_SBM_EST",
         "EVERT_SIN_EST",
         "EVERNT_SIN_EST",
+        "EVER_SIN_EST",
         "GTER_UTE_EST",
         "GTER_UTE_PAT",
         "CTER_UTE_EST",
@@ -545,6 +549,11 @@ class OperationSynthetizer:
                 "Vertimento Não-Turbinável"
             ),
             (
+                Variable.ENERGIA_VERTIDA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__stub_ever_uhes(),
+            (
                 Variable.ENERGIA_VERTIDA_TURBINAVEL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
                 TemporalResolution.ESTAGIO,
@@ -565,6 +574,14 @@ class OperationSynthetizer:
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
             ),
             (
+                Variable.ENERGIA_VERTIDA,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__stub_ever_uhes(),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
                 Variable.ENERGIA_VERTIDA_TURBINAVEL,
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
@@ -572,6 +589,14 @@ class OperationSynthetizer:
                 self.__processa_bloco_relatorio_operacao_uhe(
                     "Vertimento Turbinável"
                 ),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__stub_ever_uhes(),
                 SpatialResolution.SUBMERCADO,
             ),
             (
@@ -602,6 +627,14 @@ class OperationSynthetizer:
                 self.__processa_bloco_relatorio_operacao_uhe(
                     "Vertimento Não-Turbinável"
                 ),
+                SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.__agrupa_uhes(
+                self.__stub_ever_uhes(),
                 SpatialResolution.SISTEMA_INTERLIGADO,
             ),
             (
@@ -921,6 +954,16 @@ class OperationSynthetizer:
             else:
                 df_group = df_group.rename(columns={"group": group_name[s]})
             return df_group
+
+    def __stub_ever_uhes(self):
+        evert = self.__processa_bloco_relatorio_operacao_uhe(
+            "Vertimento Turbinável"
+        )
+        evernt = self.__processa_bloco_relatorio_operacao_uhe(
+            "Vertimento Não-Turbinável"
+        )
+        evert["valor"] += evernt["valor"]
+        return evert
 
     ##  ---------------  DADOS DO BALANCO ENERGETICO --------------   ##
 
