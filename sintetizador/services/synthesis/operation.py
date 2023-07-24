@@ -962,8 +962,12 @@ class OperationSynthetizer:
         evernt = self.__processa_bloco_relatorio_operacao_uhe(
             "Vertimento Não-Turbinável"
         )
-        print(evert)
-        evert["valor"] += evernt["valor"]
+        cols_cenarios = [
+            c
+            for c in evert.columns
+            if c not in ["usina", "estagio", "dataInicio", "dataFim", "patamar"]
+        ]
+        evert[cols_cenarios] += evernt[cols_cenarios]
         return evert
 
     ##  ---------------  DADOS DO BALANCO ENERGETICO --------------   ##
