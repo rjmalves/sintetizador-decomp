@@ -1128,6 +1128,8 @@ class OperationSynthetizer:
             patamares,
         )
 
+        print(mercado)
+        print(unsi)
         cols_cenarios = [
             c
             for c in mercado.columns
