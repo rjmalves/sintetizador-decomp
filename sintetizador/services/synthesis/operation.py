@@ -1166,7 +1166,6 @@ class OperationSynthetizer:
             ]
         ]
         mercado[cols_cenarios] -= unsi[cols_cenarios]
-        print(mercado)
         return mercado.copy()
 
     def __processa_relatorio_operacao_ree_csv(self, col: str) -> pd.DataFrame:
@@ -1544,6 +1543,7 @@ class OperationSynthetizer:
     def _postprocess(
         self, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
+        print(df)
         df = self._processa_quantis(df, [0.05 * i for i in range(21)])
         df = self._processa_media(df, probabilities)
         cols_not_scenarios = [
