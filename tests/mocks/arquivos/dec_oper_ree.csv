@@ -1,0 +1,52 @@
+***********************************************************************
+*                                                                     *
+*            CEPEL - CENTRO DE PESQUISAS DE ENERGIA ELETRICA          *
+*  CEPEL: DECOMP     - Versao 31.17 - Abr/2023(L)                     *
+*                                                                     *
+***********************************************************************
+
+
+   PROGRAMA LICENCIADO PARA OPERADOR NACIONAL DO SISTEMA ELETRICO ONS                                                                                                             
+
+
+____________________________________________________________________
+
+ PMO - ABRIL/23 - MAIO/23 - REV 0 - FCF COM CVAR - 12 REE - VALOR ESPERADO       
+____________________________________________________________________
+
+----------------------------------------------------------------
+Resultado de operacao dos reservatorios equivalentes de energia.                
+----------------------------------------------------------------
+---------------------------------------------------------
+IPER;      Indice do periodo                                                                                                                                                                            
+INO;       Indice do no                                                                                                                                                                                 
+ICEN;      Indice do cenario                                                                                                                                                                            
+REE;       Numero de cadastro do reservatorio equivalente                                                                                                                                               
+Nome REE;  Nome do reservatorio equivalente                                                                                                                                                             
+Sist;      Numero do subsistema                                                                                                                                                                         
+Nome Sist; Nome do subsistema                                                                                                                                                                           
+ENA;       Energia Afluente                                                                                                                                                                             
+EarmInic;  Energia Armazenada Inicial                                                                                                                                                                   
+EarmInic%; Energia Armazenada Inicial em percentual                                                                                                                                                     
+EarmFim;   Energia Armazenada Final                                                                                                                                                                     
+EarmFim%;  Energia Armazenada Final em percentual                                                                                                                                                       
+Earm. Max; Energia Armazenada m�xima                                                                                                                                                                    
+---------------------------------------------------------
+
+@Tabela
+-----;------;------;-----;--------------;----;---------------;----------;---------------;----------;---------------;----------;----------------;
+IPER ; INO  ; ICEN ; REE ;   Nome REE   ;Sist;   Nome Sist   ;   ENA    ;   EarmInic    ;EarmInic% ;    EarmFim    ; EarmFim% ;   Earm. Max    ;
+  -  ;  -   ;  -   ;  -  ;      -       ; -  ;       -       ; (MWmes)  ;    (MWmes)    ;   (%)    ;    (MWmes)    ;   (%)    ;    (MWmes)     ;
+-----;------;------;-----;--------------;----;---------------;----------;---------------;----------;---------------;----------;----------------;
+   1 ;    1 ;    1 ; 001 ; SUDESTE      ;  1 ; SE            ;   1403.2 ;      40150.00 ;    78.77 ;      39919.56 ;    78.32 ;      50970.5   ;
+   1 ;    1 ;    1 ; 006 ; MADEIRA      ;  1 ; SE            ;   2416.6 ;        313.14 ;    99.81 ;        310.77 ;    99.06 ;        313.7   ;
+   1 ;    1 ;    1 ; 007 ; TPIRES       ;  1 ; SE            ;   1091.0 ;        673.33 ;    73.66 ;        914.05 ;   100.00 ;        914.0   ;
+   1 ;    1 ;    1 ; 005 ; ITAIPU       ;  1 ; SE            ;    911.4 ;        641.86 ;    96.02 ;        668.48 ;   100.00 ;        668.5   ;
+   1 ;    1 ;    1 ; 010 ; PARANA       ;  1 ; SE            ;   5154.8 ;     118311.41 ;    84.06 ;     108764.81 ;    77.28 ;     140742.1   ;
+   1 ;    1 ;    1 ; 012 ; PRNPANEMA    ;  1 ; SE            ;    606.3 ;      10913.17 ;    92.07 ;      10012.67 ;    84.47 ;      11853.6   ;
+   1 ;    1 ;    1 ; 002 ; SUL          ;  2 ; S             ;    491.5 ;       6927.92 ;    68.36 ;       6982.88 ;    68.90 ;      10134.6   ;
+   1 ;    1 ;    1 ; 011 ; IGUACU       ;  2 ; S             ;    534.0 ;      10070.50 ;    97.54 ;       8839.17 ;    85.61 ;      10324.7   ;
+   1 ;    1 ;    1 ; 003 ; NORDESTE     ;  3 ; NE            ;    949.7 ;      47093.76 ;    91.06 ;      47078.51 ;    91.03 ;      51718.6   ;
+   1 ;    1 ;    1 ; 004 ; NORTE        ;  4 ; N             ;   3495.1 ;      13529.09 ;    98.77 ;      13698.08 ;   100.00 ;      13698.1   ;
+   1 ;    1 ;    1 ; 008 ; BMONTE       ;  4 ; N             ;    769.8 ;         25.22 ;    89.71 ;         28.11 ;   100.00 ;         28.1   ;
+   1 ;    1 ;    1 ; 009 ; MAN-AP       ;  4 ; N             ;    323.8 ;        652.28 ;    82.99 ;        704.30 ;    89.60 ;        786.0   ;

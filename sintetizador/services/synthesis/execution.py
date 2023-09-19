@@ -103,20 +103,20 @@ class ExecutionSynthetizer:
         df = relato.convergencia
         df_processed = df.rename(
             columns={
-                "Iteração": "iter",
-                "Zinf": "zinf",
-                "Zsup": "zsup",
-                "Gap (%)": "gap",
-                "Tempo (s)": "tempo",
-                "Num. Inviab": "inviabilidades",
-                "Tot. Def. Demanda (MWmed)": "deficit",
-                "Tot. Inviab (MWmed)": "viol_MWmed",
-                "Tot. Inviab (m3/s)": "viol_m3s",
-                "Tot. Inviab (Hm3)": "viol_hm3",
+                "iteracao": "iter",
+                "\inf": "zinf",
+                "\sup": "zsup",
+                "gap_percentual": "gap",
+                "tempo": "tempo",
+                "numero_inviabilidades ": "inviabilidades",
+                "deficit_demanda_MWmed": "deficit",
+                "inviabilidades_MWmed": "viol_MWmed",
+                "inviabilidades_m3s": "viol_m3s",
+                "inviabilidades_hm3": "viol_hm3",
             }
         )
         df_processed.drop(
-            columns=["Tot. Def. Niv. Seg. (MWmes)"], inplace=True
+            columns=["deficit_nivel_seguranca_MWmes"], inplace=True
         )
         df_processed.loc[1:, "tempo"] = (
             df_processed["tempo"].to_numpy()[1:]
@@ -142,7 +142,6 @@ class ExecutionSynthetizer:
         with self.__uow:
             decomptim = self.__uow.files.get_decomptim()
         df = decomptim.tempos_etapas
-        df = df.rename(columns={"Etapa": "etapa", "Tempo": "tempo"})
         df["tempo"] = df["tempo"].dt.total_seconds()
 
         tempo = self.__uow.export.read_df(self.RUNTIME_FILE)
@@ -157,7 +156,7 @@ class ExecutionSynthetizer:
         with self.__uow:
             relato = self.__uow.files.get_relato()
         df = relato.relatorio_operacao_custos
-        estagios = df["Estágio"].unique()
+        estagios = df["estagio"].unique()
         df_completo = pd.DataFrame(columns=["parcela", "mean", "std"])
         for e in estagios:
             parcelas = [
@@ -171,15 +170,15 @@ class ExecutionSynthetizer:
             ]
             means = (
                 df.loc[
-                    df["Estágio"] == e,
+                    df["estagio"] == e,
                     [
-                        "Geração Térmica",
-                        "Violação Desvio",
-                        "Violação de Turbinamento em Reservatórios",
-                        "Violação de Turbinamento em Fio",
-                        "Penalidade de Vertimento em Reservatórios",
-                        "Penalidade de Vertimento em Fio",
-                        "Penalidade de Intercâmbio",
+                        "geracao_termica",
+                        "violacao_desvio",
+                        "violacao_turbinamento_reservatorio",
+                        "violacao_turbinamento_fio",
+                        "penalidade_vertimento_reservatorio",
+                        "penalidade_vertimento_fio",
+                        "penalidade_intercambio",
                     ],
                 ]
                 .to_numpy()
@@ -256,13 +255,13 @@ class ExecutionSynthetizer:
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
         with self.__uow:
-            Log.log().info(f"Obtendo Inviabilidades")
+            Log.log().info("Obtendo Inviabilidades")
             inviabunic = self.__uow.files.get_inviabunic()
             hidr = self.__uow.files.get_hidr()
             relato = self.__uow.files.get_relato()
         df_iter = inviabunic.inviabilidades_iteracoes
         df_sf = inviabunic.inviabilidades_simulacao_final
-        df_sf["Iteração"] = -1
+        df_sf["iteracao"] = -1
         df_inviabs = pd.concat([df_iter, df_sf], ignore_index=True)
         inviabilidades = []
         for _, linha in df_inviabs.iterrows():

@@ -63,8 +63,6 @@ class SystemSynthetizer:
     def filter_valid_variables(
         self, variables: List[SystemSynthesis]
     ) -> List[SystemSynthesis]:
-        with self.__uow:
-            dadger = self.__uow.files.get_dadger()
         valid_variables: List[SystemSynthesis] = []
         # TODO - verificar existência de PEE
         eolica = False

@@ -1,11 +1,11 @@
 import logging
 import logging.handlers
+from typing import Optional
 
 from sintetizador.utils.singleton import Singleton
 
 
 class Log(metaclass=Singleton):
-
     LOGGER = None
 
     @classmethod
@@ -20,7 +20,5 @@ class Log(metaclass=Singleton):
         cls.LOGGER = root
 
     @classmethod
-    def log(cls) -> logging.Logger:
-        if cls.LOGGER is None:
-            raise ValueError("Logger não configurado!")
+    def log(cls) -> Optional[logging.Logger]:
         return cls.LOGGER
