@@ -49,7 +49,7 @@ class FSUnitOfWork(AbstractUnitOfWork):
         if self._files is None:
             self._files = RawFilesRepository(str(self._path))
         if self._exporter is None:
-            synthesis_outdir = self._current_path.joinpath(self._path)
+            synthesis_outdir = self._path.joinpath(Settings().synthesis_dir)
             synthesis_outdir.mkdir(parents=True, exist_ok=True)
             self._exporter = export_factory(
                 Settings().synthesis_format, str(synthesis_outdir)

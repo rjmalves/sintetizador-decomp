@@ -47,8 +47,8 @@ class ExecutionSynthetizer:
     RUNTIME_FILE = "TEMPO"
     INVIABS_FILE = "INVIABILIDADES"
 
-    def __init__(self, uow: AbstractUnitOfWork) -> None:
-        self.__uow = uow
+    def __init__(self) -> None:
+        self.__uow: Optional[AbstractUnitOfWork] = None
         self.__inviabilidades: Optional[List[Inviabilidade]] = None
         self.__rules: Dict[Variable, Callable] = {
             Variable.PROGRAMA: self._resolve_program,
@@ -59,6 +59,12 @@ class ExecutionSynthetizer:
             Variable.RECURSOS_CLUSTER: self._resolve_cluster_resources,
             Variable.INVIABILIDADES: self._resolve_inviabilidades_completas,
         }
+
+    @property
+    def uow(self) -> AbstractUnitOfWork:
+        if self.__uow is None:
+            raise RuntimeError()
+        return self.__uow
 
     def _default_args(self) -> List[ExecutionSynthesis]:
         return [
@@ -71,17 +77,19 @@ class ExecutionSynthetizer:
         args: List[str],
     ) -> List[ExecutionSynthesis]:
         args_data = [ExecutionSynthesis.factory(c) for c in args]
+        logger = Log.log()
         for i, a in enumerate(args_data):
             if a is None:
-                Log.log(f"Erro no argumento fornecido: {args[i]}")
+                if logger is not None:
+                    logger.info(f"Erro no argumento fornecido: {args[i]}")
                 return []
         return args_data
 
     def filter_valid_variables(
         self, variables: List[ExecutionSynthesis]
     ) -> List[ExecutionSynthesis]:
-        with self.__uow:
-            existe_inviabunic = self.__uow.files.get_inviabunic() is not None
+        with self.uow:
+            existe_inviabunic = self.uow.files.get_inviabunic() is not None
         invs_vars = [
             Variable.INVIABILIDADES_CODIGO,
             Variable.INVIABILIDADES_PATAMAR,
@@ -91,21 +99,23 @@ class ExecutionSynthetizer:
         ]
         if not existe_inviabunic:
             variables = [v for v in variables if v.variable not in invs_vars]
-        Log.log().info(f"Variáveis: {variables}")
+        logger = Log.log()
+        if logger is not None:
+            logger.info(f"Variáveis: {variables}")
         return variables
 
     def _resolve_program(self) -> pd.DataFrame:
         return pd.DataFrame(data={"programa": ["DECOMP"]})
 
     def _resolve_convergence(self) -> pd.DataFrame:
-        with self.__uow:
-            relato = self.__uow.files.get_relato()
+        with self.uow:
+            relato = self.uow.files.get_relato()
         df = relato.convergencia
         df_processed = df.rename(
             columns={
                 "iteracao": "iter",
-                "\inf": "zinf",
-                "\sup": "zsup",
+                "zinf": "zinf",
+                "zsup": "zsup",
                 "gap_percentual": "gap",
                 "tempo": "tempo",
                 "numero_inviabilidades ": "inviabilidades",
@@ -130,7 +140,7 @@ class ExecutionSynthetizer:
         df_processed.loc[1:, "dZinf"] /= df_processed["zinf"].to_numpy()[:-1]
         df_processed.at[0, "dZinf"] = np.nan
 
-        conv = self.__uow.export.read_df(self.CONVERGENCE_FILE)
+        conv = self.uow.export.read_df(self.CONVERGENCE_FILE)
         if conv is None:
             df_processed["execucao"] = 0
             return df_processed
@@ -139,12 +149,14 @@ class ExecutionSynthetizer:
             return pd.concat([conv, df_processed], ignore_index=True)
 
     def _resolve_tempo(self) -> pd.DataFrame:
-        with self.__uow:
-            decomptim = self.__uow.files.get_decomptim()
+        with self.uow:
+            decomptim = self.uow.files.get_decomptim()
         df = decomptim.tempos_etapas
+        df = df.rename(columns={"Etapa": "etapa", "Tempo": "tempo"})
+
         df["tempo"] = df["tempo"].dt.total_seconds()
 
-        tempo = self.__uow.export.read_df(self.RUNTIME_FILE)
+        tempo = self.uow.export.read_df(self.RUNTIME_FILE)
         if tempo is None:
             df["execucao"] = 0
             return df
@@ -153,11 +165,11 @@ class ExecutionSynthetizer:
             return pd.concat([tempo, df], ignore_index=True)
 
     def _resolve_costs(self) -> pd.DataFrame:
-        with self.__uow:
-            relato = self.__uow.files.get_relato()
+        with self.uow:
+            relato = self.uow.files.get_relato()
         df = relato.relatorio_operacao_custos
         estagios = df["estagio"].unique()
-        df_completo = pd.DataFrame(columns=["parcela", "mean", "std"])
+        dfs: List[pd.DataFrame] = []
         for e in estagios:
             parcelas = [
                 "GERACAO TERMICA",
@@ -192,7 +204,8 @@ class ExecutionSynthetizer:
                 }
             )
             dfe["estagio"] = e
-            df_completo = pd.concat([df_completo, dfe], ignore_index=True)
+            dfs.append(dfe)
+        df_completo = pd.concat(dfs, ignore_index=True)
         df_completo = df_completo.astype(
             {"mean": np.float64, "std": np.float64}
         )
@@ -203,15 +216,17 @@ class ExecutionSynthetizer:
     def _resolve_job_resources(self) -> pd.DataFrame:
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
         # monitor-job.parquet.gzip
-        with self.__uow:
+        with self.uow:
             file = "monitor-job.parquet.gzip"
             if pathlib.Path(file).exists():
                 try:
                     df = pd.read_parquet("monitor-job.parquet.gzip")
                 except Exception as e:
-                    Log.log().info(
-                        f"Erro ao acessar arquivo monitor-job.parquet.gzip: {str(e)}"
-                    )
+                    logger = Log.log()
+                    if logger is not None:
+                        logger.info(
+                            f"Erro ao acessar arquivo monitor-job.parquet.gzip: {str(e)}"
+                        )
                     return None
                 return df
             return None
@@ -219,15 +234,17 @@ class ExecutionSynthetizer:
     def _resolve_cluster_resources(self) -> pd.DataFrame:
         # Le o do job para saber tempo inicial e final
         df_job = None
-        with self.__uow:
+        with self.uow:
             file = "monitor-job.parquet.gzip"
             if pathlib.Path(file).exists():
                 try:
                     df_job = pd.read_parquet("monitor-job.parquet.gzip")
                 except Exception as e:
-                    Log.log().info(
-                        f"Erro ao acessar arquivo monitor-job.parquet.gzip: {str(e)}"
-                    )
+                    logger = Log.log()
+                    if logger is not None:
+                        logger.info(
+                            f"Erro ao acessar arquivo monitor-job.parquet.gzip: {str(e)}"
+                        )
                     return None
         if df_job is None:
             return None
@@ -242,7 +259,11 @@ class ExecutionSynthetizer:
                 try:
                     df = pd.read_parquet(file)
                 except Exception as e:
-                    Log.log().info(f"Erro ao acessar arquivo {file}: {str(e)}")
+                    logger = Log.log()
+                    if logger is not None:
+                        logger.info(
+                            f"Erro ao acessar arquivo {file}: {str(e)}"
+                        )
                     return None
                 df["timeInstant"] = pd.to_datetime(
                     df["timeInstant"], format="ISO8601"
@@ -254,11 +275,13 @@ class ExecutionSynthetizer:
         return None
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
-        with self.__uow:
-            Log.log().info("Obtendo Inviabilidades")
-            inviabunic = self.__uow.files.get_inviabunic()
-            hidr = self.__uow.files.get_hidr()
-            relato = self.__uow.files.get_relato()
+        with self.uow:
+            logger = Log.log()
+            if logger is not None:
+                logger.info("Obtendo Inviabilidades")
+            inviabunic = self.uow.files.get_inviabunic()
+            hidr = self.uow.files.get_hidr()
+            relato = self.uow.files.get_relato()
         df_iter = inviabunic.inviabilidades_iteracoes
         df_sf = inviabunic.inviabilidades_simulacao_final
         df_sf["iteracao"] = -1
@@ -286,7 +309,7 @@ class ExecutionSynthetizer:
             ignore_index=True,
         )
         df = df.astype({"iteracao": int, "cenario": int, "estagio": int})
-        inviabs = self.__uow.export.read_df(self.INVIABS_FILE)
+        inviabs = self.uow.export.read_df(self.INVIABS_FILE)
         if inviabs is None:
             df["execucao"] = 0
             return df
@@ -479,7 +502,9 @@ class ExecutionSynthetizer:
             }
         )
 
-    def synthetize(self, variables: List[str]):
+    def synthetize(self, variables: List[str], uow: AbstractUnitOfWork):
+        self.__uow = uow
+        logger = Log.log()
         if len(variables) == 0:
             variables = self._default_args()
         else:
@@ -487,8 +512,9 @@ class ExecutionSynthetizer:
         valid_synthesis = self.filter_valid_variables(variables)
         for s in valid_synthesis:
             filename = str(s)
-            Log.log().info(f"Realizando síntese de {filename}")
+            if logger is not None:
+                logger.info(f"Realizando síntese de {filename}")
             df = self.__rules[s.variable]()
             if df is not None:
-                with self.__uow:
-                    self.__uow.export.synthetize_df(df, filename)
+                with self.uow:
+                    self.uow.export.synthetize_df(df, filename)

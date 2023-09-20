@@ -127,7 +127,7 @@ class OperationSynthetizer:
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.ESTAGIO,
             ): lambda: self.__processa_bloco_relatorio_operacao(
-                "Geração Térmica"
+                "geracao_termica"
             ),
             (
                 Variable.CUSTO_OPERACAO,

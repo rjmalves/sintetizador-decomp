@@ -35,15 +35,15 @@ class Inviabilidade:
     def factory(
         linha_inviab_unic: pd.Series, hidr: Hidr, relato: Relato
     ) -> "Inviabilidade":
-        if "Iteração" in list(linha_inviab_unic.index):
-            iteracao = int(linha_inviab_unic["Iteração"])
+        if "iteracao" in list(linha_inviab_unic.index):
+            iteracao = int(linha_inviab_unic["iteracao"])
         else:
             iteracao = -1
-        estagio = int(linha_inviab_unic["Estágio"])
-        cenario = int(linha_inviab_unic["Cenário"])
-        mensagem_restricao = str(linha_inviab_unic["Restrição"])
-        violacao = float(linha_inviab_unic["Violação"])
-        unidade = str(linha_inviab_unic["Unidade"])
+        estagio = int(linha_inviab_unic["estagio"])
+        cenario = int(linha_inviab_unic["cenario"])
+        mensagem_restricao = str(linha_inviab_unic["restricao"])
+        violacao = float(linha_inviab_unic["violacao"])
+        unidade = str(linha_inviab_unic["unidade"])
         if "RESTRICAO ELETRICA" in mensagem_restricao:
             return InviabilidadeRE(
                 iteracao,
@@ -189,7 +189,9 @@ class InviabilidadeTI(Inviabilidade):
         hidr: Hidr = args[0]
         nome = self._mensagem_restricao.split("IRRIGACAO, USINA")[1].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         return [codigo, nome]
 
@@ -226,11 +228,15 @@ class InviabilidadeVertimento(Inviabilidade):
     def processa_mensagem(self, *args) -> list:
         hidr: Hidr = args[0]
         patamar = int(
-            self._mensagem_restricao.split("USINA")[0].split("PAT. ").strip()
+            self._mensagem_restricao.split("USINA")[0]
+            .split("PAT. ")[1]
+            .strip()
         )
         nome = self._mensagem_restricao.split("USINA")[1].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         return [codigo, nome, patamar]
 
@@ -441,7 +447,9 @@ class InviabilidadeEV(Inviabilidade):
         hidr: Hidr = args[0]
         nome = self._mensagem_restricao.split("EVAPORACAO, USINA")[1].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         return [codigo, nome]
 
@@ -483,12 +491,15 @@ class InviabilidadeDEFMIN(Inviabilidade):
         pat = int(self._mensagem_restricao.split(p)[1].split(u)[0].strip())
         nome = self._mensagem_restricao.split(u)[1].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         vazmin_hidr = int(
             list(
                 hidr.cadastro.loc[
-                    hidr.cadastro["Nome"] == nome, "Vazão Mínima Histórica"
+                    hidr.cadastro["nome_usina"] == nome,
+                    "vazao_minima_historica",
                 ]
             )[0]
         )
@@ -531,7 +542,9 @@ class InviabilidadeFP(Inviabilidade):
         pat = int(self._mensagem_restricao.split(p)[1])
         nome = self._mensagem_restricao.split(u)[1].split(",")[0].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         return [codigo, nome, pat]
 
@@ -574,10 +587,10 @@ class InviabilidadeDeficit(Inviabilidade):
         # Duração dos patamares
         try:
             merc = relato.dados_mercado
-            cols_pat = [c for c in merc.columns if "Patamar" in c]
+            cols_pat = [c for c in merc.columns if "patamar" in c]
             duracoes = merc.loc[
-                (merc["Estágio"] == self._estagio)
-                & (merc["Subsistema"] == subsis),
+                (merc["estagio"] == self._estagio)
+                & (merc["nome_submercado"] == subsis),
                 cols_pat,
             ].to_numpy()[0]
             fracao = duracoes[pat - 1] / np.sum(duracoes)
@@ -586,9 +599,12 @@ class InviabilidadeDeficit(Inviabilidade):
             violacao_ponderada = 0
         # EARMax
         try:
-            earmax = relato.energia_armazenada_maxima_subsistema
+            earmax = relato.energia_armazenada_maxima_submercado
             earmax_subsis = float(
-                earmax.loc[earmax["Subsistema"] == subsis, "Earmax"]
+                earmax.loc[
+                    earmax["nome_submercado"] == subsis,
+                    "energia_armazenada_maxima",
+                ]
             )
         except ValueError:
             earmax_subsis = np.inf
