@@ -1,6 +1,9 @@
 # sintetizador-decomp
 Programa auxiliar para realizar a síntese de dados do programa DECOMP em arquivos ou banco de dados.
 
+[![tests](https://github.com/rjmalves/sintetizador-decomp/actions/workflows/main.yml/badge.svg)](https://github.com/rjmalves/sintetizador-decomp/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/rjmalves/sintetizador-decomp/graph/badge.svg?token=8KTPAR862Z)](https://codecov.io/gh/rjmalves/sintetizador-decomp)
+
 
 ## Instalação
 
