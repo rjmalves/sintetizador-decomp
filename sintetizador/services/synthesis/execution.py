@@ -1,5 +1,5 @@
 from typing import Callable, Dict, List, Optional
-import pandas as pd
+import pandas as pd  # type: ignore
 import numpy as np
 import socket
 import pathlib
@@ -66,24 +66,22 @@ class ExecutionSynthetizer:
             raise RuntimeError()
         return self.__uow
 
-    def _default_args(self) -> List[ExecutionSynthesis]:
-        return [
-            ExecutionSynthesis.factory(a)
-            for a in self.__class__.DEFAULT_EXECUTION_SYNTHESIS_ARGS
-        ]
+    def _default_args(self) -> List[str]:
+        return self.__class__.DEFAULT_EXECUTION_SYNTHESIS_ARGS
 
     def _process_variable_arguments(
         self,
         args: List[str],
     ) -> List[ExecutionSynthesis]:
         args_data = [ExecutionSynthesis.factory(c) for c in args]
+        valid_args = [arg for arg in args_data if arg is not None]
         logger = Log.log()
         for i, a in enumerate(args_data):
             if a is None:
                 if logger is not None:
                     logger.info(f"Erro no argumento fornecido: {args[i]}")
                 return []
-        return args_data
+        return valid_args
 
     def filter_valid_variables(
         self, variables: List[ExecutionSynthesis]
@@ -111,6 +109,11 @@ class ExecutionSynthetizer:
         with self.uow:
             relato = self.uow.files.get_relato()
         df = relato.convergencia
+        logger = Log.log()
+        if df is None:
+            if logger is not None:
+                logger.error("Bloco de convergência do relato não encontrado")
+            raise RuntimeError()
         df_processed = df.rename(
             columns={
                 "iteracao": "iter",
@@ -152,6 +155,11 @@ class ExecutionSynthetizer:
         with self.uow:
             decomptim = self.uow.files.get_decomptim()
         df = decomptim.tempos_etapas
+        logger = Log.log()
+        if df is None:
+            if logger is not None:
+                logger.error("Dados de tempo do decomp.tim não encontrados")
+            raise RuntimeError()
         df = df.rename(columns={"Etapa": "etapa", "Tempo": "tempo"})
 
         df["tempo"] = df["tempo"].dt.total_seconds()
@@ -168,6 +176,13 @@ class ExecutionSynthetizer:
         with self.uow:
             relato = self.uow.files.get_relato()
         df = relato.relatorio_operacao_custos
+        logger = Log.log()
+        if df is None:
+            if logger is not None:
+                logger.error(
+                    "Bloco de custos da operação do relato não encontrado"
+                )
+            raise RuntimeError()
         estagios = df["estagio"].unique()
         dfs: List[pd.DataFrame] = []
         for e in estagios:

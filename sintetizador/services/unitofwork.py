@@ -55,7 +55,7 @@ class FSUnitOfWork(AbstractUnitOfWork):
                 Settings().synthesis_format, str(synthesis_outdir)
             )
 
-    def __enter__(self) -> "FSUnitOfWork":
+    def __enter__(self) -> "AbstractUnitOfWork":
         chdir(self._path)
         self.__create_repository()
         return super().__enter__()
@@ -65,11 +65,15 @@ class FSUnitOfWork(AbstractUnitOfWork):
         super().__exit__(*args)
 
     @property
-    def files(self) -> RawFilesRepository:
+    def files(self) -> AbstractFilesRepository:
+        if self._files is None:
+            raise RuntimeError()
         return self._files
 
     @property
     def export(self) -> AbstractExportRepository:
+        if self._exporter is None:
+            raise RuntimeError()
         return self._exporter
 
     def rollback(self):

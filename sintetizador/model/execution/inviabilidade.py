@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd  # type: ignore
 from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.relato import Relato
+from sintetizador.utils.log import Log
 
 
 class Inviabilidade:
@@ -587,6 +588,11 @@ class InviabilidadeDeficit(Inviabilidade):
         # Duração dos patamares
         try:
             merc = relato.dados_mercado
+            if merc is None:
+                logger = Log.log()
+                if logger is not None:
+                    logger.error("Erro na obtenção dos dados de mercado")
+                raise RuntimeError()
             cols_pat = [c for c in merc.columns if "patamar" in c]
             duracoes = merc.loc[
                 (merc["estagio"] == self._estagio)
@@ -600,6 +606,11 @@ class InviabilidadeDeficit(Inviabilidade):
         # EARMax
         try:
             earmax = relato.energia_armazenada_maxima_submercado
+            if earmax is None:
+                logger = Log.log()
+                if logger is not None:
+                    logger.error("Erro na obtenção dos dados de EARmax")
+                raise RuntimeError()
             earmax_subsis = float(
                 earmax.loc[
                     earmax["nome_submercado"] == subsis,

@@ -32,7 +32,7 @@ if platform.system() == "Windows":
 class AbstractFilesRepository(ABC):
     @property
     @abstractmethod
-    def caso(self) -> Caso:
+    def extensao(self) -> str:
         raise NotImplementedError
 
     @property
@@ -45,11 +45,11 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_dadgnl(self) -> Optional[DadGNL]:
+    def get_dadgnl(self) -> DadGNL:
         raise NotImplementedError
 
     @abstractmethod
-    def get_inviabunic(self) -> Optional[InviabUnic]:
+    def get_inviabunic(self) -> InviabUnic:
         raise NotImplementedError
 
     @abstractmethod
@@ -61,11 +61,11 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_relato2(self) -> Optional[Relato]:
+    def get_relato2(self) -> Relato:
         raise NotImplementedError
 
     @abstractmethod
-    def get_relgnl(self) -> Optional[RelGNL]:
+    def get_relgnl(self) -> RelGNL:
         raise NotImplementedError
 
     @abstractmethod
@@ -93,41 +93,33 @@ class RawFilesRepository(AbstractFilesRepository):
     def __init__(self, tmppath: str):
         self.__tmppath = tmppath
         try:
-            self.__caso = Caso.read(join(str(self.__tmppath), "caso.dat"))
+            arq_caso = Caso.read(join(str(self.__tmppath), "caso.dat"))
+            extensao = arq_caso.arquivos
+            if extensao is None:
+                raise FileNotFoundError()
+            self.__extensao = extensao
         except FileNotFoundError as e:
             logger = Log.log()
             if logger is not None:
-                logger.error("Não foi encontrado o arquivo caso.dat")
+                logger.error("Erro na leitura do arquivo arquivo caso.dat")
             raise e
         self.__arquivos: Optional[Arquivos] = None
-        self.__dadger: Optional[Dadger] = None
         self.__read_dadger = False
-        self.__dadgnl: Optional[DadGNL] = None
         self.__read_dadgnl = False
-        self.__relato: Optional[Relato] = None
         self.__read_relato = False
-        self.__relato2: Optional[Relato] = None
         self.__read_relato2 = False
-        self.__decomptim: Optional[DecompTim] = None
         self.__read_decomptim = False
-        self.__inviabunic: Optional[InviabUnic] = None
         self.__read_inviabunic = False
-        self.__relgnl: Optional[RelGNL] = None
         self.__read_relgnl = False
-        self.__hidr: Optional[Hidr] = None
         self.__read_hidr = False
-        self.__dec_oper_usih: Optional[DecOperUsih] = None
         self.__read_dec_oper_usih = False
-        self.__dec_oper_usit: Optional[DecOperUsit] = None
         self.__read_dec_oper_usit = False
-        self.__dec_oper_ree: Optional[DecOperRee] = None
         self.__read_dec_oper_ree = False
-        self.__dec_oper_interc: Optional[DecOperInterc] = None
         self.__read_dec_oper_interc = False
 
     @property
-    def caso(self) -> Caso:
-        return self.__caso
+    def extensao(self) -> str:
+        return self.__extensao
 
     @property
     def arquivos(self) -> Arquivos:
@@ -135,12 +127,12 @@ class RawFilesRepository(AbstractFilesRepository):
             logger = Log.log()
             try:
                 self.__arquivos = Arquivos.read(
-                    join(self.__tmppath, self.__caso.arquivos)
+                    join(self.__tmppath, self.extensao)
                 )
             except FileNotFoundError as e:
                 if logger is not None:
                     logger.error(
-                        f"Não foi encontrado o arquivo {self.__caso.arquivos}"
+                        f"Não foi encontrado o arquivo {self.extensao}"
                     )
                 raise e
         return self.__arquivos
@@ -150,49 +142,44 @@ class RawFilesRepository(AbstractFilesRepository):
             self.__read_dadger = True
             logger = Log.log()
             try:
-                caminho = pathlib.Path(self.__tmppath).joinpath(
-                    self.arquivos.dadger
+                arq_dadger = self.arquivos.dadger
+                if arq_dadger is None:
+                    raise FileNotFoundError()
+                caminho = str(
+                    pathlib.Path(self.__tmppath).joinpath(arq_dadger)
                 )
-                script = pathlib.Path(Settings().installdir).joinpath(
-                    Settings().encoding_script
+                script = str(
+                    pathlib.Path(Settings().installdir).joinpath(
+                        Settings().encoding_script
+                    )
                 )
                 asyncio.run(converte_codificacao(caminho, script))
 
                 if logger is not None:
-                    logger.info(f"Lendo arquivo {self.arquivos.dadger}")
-                self.__dadger = Dadger.read(
-                    join(self.__tmppath, self.arquivos.dadger)
-                )
+                    logger.info(f"Lendo arquivo {arq_dadger}")
+
+                self.__dadger = Dadger.read(join(self.__tmppath, arq_dadger))
             except Exception as e:
                 if logger is not None:
-                    logger.error(
-                        f"Erro na leitura do {self.arquivos.dadger}: {e}"
-                    )
+                    logger.error(f"Erro na leitura do dadger: {e}")
                 raise e
         return self.__dadger
 
-    def get_dadgnl(self) -> Optional[DadGNL]:
+    def get_dadgnl(self) -> DadGNL:
         if self.__read_dadgnl is False:
             self.__read_dadgnl = True
             logger = Log.log()
             try:
+                arq_dadgnl = self.arquivos.dadgnl
+                if arq_dadgnl is None:
+                    raise FileNotFoundError()
                 if logger is not None:
-                    logger.info(f"Lendo arquivo {self.arquivos.dadgnl}")
-                self.__dadgnl = DadGNL.read(
-                    join(self.__tmppath, self.arquivos.dadgnl)
-                )
-            except FileNotFoundError:
-                if logger is not None:
-                    logger.info(
-                        f"Não encontrado arquivo {self.arquivos.dadgnl}"
-                    )
-                return None
+                    logger.info(f"Lendo arquivo {arq_dadgnl}")
+                self.__dadgnl = DadGNL.read(join(self.__tmppath, arq_dadgnl))
             except Exception as e:
                 if logger is not None:
-                    logger.info(
-                        f"Erro na leitura do {self.arquivos.dadgnl}: {e}"
-                    )
-                return None
+                    logger.info(f"Erro na leitura do dadgnl: {e}")
+                raise e
         return self.__dadgnl
 
     def get_relato(self) -> Relato:
@@ -200,41 +187,33 @@ class RawFilesRepository(AbstractFilesRepository):
             self.__read_relato = True
             logger = Log.log()
             try:
+                arq_relato = f"relato.{self.extensao}"
                 if logger is not None:
-                    logger.info(f"Lendo arquivo relato.{self.caso.arquivos}")
-                self.__relato = Relato.read(
-                    join(self.__tmppath, f"relato.{self.caso.arquivos}")
-                )
+                    logger.info(f"Lendo arquivo {arq_relato}")
+                self.__relato = Relato.read(join(self.__tmppath, arq_relato))
             except Exception as e:
                 if logger is not None:
-                    logger.error(
-                        f"Erro na leitura do relato.{self.caso.arquivos}: {e}"
-                    )
+                    logger.error(f"Erro na leitura do {arq_relato}: {e}")
                 raise e
         return self.__relato
 
-    def get_relato2(self) -> Optional[Relato]:
+    def get_relato2(self) -> Relato:
         if self.__read_relato2 is False:
             self.__read_relato2 = True
             logger = Log.log()
             try:
+                arq_relato2 = f"relato2.{self.extensao}"
                 if logger is not None:
-                    logger.info(f"Lendo arquivo relato2.{self.caso.arquivos}")
-                self.__relato2 = Relato.read(
-                    join(self.__tmppath, f"relato2.{self.caso.arquivos}")
-                )
+                    logger.info(f"Lendo arquivo {arq_relato2}")
+                self.__relato2 = Relato.read(join(self.__tmppath, arq_relato2))
             except FileNotFoundError:
                 if logger is not None:
-                    logger.info(
-                        f"Não encontrado arquivo relato2.{self.caso.arquivos}"
-                    )
-                return None
+                    logger.info(f"Não encontrado arquivo {arq_relato2}")
+                raise RuntimeError()
             except Exception as e:
                 if logger is not None:
-                    logger.info(
-                        f"Erro na leitura do relato2.{self.caso.arquivos}: {e}"
-                    )
-                return None
+                    logger.info(f"Erro na leitura do {arq_relato2}: {e}")
+                raise e
         return self.__relato2
 
     def get_decomptim(self) -> DecompTim:
@@ -253,54 +232,44 @@ class RawFilesRepository(AbstractFilesRepository):
                 raise e
         return self.__decomptim
 
-    def get_inviabunic(self) -> Optional[InviabUnic]:
+    def get_inviabunic(self) -> InviabUnic:
         if self.__read_inviabunic is False:
             self.__read_inviabunic = True
             logger = Log.log()
             try:
+                arq_inviabunic = f"inviab_unic.{self.extensao}"
                 if logger is not None:
-                    logger.info(
-                        f"Lendo arquivo inviab_unic.{self.caso.arquivos}"
-                    )
+                    logger.info(f"Lendo arquivo {arq_inviabunic}")
                 self.__inviabunic = InviabUnic.read(
-                    join(self.__tmppath, f"inviab_unic.{self.caso.arquivos}")
+                    join(self.__tmppath, arq_inviabunic)
                 )
             except FileNotFoundError:
                 if logger is not None:
-                    logger.info(
-                        f"Não encontrado arquivo inviab_unic.{self.caso.arquivos}"
-                    )
-                return None
+                    logger.info(f"Não encontrado arquivo {arq_inviabunic}")
+                raise RuntimeError()
             except Exception as e:
                 if logger is not None:
-                    logger.info(
-                        f"Erro na leitura do inviab_unic.{self.caso.arquivos}: {e}"
-                    )
-                return None
+                    logger.info(f"Erro na leitura do {arq_inviabunic}: {e}")
+                raise e
         return self.__inviabunic
 
-    def get_relgnl(self) -> Optional[RelGNL]:
+    def get_relgnl(self) -> RelGNL:
         if self.__read_relgnl is False:
             self.__read_relgnl = True
             logger = Log.log()
             try:
+                arq_relgnl = f"relgnl.{self.extensao}"
                 if logger is not None:
-                    logger.info(f"Lendo arquivo relgnl.{self.caso.arquivos}")
-                self.__relgnl = RelGNL.read(
-                    join(self.__tmppath, f"relgnl.{self.caso.arquivos}")
-                )
+                    logger.info(f"Lendo arquivo {arq_relgnl}")
+                self.__relgnl = RelGNL.read(join(self.__tmppath, arq_relgnl))
             except FileNotFoundError:
                 if logger is not None:
-                    logger.info(
-                        f"Não encontrado arquivo relgnl.{self.caso.arquivos}"
-                    )
-                return None
+                    logger.info(f"Não encontrado arquivo {arq_relgnl}")
+                raise RuntimeError()
             except Exception as e:
                 if logger is not None:
-                    logger.info(
-                        f"Erro na leitura do relgnl.{self.caso.arquivos}: {e}"
-                    )
-                return None
+                    logger.info(f"Erro na leitura do {arq_relgnl}: {e}")
+                raise e
         return self.__relgnl
 
     def get_hidr(self) -> Hidr:
@@ -308,16 +277,15 @@ class RawFilesRepository(AbstractFilesRepository):
             self.__read_hidr = True
             logger = Log.log()
             try:
+                arq_hidr = self.arquivos.hidr
+                if arq_hidr is None:
+                    raise FileNotFoundError()
                 if logger is not None:
-                    logger.info(f"Lendo arquivo {self.arquivos.hidr}")
-                self.__hidr = Hidr.read(
-                    join(self.__tmppath, self.arquivos.hidr)
-                )
+                    logger.info(f"Lendo arquivo {arq_hidr}")
+                self.__hidr = Hidr.read(join(self.__tmppath, arq_hidr))
             except Exception as e:
                 if logger is not None:
-                    logger.error(
-                        f"Erro na leitura do {self.arquivos.hidr}: {e}"
-                    )
+                    logger.error(f"Erro na leitura do {arq_hidr}: {e}")
                 raise e
         return self.__hidr
 
@@ -384,7 +352,7 @@ class RawFilesRepository(AbstractFilesRepository):
                 raise e
         return self.__dec_oper_ree
 
-    def get_dec_oper_interc(self) -> DecOperRee:
+    def get_dec_oper_interc(self) -> DecOperInterc:
         if self.__read_dec_oper_interc is False:
             self.__read_dec_oper_interc = True
             logger = Log.log()

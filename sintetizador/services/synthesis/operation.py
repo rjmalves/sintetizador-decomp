@@ -1,8 +1,9 @@
 from typing import Callable, Dict, List, Tuple, Optional
-import pandas as pd
+import pandas as pd  # type: ignore
 import numpy as np
 from traceback import print_exc
 from datetime import datetime, timedelta
+from idecomp.decomp.modelos.dadger import SB, DP
 
 from sintetizador.services.unitofwork import AbstractUnitOfWork
 from sintetizador.utils.log import Log
@@ -836,10 +837,18 @@ class OperationSynthetizer:
         with self.uow:
             r1 = self.uow.files.get_relato()
             r2 = self.uow.files.get_relato2()
+        logger = Log.log()
         df1 = r1.relatorio_operacao_uhe
+        if df1 is None:
+            if logger is not None:
+                logger.error(
+                    "Erro na leitura do relatório de"
+                    + " operação das UHE do relato."
+                )
+            raise RuntimeError()
         df2 = (
             r2.relatorio_operacao_uhe
-            if r2 is not None
+            if r2.relatorio_operacao_uhe is not None
             else pd.DataFrame(columns=df1.columns)
         )
         df1 = df1.loc[~pd.isna(df1["FPCGC"]), :]
@@ -878,6 +887,11 @@ class OperationSynthetizer:
     ) -> pd.DataFrame:
         with self.uow:
             df = self.uow.files.get_dec_oper_usih().tabela
+        if df is None:
+            logger = Log.log()
+            if logger is not None:
+                logger.error("Erro na leitura do dec_oper_usih.csv")
+            raise RuntimeError()
         if patamar is None:
             df = df.loc[pd.isna(df["patamar"])]
         else:
@@ -935,6 +949,11 @@ class OperationSynthetizer:
 
         with self.uow:
             df = self.uow.files.get_dec_oper_interc().tabela
+        if df is None:
+            logger = Log.log()
+            if logger is not None:
+                logger.error("Erro na leitura do dec_oper_interc.csv")
+            raise RuntimeError()
         if patamar is None:
             df_final = __processa_dados_intercambio(df, None)
             df = df.loc[pd.isna(df["patamar"])]
@@ -955,7 +974,14 @@ class OperationSynthetizer:
         with self.uow:
             relato = self.uow.files.get_relato()
             uhes_rees = relato.uhes_rees_submercados
-
+            if uhes_rees is None:
+                logger = Log.log()
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura da relação entre UHEs"
+                        + " e REEs no relato."
+                    )
+                raise RuntimeError()
             df["group"] = df.apply(
                 lambda linha: int(
                     uhes_rees.loc[
@@ -1030,6 +1056,14 @@ class OperationSynthetizer:
             earmax = (
                 self.uow.files.get_relato().energia_armazenada_maxima_submercado
             )
+        if earmax is None:
+            logger = Log.log()
+            if logger is not None:
+                logger.error(
+                    "Erro na leitura do relatório do balanço"
+                    + " energético do relato."
+                )
+            raise RuntimeError()
         cte_earmax_sin = (
             float(earmax["energia_armazenada_maxima"].sum()) / 100.0
         )
@@ -1051,10 +1085,18 @@ class OperationSynthetizer:
         with self.uow:
             r1 = self.uow.files.get_relato()
             r2 = self.uow.files.get_relato2()
+        logger = Log.log()
         df1 = r1.balanco_energetico
+        if df1 is None:
+            if logger is not None:
+                logger.error(
+                    "Erro na leitura do relatório de"
+                    + " balanço energético do relato."
+                )
+            raise RuntimeError()
         df2 = (
             r2.balanco_energetico
-            if r2 is not None
+            if r2.balanco_energetico is not None
             else pd.DataFrame(columns=df1.columns)
         )
         subsis_balanco = df1["nome_submercado"].unique()
@@ -1088,10 +1130,18 @@ class OperationSynthetizer:
         with self.uow:
             r1 = self.uow.files.get_relato()
             r2 = self.uow.files.get_relato2()
+        logger = Log.log()
         df1 = r1.balanco_energetico
+        if df1 is None:
+            if logger is not None:
+                logger.error(
+                    "Erro na leitura do relatório de"
+                    + " balanço energético do relato."
+                )
+            raise RuntimeError()
         df2 = (
             r2.balanco_energetico
-            if r2 is not None
+            if r2.balanco_energetico is not None
             else pd.DataFrame(columns=df1.columns)
         )
         subsis_balanco = df1["nome_submercado"].unique()
@@ -1194,6 +1244,11 @@ class OperationSynthetizer:
     def __processa_relatorio_operacao_ree_csv(self, col: str) -> pd.DataFrame:
         with self.uow:
             df = self.uow.files.get_dec_oper_ree().tabela
+        if df is None:
+            logger = Log.log()
+            if logger is not None:
+                logger.error("Erro na leitura do dec_oper_ree.csv")
+            raise RuntimeError()
         df = df.loc[pd.isna(df["patamar"])]
         rees_relatorio = df["nome_ree"].unique()
         df_final = pd.DataFrame()
@@ -1213,10 +1268,18 @@ class OperationSynthetizer:
         with self.uow:
             r1 = self.uow.files.get_relato()
             r2 = self.uow.files.get_relato2()
+        logger = Log.log()
         df1 = r1.relatorio_operacao_custos
+        if df1 is None:
+            if logger is not None:
+                logger.error(
+                    "Erro na leitura do relatório de"
+                    + " custos de operação do relato."
+                )
+            raise RuntimeError()
         df2 = (
             r2.relatorio_operacao_custos
-            if r2 is not None
+            if r2.relatorio_operacao_custos is not None
             else pd.DataFrame(columns=df1.columns)
         )
         df_s = self.__process_df_relato1_relato2(df1, df2, col)
@@ -1226,10 +1289,18 @@ class OperationSynthetizer:
         with self.uow:
             r1 = self.uow.files.get_relato()
             r2 = self.uow.files.get_relato2()
+        logger = Log.log()
         df1 = r1.relatorio_operacao_custos
+        if df1 is None:
+            if logger is not None:
+                logger.error(
+                    "Erro na leitura do relatório de"
+                    + " custos de operação para obtenção do CMO do relato."
+                )
+            raise RuntimeError()
         df2 = (
             r2.relatorio_operacao_custos
-            if r2 is not None
+            if r2.relatorio_operacao_custos is not None
             else pd.DataFrame(columns=df1.columns)
         )
         df_final = pd.DataFrame()
@@ -1335,24 +1406,22 @@ class OperationSynthetizer:
             df_sum.loc[:, scenario_columns] += dfs[i].loc[:, scenario_columns]
         return df_sum
 
-    def _default_args(self) -> List[OperationSynthesis]:
-        return [
-            OperationSynthesis.factory(a)
-            for a in self.__class__.DEFAULT_OPERATION_SYNTHESIS_ARGS
-        ]
+    def _default_args(self) -> List[str]:
+        return self.__class__.DEFAULT_OPERATION_SYNTHESIS_ARGS
 
     def _process_variable_arguments(
         self,
         args: List[str],
     ) -> List[OperationSynthesis]:
         args_data = [OperationSynthesis.factory(c) for c in args]
+        valid_args = [arg for arg in args_data if arg is not None]
         logger = Log.log()
         for i, a in enumerate(args_data):
             if a is None:
                 if logger is not None:
                     logger.info(f"Erro no argumento fornecido: {args[i]}")
                 return []
-        return args_data
+        return valid_args
 
     def filter_valid_variables(
         self, variables: List[OperationSynthesis]
@@ -1368,13 +1437,17 @@ class OperationSynthetizer:
             if logger is not None:
                 logger.info("Obtendo subsistemas")
             dadger = self.uow.files.get_dadger()
-            sbs = dadger.sb()
-        if sbs is None:
-            return []
-        if isinstance(sbs, list):
-            return [s.nome_submercado for s in sbs]
-        else:
-            return [sbs.nome_submercado]
+        sbs = dadger.sb()
+        if isinstance(sbs, pd.DataFrame) or sbs is None:
+            if logger is not None:
+                logger.error("Erro no processamento dos registros SB")
+            raise RuntimeError()
+        registros_submercados = sbs if isinstance(sbs, list) else [sbs]
+        return [
+            s.nome_submercado
+            for s in registros_submercados
+            if s.nome_submercado is not None
+        ]
 
     @property
     def subsystems(self) -> List[str]:
@@ -1384,19 +1457,42 @@ class OperationSynthetizer:
 
     def __resolve_patamares(self) -> List[str]:
         sample_sb = self.subsystems[0]
+        logger = Log.log()
         with self.uow:
-            logger = Log.log()
             if logger is not None:
                 logger.info("Obtendo patamares")
             dadger = self.uow.files.get_dadger()
-            sb_code = dadger.sb(nome_submercado=sample_sb).codigo_submercado
+            registro_sb = dadger.sb(nome_submercado=sample_sb)
+            if not isinstance(registro_sb, SB):
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: mais de um "
+                        + f"registro SB com o mesmo nome ({sample_sb})"
+                    )
+                raise RuntimeError()
+            sb_code = registro_sb.codigo_submercado
+            if sb_code is None:
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: registro SB "
+                        + f" sem código ({sample_sb})"
+                    )
+                raise RuntimeError()
             dps = dadger.dp(codigo_submercado=sb_code, estagio=1)
-        if dps is None:
-            return []
-        if isinstance(dps, list):
-            return [str(p) for p in range(1, dps[0].numero_patamares + 1)]
-        else:
-            return [str(p) for p in range(1, dps.numero_patamares + 1)]
+            if isinstance(dps, pd.DataFrame) or dps is None:
+                if logger is not None:
+                    logger.error("Erro no processamento dos registros DP")
+                raise RuntimeError()
+            registro_patamares = dps[0] if isinstance(dps, list) else dps
+            numero_patamares = registro_patamares.numero_patamares
+            if numero_patamares is None:
+                if logger is not None:
+                    logger.error(
+                        "Erro no processamento dos registros DP:"
+                        + " sem número de patamares."
+                    )
+                raise RuntimeError()
+        return [str(p) for p in range(1, numero_patamares + 1)]
 
     @property
     def patamares(self) -> List[str]:
@@ -1410,18 +1506,40 @@ class OperationSynthetizer:
             if logger is not None:
                 logger.info("Obtendo duração dos patamares")
             dadger = self.uow.files.get_dadger()
-        duracoes_patamares = {}
+        duracoes_patamares: Dict[str, Dict[int, List[float]]] = {}
         for sb in self.subsystems:
             duracoes_patamares[sb] = {}
-            sb_code = dadger.sb(nome_submercado=sb).codigo_submercado
+            registro_sb = dadger.sb(nome_submercado=sb)
+            if not isinstance(registro_sb, SB):
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: "
+                        + f"registro SB não encontrado ({sb})"
+                    )
+                raise RuntimeError()
+            sb_code = registro_sb.codigo_submercado
+            if sb_code is None:
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: "
+                        + f"registro SB sem código ({sb})"
+                    )
+                raise RuntimeError()
             for e in range(1, len(self.stages_start_date) + 1):
                 dps = dadger.dp(codigo_submercado=sb_code, estagio=e)
-                if dps is None:
-                    duracoes_patamares[sb][e] = []
-                if isinstance(dps, list):
-                    duracoes_patamares[sb][e] = dps[0].duracao
-                else:
-                    duracoes_patamares[sb][e] = dps.duracao
+                if not isinstance(dps, DP):
+                    if logger is not None:
+                        logger.error(
+                            "Erro na leitura do dadger: mais de um registro "
+                            + f"DP por estágio/submercado ({sb}, {e})"
+                        )
+                    raise RuntimeError()
+                duracoes = dps.duracao
+                if duracoes is None:
+                    if logger is not None:
+                        logger.error(f"Registro DP sem durações ({sb}, {e})")
+                    raise RuntimeError()
+                duracoes_patamares[sb][e] = duracoes
         return duracoes_patamares
 
     @property
@@ -1432,24 +1550,47 @@ class OperationSynthetizer:
 
     def __resolve_stages_start_date(self) -> List[datetime]:
         sample_sb = self.subsystems[0]
+        logger = Log.log()
         with self.uow:
-            logger = Log.log()
             if logger is not None:
                 logger.info("Obtendo início dos estágios")
             dadger = self.uow.files.get_dadger()
-            sb_code = dadger.sb(nome_submercado=sample_sb).codigo_submercado
-            dt = dadger.dt
+            registro_sb = dadger.sb(nome_submercado=sample_sb)
+            if not isinstance(registro_sb, SB):
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: "
+                        + f"registro SB não encontrado ({sample_sb})"
+                    )
+                raise RuntimeError()
+            sb_code = registro_sb.codigo_submercado
+            if sb_code is None:
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: "
+                        + f"registro SB sem código ({sample_sb})"
+                    )
+                raise RuntimeError()
+            registro_dt = dadger.dt
+            if registro_dt is None:
+                if logger is not None:
+                    logger.error("Não foi encontrado registro DT")
+                raise RuntimeError()
+            ano, mes, dia = registro_dt.ano, registro_dt.mes, registro_dt.dia
+            if ano is None or mes is None or dia is None:
+                if logger is not None:
+                    logger.error("Erro no processamento do registro DT")
+                raise RuntimeError()
             dps = dadger.dp(codigo_submercado=sb_code)
-        if dt is None:
-            return []
-        if dps is None:
-            hours_stage = []
-        elif isinstance(dps, list):
-            hours_stage = [sum(dp.duracao) for dp in dps]
-        else:
-            hours_stage = [sum(dps.duracao)]
-        first_stage = datetime(year=dt.ano, month=dt.mes, day=dt.dia)
 
+        if dps is None or isinstance(dps, pd.DataFrame):
+            if logger is not None:
+                logger.error("Não foi encontrado registros DP")
+            raise RuntimeError()
+        registros_dp = dps if isinstance(dps, list) else [dps]
+        duracoes = [dp.duracao for dp in registros_dp]
+        hours_stage = [sum(d) for d in duracoes if d is not None]
+        first_stage = datetime(year=ano, month=mes, day=dia)
         return [
             first_stage + timedelta(hours=sum(hours_stage[:i]))
             for i in range(len(hours_stage))
@@ -1468,19 +1609,38 @@ class OperationSynthetizer:
             if logger is not None:
                 logger.info("Obtendo fim dos estágios")
             dadger = self.uow.files.get_dadger()
-            sb_code = dadger.sb(nome_submercado=sample_sb).codigo_submercado
-            dt = dadger.dt
+            registro_sb = dadger.sb(nome_submercado=sample_sb)
+            if not isinstance(registro_sb, SB):
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: "
+                        + f"registro SB não encontrado ({sample_sb})"
+                    )
+                raise RuntimeError()
+            sb_code = registro_sb.codigo_submercado
+            if sb_code is None:
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: "
+                        + f"registro SB sem código ({sample_sb})"
+                    )
+                raise RuntimeError()
+            registro_dt = dadger.dt
+            if registro_dt is None:
+                if logger is not None:
+                    logger.error("Não foi encontrado registro DT")
+                raise RuntimeError()
             dps = dadger.dp(codigo_submercado=sb_code)
-        if dt is None:
-            return []
-        if dps is None:
-            hours_stage = []
-        elif isinstance(dps, list):
-            hours_stage = [sum(dp.duracao) for dp in dps]
-        else:
-            hours_stage = [sum(dps.duracao)]
-        first_stage = datetime(year=dt.ano, month=dt.mes, day=dt.dia)
-
+            ano, mes, dia = registro_dt.ano, registro_dt.mes, registro_dt.dia
+            if ano is None or mes is None or dia is None:
+                if logger is not None:
+                    logger.error("Erro no processamento do registro DT")
+                raise RuntimeError()
+            dps = dadger.dp(codigo_submercado=sb_code)
+        registros_dp = dps if isinstance(dps, list) else [dps]
+        duracoes = [dp.duracao for dp in registros_dp]
+        hours_stage = [sum(d) for d in duracoes if d is not None]
+        first_stage = datetime(year=ano, month=mes, day=dia)
         return [
             first_stage + timedelta(hours=sum(hours_stage[:i]))
             for i in range(1, len(hours_stage) + 1)
@@ -1492,24 +1652,43 @@ class OperationSynthetizer:
             self.__stages_end_dates = self.__resolve_stages_end_date()
         return self.__stages_end_dates
 
-    def __resolve_utes(self) -> Dict[str, Dict[int, List[float]]]:
+    def __resolve_utes(self) -> Dict[str, Dict[int, List[str]]]:
         with self.uow:
             logger = Log.log()
             if logger is not None:
                 logger.info("Obtendo UTEs")
             dadger = self.uow.files.get_dadger()
-        utes = {}
+        utes: Dict[str, Dict[int, List[str]]] = {}
         for sb in self.subsystems:
             utes[sb] = {}
-            sb_code = dadger.sb(nome_submercado=sb).codigo_submercado
+            registro_sb = dadger.sb(nome_submercado=sb)
+            if not isinstance(registro_sb, SB):
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: "
+                        + f"registro SB não encontrado ({sb})"
+                    )
+                raise RuntimeError()
+            sb_code = registro_sb.codigo_submercado
+            if sb_code is None:
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do dadger: "
+                        + f"registro SB sem código ({sb})"
+                    )
+                raise RuntimeError()
             for e in range(1, len(self.stages_start_date) + 1):
-                cts = dadger.ct(subsistema=sb_code, estagio=e)
-                if cts is None:
-                    utes[sb][e] = []
-                elif isinstance(cts, list):
-                    utes[sb][e] = [c.nome_submercado for c in cts]
-                else:
-                    utes[sb][e] = [cts.nome_submercado]
+                cts = dadger.ct(codigo_submercado=sb_code, estagio=e)
+                if cts is None or isinstance(cts, pd.DataFrame):
+                    if logger is not None:
+                        logger.error("Não foi encontrado registros CT")
+                    raise RuntimeError()
+                registros_ct = cts if isinstance(cts, list) else [cts]
+                utes[sb][e] = [
+                    c.nome_usina
+                    for c in registros_ct
+                    if c.nome_usina is not None
+                ]
         return utes
 
     @property
@@ -1604,9 +1783,8 @@ class OperationSynthetizer:
         logger = Log.log()
         if len(variables) == 0:
             variables = self._default_args()
-        else:
-            variables = self._process_variable_arguments(variables)
-        valid_synthesis = self.filter_valid_variables(variables)
+        synthesis_variables = self._process_variable_arguments(variables)
+        valid_synthesis = self.filter_valid_variables(synthesis_variables)
         for s in valid_synthesis:
             filename = str(s)
 
