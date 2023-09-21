@@ -1,8 +1,10 @@
 from abc import abstractmethod
 import numpy as np
 import pandas as pd  # type: ignore
+from typing import Dict, Callable
 from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.relato import Relato
+from sintetizador.utils.log import Log
 
 
 class Inviabilidade:
@@ -23,6 +25,11 @@ class Inviabilidade:
         self._mensagem_restricao = mensagem_restricao
         self._violacao = violacao
         self._unidade = unidade
+        self._codigo = 0
+        self._patamar = 0
+        self._limite = ""
+        self._submercado = ""
+        self._violacao_percentual = 0.0
 
     def __str__(self) -> str:
         return (
@@ -35,54 +42,41 @@ class Inviabilidade:
     def factory(
         linha_inviab_unic: pd.Series, hidr: Hidr, relato: Relato
     ) -> "Inviabilidade":
-        if "Iteração" in list(linha_inviab_unic.index):
-            iteracao = int(linha_inviab_unic["Iteração"])
+        if "iteracao" in list(linha_inviab_unic.index):
+            iteracao = int(linha_inviab_unic["iteracao"])
         else:
             iteracao = -1
-        estagio = int(linha_inviab_unic["Estágio"])
-        cenario = int(linha_inviab_unic["Cenário"])
-        mensagem_restricao = str(linha_inviab_unic["Restrição"])
-        violacao = float(linha_inviab_unic["Violação"])
-        unidade = str(linha_inviab_unic["Unidade"])
-        if "RESTRICAO ELETRICA" in mensagem_restricao:
-            return InviabilidadeRE(
+        estagio = int(linha_inviab_unic["estagio"])
+        cenario = int(linha_inviab_unic["cenario"])
+        mensagem_restricao = str(linha_inviab_unic["restricao"])
+        violacao = float(linha_inviab_unic["violacao"])
+        unidade = str(linha_inviab_unic["unidade"])
+        inviabilidade_map: Dict[str, Callable] = {
+            "RESTRICAO ELETRICA": lambda _: InviabilidadeRE(
                 iteracao,
                 estagio,
                 cenario,
                 mensagem_restricao,
                 violacao,
                 unidade,
-            )
-        elif "RHA" in mensagem_restricao:
-            return InviabilidadeRHA(
+            ),
+            "RHA": lambda _: InviabilidadeRHA(
                 iteracao,
                 estagio,
                 cenario,
                 mensagem_restricao,
                 violacao,
                 unidade,
-            )
-        elif "RHQ" in mensagem_restricao:
-            return InviabilidadeRHQ(
+            ),
+            "RHQ": lambda _: InviabilidadeRHQ(
                 iteracao,
                 estagio,
                 cenario,
                 mensagem_restricao,
                 violacao,
                 unidade,
-            )
-        elif "IRRIGACAO" in mensagem_restricao:
-            return InviabilidadeTI(
-                iteracao,
-                estagio,
-                cenario,
-                mensagem_restricao,
-                violacao,
-                unidade,
-                hidr,
-            )
-        elif "VERT. PERIODO" in mensagem_restricao:
-            return InviabilidadeVertimento(
+            ),
+            "IRRIGACAO": lambda _: InviabilidadeTI(
                 iteracao,
                 estagio,
                 cenario,
@@ -90,27 +84,8 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 hidr,
-            )
-        elif "RHV" in mensagem_restricao:
-            return InviabilidadeRHV(
-                iteracao,
-                estagio,
-                cenario,
-                mensagem_restricao,
-                violacao,
-                unidade,
-            )
-        elif "RHE" in mensagem_restricao:
-            return InviabilidadeRHE(
-                iteracao,
-                estagio,
-                cenario,
-                mensagem_restricao,
-                violacao,
-                unidade,
-            )
-        elif "EVAPORACAO" in mensagem_restricao:
-            return InviabilidadeEV(
+            ),
+            "VERT. PERIODO": lambda _: InviabilidadeVertimento(
                 iteracao,
                 estagio,
                 cenario,
@@ -118,9 +93,24 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 hidr,
-            )
-        elif "DEF. MINIMA" in mensagem_restricao:
-            return InviabilidadeDEFMIN(
+            ),
+            "RHV": lambda _: InviabilidadeRHV(
+                iteracao,
+                estagio,
+                cenario,
+                mensagem_restricao,
+                violacao,
+                unidade,
+            ),
+            "RHE": lambda _: InviabilidadeRHE(
+                iteracao,
+                estagio,
+                cenario,
+                mensagem_restricao,
+                violacao,
+                unidade,
+            ),
+            "EVAPORACAO": lambda _: InviabilidadeEV(
                 iteracao,
                 estagio,
                 cenario,
@@ -128,9 +118,8 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 hidr,
-            )
-        elif "FUNCAO DE PRODUCAO" in mensagem_restricao:
-            return InviabilidadeFP(
+            ),
+            "DEF. MINIMA": lambda _: InviabilidadeDEFMIN(
                 iteracao,
                 estagio,
                 cenario,
@@ -138,9 +127,17 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 hidr,
-            )
-        elif "DEFICIT" in mensagem_restricao:
-            return InviabilidadeDeficit(
+            ),
+            "FUNCAO DE PRODUCAO": lambda _: InviabilidadeFP(
+                iteracao,
+                estagio,
+                cenario,
+                mensagem_restricao,
+                violacao,
+                unidade,
+                hidr,
+            ),
+            "DEFICIT": lambda _: InviabilidadeDeficit(
                 iteracao,
                 estagio,
                 cenario,
@@ -148,9 +145,18 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 relato,
-            )
-        else:
+            ),
+        }
+        tipos_inviabilidades = list(inviabilidade_map.keys())
+        tipo = list(
+            filter(lambda s: s in mensagem_restricao, tipos_inviabilidades)
+        )
+        if len(tipo) == 0:
             raise TypeError(f"Restrição {mensagem_restricao} não suportada")
+        elif len(tipo) > 1:
+            raise TypeError(f"Mensagem {mensagem_restricao} ambígua: {tipo}")
+        else:
+            return inviabilidade_map[tipo[0]](None)
 
     @abstractmethod
     def processa_mensagem(self, *args) -> list:
@@ -189,7 +195,9 @@ class InviabilidadeTI(Inviabilidade):
         hidr: Hidr = args[0]
         nome = self._mensagem_restricao.split("IRRIGACAO, USINA")[1].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         return [codigo, nome]
 
@@ -226,11 +234,15 @@ class InviabilidadeVertimento(Inviabilidade):
     def processa_mensagem(self, *args) -> list:
         hidr: Hidr = args[0]
         patamar = int(
-            self._mensagem_restricao.split("USINA")[0].split("PAT. ").strip()
+            self._mensagem_restricao.split("USINA")[0]
+            .split("PAT. ")[1]
+            .strip()
         )
         nome = self._mensagem_restricao.split("USINA")[1].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         return [codigo, nome, patamar]
 
@@ -441,7 +453,9 @@ class InviabilidadeEV(Inviabilidade):
         hidr: Hidr = args[0]
         nome = self._mensagem_restricao.split("EVAPORACAO, USINA")[1].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         return [codigo, nome]
 
@@ -483,12 +497,15 @@ class InviabilidadeDEFMIN(Inviabilidade):
         pat = int(self._mensagem_restricao.split(p)[1].split(u)[0].strip())
         nome = self._mensagem_restricao.split(u)[1].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         vazmin_hidr = int(
             list(
                 hidr.cadastro.loc[
-                    hidr.cadastro["Nome"] == nome, "Vazão Mínima Histórica"
+                    hidr.cadastro["nome_usina"] == nome,
+                    "vazao_minima_historica",
                 ]
             )[0]
         )
@@ -531,7 +548,9 @@ class InviabilidadeFP(Inviabilidade):
         pat = int(self._mensagem_restricao.split(p)[1])
         nome = self._mensagem_restricao.split(u)[1].split(",")[0].strip()
         codigo = int(
-            list(hidr.cadastro.loc[hidr.cadastro["Nome"] == nome, :].index)[0]
+            list(
+                hidr.cadastro.loc[hidr.cadastro["nome_usina"] == nome, :].index
+            )[0]
         )
         return [codigo, nome, pat]
 
@@ -553,7 +572,7 @@ class InviabilidadeDeficit(Inviabilidade):
             iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
         )
         dados = self.processa_mensagem(relato)
-        self._subsistema = dados[0]
+        self._submercado = dados[0]
         self._patamar = dados[1]
         self._violacao_percentual = dados[2]
 
@@ -574,10 +593,15 @@ class InviabilidadeDeficit(Inviabilidade):
         # Duração dos patamares
         try:
             merc = relato.dados_mercado
-            cols_pat = [c for c in merc.columns if "Patamar" in c]
+            if merc is None:
+                logger = Log.log()
+                if logger is not None:
+                    logger.error("Erro na obtenção dos dados de mercado")
+                raise RuntimeError()
+            cols_pat = [c for c in merc.columns if "patamar" in c]
             duracoes = merc.loc[
-                (merc["Estágio"] == self._estagio)
-                & (merc["Subsistema"] == subsis),
+                (merc["estagio"] == self._estagio)
+                & (merc["nome_submercado"] == subsis),
                 cols_pat,
             ].to_numpy()[0]
             fracao = duracoes[pat - 1] / np.sum(duracoes)
@@ -586,9 +610,17 @@ class InviabilidadeDeficit(Inviabilidade):
             violacao_ponderada = 0
         # EARMax
         try:
-            earmax = relato.energia_armazenada_maxima_subsistema
+            earmax = relato.energia_armazenada_maxima_submercado
+            if earmax is None:
+                logger = Log.log()
+                if logger is not None:
+                    logger.error("Erro na obtenção dos dados de EARmax")
+                raise RuntimeError()
             earmax_subsis = float(
-                earmax.loc[earmax["Subsistema"] == subsis, "Earmax"]
+                earmax.loc[
+                    earmax["nome_submercado"] == subsis,
+                    "energia_armazenada_maxima",
+                ]
             )
         except ValueError:
             earmax_subsis = np.inf

@@ -1,6 +1,5 @@
 import click
 import os
-from sintetizador.model.settings import Settings
 import sintetizador.domain.commands as commands
 import sintetizador.services.handlers as handlers
 from sintetizador.services.unitofwork import factory
@@ -33,7 +32,7 @@ def sistema(variaveis, formato):
 
     uow = factory(
         "FS",
-        Settings().synthesis_dir,
+        os.curdir,
     )
     command = commands.SynthetizeSystem(variaveis)
     handlers.synthetize_system(command, uow)
@@ -58,7 +57,7 @@ def execucao(variaveis, formato):
 
     uow = factory(
         "FS",
-        Settings().synthesis_dir,
+        os.curdir,
     )
     command = commands.SynthetizeExecution(variaveis)
     handlers.synthetize_execution(command, uow)
@@ -83,7 +82,7 @@ def cenarios(variaveis, formato):
 
     uow = factory(
         "FS",
-        Settings().synthesis_dir,
+        os.curdir,
     )
     command = commands.SynthetizeScenario(variaveis)
     handlers.synthetize_scenario(command, uow)
@@ -107,7 +106,7 @@ def operacao(variaveis, formato):
 
     uow = factory(
         "FS",
-        Settings().synthesis_dir,
+        os.curdir,
     )
     command = commands.SynthetizeOperation(variaveis)
     handlers.synthetize_operation(command, uow)
@@ -148,7 +147,7 @@ def completa(sistema, execucao, cenarios, operacao, formato):
 
     uow = factory(
         "FS",
-        Settings().synthesis_dir,
+        os.curdir,
     )
     command = commands.SynthetizeSystem(sistema)
     handlers.synthetize_system(command, uow)

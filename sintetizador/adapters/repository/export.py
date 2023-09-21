@@ -16,7 +16,7 @@ class AbstractExportRepository(ABC):
         pass
 
     @abstractmethod
-    def synthetize_df(self, df: pd.DataFrame, filename: str) -> bool:
+    def synthetize_df(self, df: pd.DataFrame, filename: str):
         pass
 
 
@@ -35,11 +35,10 @@ class ParquetExportRepository(AbstractExportRepository):
         else:
             return None
 
-    def synthetize_df(self, df: pd.DataFrame, filename: str) -> bool:
+    def synthetize_df(self, df: pd.DataFrame, filename: str):
         df.to_parquet(
             self.path.joinpath(filename + ".parquet.gzip"), compression="gzip"
         )
-        pass
 
 
 class CSVExportRepository(AbstractExportRepository):
@@ -57,9 +56,8 @@ class CSVExportRepository(AbstractExportRepository):
         else:
             return None
 
-    def synthetize_df(self, df: pd.DataFrame, filename: str) -> bool:
+    def synthetize_df(self, df: pd.DataFrame, filename: str):
         df.to_csv(self.path.joinpath(filename + ".csv"), index=False)
-        pass
 
 
 def factory(kind: str, *args, **kwargs) -> AbstractExportRepository:
@@ -70,6 +68,8 @@ def factory(kind: str, *args, **kwargs) -> AbstractExportRepository:
     kind = kind.upper()
     if kind not in mapping.keys():
         msg = f"Formato de síntese {kind} não suportado"
-        Log.log().error(msg)
+        logger = Log.log()
+        if logger is not None:
+            logger.error(msg)
         raise ValueError(msg)
-    return mapping.get(kind)(*args, **kwargs)
+    return mapping.get(kind, ParquetExportRepository)(*args, **kwargs)
