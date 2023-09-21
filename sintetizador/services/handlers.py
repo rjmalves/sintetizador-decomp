@@ -12,22 +12,22 @@ from sintetizador.services.synthesis.operation import OperationSynthetizer
 def synthetize_system(
     command: commands.SynthetizeSystem, uow: AbstractUnitOfWork
 ):
-    synthetizer = SystemSynthetizer(uow)
-    synthetizer.synthetize(command.variables)
+    synthetizer = SystemSynthetizer()
+    synthetizer.synthetize(command.variables, uow)
 
 
 def synthetize_execution(
     command: commands.SynthetizeExecution, uow: AbstractUnitOfWork
 ):
-    synthetizer = ExecutionSynthetizer(uow)
-    synthetizer.synthetize(command.variables)
+    synthetizer = ExecutionSynthetizer()
+    synthetizer.synthetize(command.variables, uow)
 
 
 def synthetize_scenario(
     command: commands.SynthetizeScenario, uow: AbstractUnitOfWork
 ):
-    synthetizer = ScenarioSynthetizer(uow)
-    synthetizer.synthetize(command.variables)
+    synthetizer = ScenarioSynthetizer()
+    synthetizer.synthetize(command.variables, uow)
 
 
 def synthetize_operation(

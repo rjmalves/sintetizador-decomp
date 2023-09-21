@@ -24,6 +24,11 @@ class Inviabilidade:
         self._mensagem_restricao = mensagem_restricao
         self._violacao = violacao
         self._unidade = unidade
+        self._codigo = 0
+        self._patamar = 0
+        self._limite = ""
+        self._submercado = ""
+        self._violacao_percentual = 0.0
 
     def __str__(self) -> str:
         return (
@@ -567,7 +572,7 @@ class InviabilidadeDeficit(Inviabilidade):
             iteracao, estagio, cenario, mensagem_restricao, violacao, unidade
         )
         dados = self.processa_mensagem(relato)
-        self._subsistema = dados[0]
+        self._submercado = dados[0]
         self._patamar = dados[1]
         self._violacao_percentual = dados[2]
 

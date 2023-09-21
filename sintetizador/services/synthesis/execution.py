@@ -299,6 +299,10 @@ class ExecutionSynthetizer:
             relato = self.uow.files.get_relato()
         df_iter = inviabunic.inviabilidades_iteracoes
         df_sf = inviabunic.inviabilidades_simulacao_final
+        if df_iter is None or df_sf is None:
+            if logger is not None:
+                logger.warning("Não foram encontradas inviabilidades")
+            return []
         df_sf["iteracao"] = -1
         df_inviabs = pd.concat([df_iter, df_sf], ignore_index=True)
         inviabilidades = []
@@ -493,7 +497,7 @@ class ExecutionSynthetizer:
         violacoes: List[float] = []
         unidades: List[str] = []
         submercados: List[str] = []
-        patamares: List[str] = []
+        patamares: List[int] = []
         for i in inviabs_codigo:
             tipos.append(i.NOME)
             iteracoes.append(i._iteracao)
@@ -501,7 +505,7 @@ class ExecutionSynthetizer:
             estagios.append(i._estagio)
             violacoes.append(i._violacao_percentual)
             unidades.append(i._unidade)
-            submercados.append(i._subsistema)
+            submercados.append(i._submercado)
             patamares.append(i._patamar)
 
         return pd.DataFrame(
@@ -522,9 +526,8 @@ class ExecutionSynthetizer:
         logger = Log.log()
         if len(variables) == 0:
             variables = self._default_args()
-        else:
-            variables = self._process_variable_arguments(variables)
-        valid_synthesis = self.filter_valid_variables(variables)
+        synthesis_variables = self._process_variable_arguments(variables)
+        valid_synthesis = self.filter_valid_variables(synthesis_variables)
         for s in valid_synthesis:
             filename = str(s)
             if logger is not None:
