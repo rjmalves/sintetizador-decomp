@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import numpy as np
 import pandas as pd  # type: ignore
+from typing import Dict, Callable
 from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.relato import Relato
 from sintetizador.utils.log import Log
@@ -50,45 +51,32 @@ class Inviabilidade:
         mensagem_restricao = str(linha_inviab_unic["restricao"])
         violacao = float(linha_inviab_unic["violacao"])
         unidade = str(linha_inviab_unic["unidade"])
-        if "RESTRICAO ELETRICA" in mensagem_restricao:
-            return InviabilidadeRE(
+        inviabilidade_map: Dict[str, Callable] = {
+            "RESTRICAO ELETRICA": lambda _: InviabilidadeRE(
                 iteracao,
                 estagio,
                 cenario,
                 mensagem_restricao,
                 violacao,
                 unidade,
-            )
-        elif "RHA" in mensagem_restricao:
-            return InviabilidadeRHA(
+            ),
+            "RHA": lambda _: InviabilidadeRHA(
                 iteracao,
                 estagio,
                 cenario,
                 mensagem_restricao,
                 violacao,
                 unidade,
-            )
-        elif "RHQ" in mensagem_restricao:
-            return InviabilidadeRHQ(
+            ),
+            "RHQ": lambda _: InviabilidadeRHQ(
                 iteracao,
                 estagio,
                 cenario,
                 mensagem_restricao,
                 violacao,
                 unidade,
-            )
-        elif "IRRIGACAO" in mensagem_restricao:
-            return InviabilidadeTI(
-                iteracao,
-                estagio,
-                cenario,
-                mensagem_restricao,
-                violacao,
-                unidade,
-                hidr,
-            )
-        elif "VERT. PERIODO" in mensagem_restricao:
-            return InviabilidadeVertimento(
+            ),
+            "IRRIGACAO": lambda _: InviabilidadeTI(
                 iteracao,
                 estagio,
                 cenario,
@@ -96,27 +84,8 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 hidr,
-            )
-        elif "RHV" in mensagem_restricao:
-            return InviabilidadeRHV(
-                iteracao,
-                estagio,
-                cenario,
-                mensagem_restricao,
-                violacao,
-                unidade,
-            )
-        elif "RHE" in mensagem_restricao:
-            return InviabilidadeRHE(
-                iteracao,
-                estagio,
-                cenario,
-                mensagem_restricao,
-                violacao,
-                unidade,
-            )
-        elif "EVAPORACAO" in mensagem_restricao:
-            return InviabilidadeEV(
+            ),
+            "VERT. PERIODO": lambda _: InviabilidadeVertimento(
                 iteracao,
                 estagio,
                 cenario,
@@ -124,9 +93,24 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 hidr,
-            )
-        elif "DEF. MINIMA" in mensagem_restricao:
-            return InviabilidadeDEFMIN(
+            ),
+            "RHV": lambda _: InviabilidadeRHV(
+                iteracao,
+                estagio,
+                cenario,
+                mensagem_restricao,
+                violacao,
+                unidade,
+            ),
+            "RHE": lambda _: InviabilidadeRHE(
+                iteracao,
+                estagio,
+                cenario,
+                mensagem_restricao,
+                violacao,
+                unidade,
+            ),
+            "EVAPORACAO": lambda _: InviabilidadeEV(
                 iteracao,
                 estagio,
                 cenario,
@@ -134,9 +118,8 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 hidr,
-            )
-        elif "FUNCAO DE PRODUCAO" in mensagem_restricao:
-            return InviabilidadeFP(
+            ),
+            "DEF. MINIMA": lambda _: InviabilidadeDEFMIN(
                 iteracao,
                 estagio,
                 cenario,
@@ -144,9 +127,17 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 hidr,
-            )
-        elif "DEFICIT" in mensagem_restricao:
-            return InviabilidadeDeficit(
+            ),
+            "FUNCAO DE PRODUCAO": lambda _: InviabilidadeFP(
+                iteracao,
+                estagio,
+                cenario,
+                mensagem_restricao,
+                violacao,
+                unidade,
+                hidr,
+            ),
+            "DEFICIT": lambda _: InviabilidadeDeficit(
                 iteracao,
                 estagio,
                 cenario,
@@ -154,9 +145,18 @@ class Inviabilidade:
                 violacao,
                 unidade,
                 relato,
-            )
-        else:
+            ),
+        }
+        tipos_inviabilidades = list(inviabilidade_map.keys())
+        tipo = list(
+            filter(lambda s: s in mensagem_restricao, tipos_inviabilidades)
+        )
+        if len(tipo) == 0:
             raise TypeError(f"Restrição {mensagem_restricao} não suportada")
+        elif len(tipo) > 1:
+            raise TypeError(f"Mensagem {mensagem_restricao} ambígua: {tipo}")
+        else:
+            return inviabilidade_map[tipo[0]](None)
 
     @abstractmethod
     def processa_mensagem(self, *args) -> list:

@@ -80,6 +80,7 @@ def test_sintese_inviabilidades(test_settings):
         synthetizer.synthetize(["INVIABILIDADES"], uow)
     m.assert_called_once()
     df = m.mock_calls[0].args[0]
+
     assert df.at[0, "tipo"] == "TI"
     assert df.at[0, "iteracao"] == 2
     assert df.at[0, "cenario"] == 161

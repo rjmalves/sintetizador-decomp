@@ -15,8 +15,11 @@ from idecomp.decomp.relgnl import RelGNL
 from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.dec_oper_usih import DecOperUsih
 from idecomp.decomp.dec_oper_usit import DecOperUsit
+from idecomp.decomp.dec_oper_gnl import DecOperGnl
 from idecomp.decomp.dec_oper_ree import DecOperRee
+from idecomp.decomp.dec_oper_sist import DecOperSist
 from idecomp.decomp.dec_oper_interc import DecOperInterc
+from idecomp.decomp.dec_eco_discr import DecEcoDiscr
 
 from sintetizador.model.settings import Settings
 from sintetizador.utils.encoding import converte_codificacao
@@ -81,11 +84,23 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_dec_oper_gnl(self) -> DecOperGnl:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_dec_oper_ree(self) -> DecOperRee:
         raise NotImplementedError
 
     @abstractmethod
+    def get_dec_oper_sist(self) -> DecOperSist:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_dec_oper_interc(self) -> DecOperInterc:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_dec_eco_discr(self) -> DecEcoDiscr:
         raise NotImplementedError
 
 
@@ -114,8 +129,11 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_hidr = False
         self.__read_dec_oper_usih = False
         self.__read_dec_oper_usit = False
+        self.__read_dec_oper_gnl = False
         self.__read_dec_oper_ree = False
+        self.__read_dec_oper_sist = False
         self.__read_dec_oper_interc = False
+        self.__read_dec_eco_discr = False
 
     @property
     def extensao(self) -> str:
@@ -331,6 +349,27 @@ class RawFilesRepository(AbstractFilesRepository):
                 raise e
         return self.__dec_oper_usit
 
+    def get_dec_oper_gnl(self) -> DecOperGnl:
+        if self.__read_dec_oper_gnl is False:
+            self.__read_dec_oper_gnl = True
+            logger = Log.log()
+            try:
+                if logger is not None:
+                    logger.info("Lendo arquivo dec_oper_gnl.csv")
+                self.__dec_oper_gnl = DecOperGnl.read(
+                    join(self.__tmppath, "dec_oper_gnl.csv")
+                )
+                if self.__dec_oper_gnl.versao <= "31.0.2":
+                    DecOperGnl.set_version("31.0.2")
+                    self.__dec_oper_gnl = DecOperGnl.read(
+                        join(self.__tmppath, "dec_oper_gnl.csv")
+                    )
+            except Exception as e:
+                if logger is not None:
+                    logger.error(f"Erro na leitura do dec_oper_gnl.csv: {e}")
+                raise e
+        return self.__dec_oper_usit
+
     def get_dec_oper_ree(self) -> DecOperRee:
         if self.__read_dec_oper_ree is False:
             self.__read_dec_oper_ree = True
@@ -351,6 +390,27 @@ class RawFilesRepository(AbstractFilesRepository):
                     logger.error(f"Erro na leitura do dec_oper_ree.csv: {e}")
                 raise e
         return self.__dec_oper_ree
+
+    def get_dec_oper_sist(self) -> DecOperSist:
+        if self.__read_dec_oper_sist is False:
+            self.__read_dec_oper_sist = True
+            logger = Log.log()
+            try:
+                if logger is not None:
+                    logger.info("Lendo arquivo dec_oper_sist.csv")
+                self.__dec_oper_sist = DecOperSist.read(
+                    join(self.__tmppath, "dec_oper_sist.csv")
+                )
+                if self.__dec_oper_sist.versao <= "31.0.2":
+                    DecOperSist.set_version("31.0.2")
+                    self.__dec_oper_sist = DecOperSist.read(
+                        join(self.__tmppath, "dec_oper_sist.csv")
+                    )
+            except Exception as e:
+                if logger is not None:
+                    logger.error(f"Erro na leitura do dec_oper_sist.csv: {e}")
+                raise e
+        return self.__dec_oper_sist
 
     def get_dec_oper_interc(self) -> DecOperInterc:
         if self.__read_dec_oper_interc is False:
@@ -374,6 +434,27 @@ class RawFilesRepository(AbstractFilesRepository):
                     )
                 raise e
         return self.__dec_oper_interc
+
+    def get_dec_eco_discr(self) -> DecEcoDiscr:
+        if self.__read_dec_eco_discr is False:
+            self.__read_dec_eco_discr = True
+            logger = Log.log()
+            try:
+                if logger is not None:
+                    logger.info("Lendo arquivo dec_eco_discr.csv")
+                self.__dec_eco_discr = DecEcoDiscr.read(
+                    join(self.__tmppath, "dec_eco_discr.csv")
+                )
+                if self.__dec_eco_discr.versao <= "31.0.2":
+                    DecEcoDiscr.set_version("31.0.2")
+                    self.__dec_eco_discr = DecEcoDiscr.read(
+                        join(self.__tmppath, "dec_eco_discr.csv")
+                    )
+            except Exception as e:
+                if logger is not None:
+                    logger.error(f"Erro na leitura do dec_eco_discr.csv: {e}")
+                raise e
+        return self.__dec_eco_discr
 
 
 def factory(kind: str, *args, **kwargs) -> AbstractFilesRepository:

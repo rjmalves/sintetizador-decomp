@@ -1,6 +1,6 @@
 click
 pyarrow
-idecomp
+idecomp>=0.0.60
 pylama
 mypy
 pytest
