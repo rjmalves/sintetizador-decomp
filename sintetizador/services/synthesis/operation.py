@@ -707,6 +707,8 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_sist()
             df = arq_oper.tabela
+            if arq_oper.versao <= "31.0.2":
+                df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -737,6 +739,8 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_ree()
             df = arq_oper.tabela
+            if arq_oper.versao <= "31.0.2":
+                df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -755,6 +759,8 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_usih()
             df = arq_oper.tabela
+            if arq_oper.versao <= "31.0.2":
+                df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -775,6 +781,8 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_usit()
             df = arq_oper.tabela
+            if arq_oper.versao <= "31.0.2":
+                df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -823,6 +831,8 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_gnl()
             df = arq_oper.tabela
+            if arq_oper.versao <= "31.0.2":
+                df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -841,6 +851,8 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_interc()
             df = arq_oper.tabela
+            if arq_oper.versao <= "31.0.2":
+                df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -855,6 +867,15 @@ class OperationSynthetizer:
             )
             self.__dec_oper_interc = df
         return self.__dec_oper_interc
+
+    @staticmethod
+    def __stub_cenarios_nos_v31_0_2(df: pd.DataFrame) -> pd.DataFrame:
+        estagios = df["estagio"].unique().tolist()
+        # Para todos os estágios antes do último, fixa cenário em 1
+        df.loc[df["estagio"].isin(estagios[:-1]), "cenario"] = 1
+        # Subtrai dos cenários o valor de n_semanas
+        df.loc[df["estagio"] == estagios[-1], "cenario"] -= len(estagios) - 1
+        return df.copy()
 
     @property
     def data_inicio_estudo(self) -> datetime:
