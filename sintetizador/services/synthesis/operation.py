@@ -870,11 +870,11 @@ class OperationSynthetizer:
 
     @staticmethod
     def __stub_cenarios_nos_v31_0_2(df: pd.DataFrame) -> pd.DataFrame:
-        estagios = df["estagio"].unique().tolist()
+        periodos = df["periodo"].unique().tolist()
         # Para todos os estágios antes do último, fixa cenário em 1
-        df.loc[df["estagio"].isin(estagios[:-1]), "cenario"] = 1
+        df.loc[df["periodo"].isin(periodos[:-1]), "cenario"] = 1
         # Subtrai dos cenários o valor de n_semanas
-        df.loc[df["estagio"] == estagios[-1], "cenario"] -= len(estagios) - 1
+        df.loc[df["periodo"] == periodos[-1], "cenario"] -= len(periodos) - 1
         return df.copy()
 
     @property
