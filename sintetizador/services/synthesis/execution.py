@@ -1,4 +1,5 @@
 from typing import Callable, Dict, List, Optional
+from traceback import print_exc
 import pandas as pd  # type: ignore
 import numpy as np
 import socket
@@ -532,7 +533,11 @@ class ExecutionSynthetizer:
             filename = str(s)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
-            df = self.__rules[s.variable]()
+            try:
+                df = self.__rules[s.variable]()
+            except Exception:
+                print_exc()
+                continue
             if df is not None:
                 with self.uow:
                     self.uow.export.synthetize_df(df, filename)

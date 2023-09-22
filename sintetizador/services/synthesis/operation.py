@@ -707,8 +707,10 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_sist()
             df = arq_oper.tabela
-            if arq_oper.versao <= "31.0.2":
-                df = self.__stub_cenarios_nos_v31_0_2(df)
+            versao = arq_oper.versao
+            if versao is not None:
+                if versao <= "31.0.2":
+                    df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -739,8 +741,10 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_ree()
             df = arq_oper.tabela
-            if arq_oper.versao <= "31.0.2":
-                df = self.__stub_cenarios_nos_v31_0_2(df)
+            versao = arq_oper.versao
+            if versao is not None:
+                if versao <= "31.0.2":
+                    df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -759,8 +763,10 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_usih()
             df = arq_oper.tabela
-            if arq_oper.versao <= "31.0.2":
-                df = self.__stub_cenarios_nos_v31_0_2(df)
+            versao = arq_oper.versao
+            if versao is not None:
+                if versao <= "31.0.2":
+                    df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -781,8 +787,10 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_usit()
             df = arq_oper.tabela
-            if arq_oper.versao <= "31.0.2":
-                df = self.__stub_cenarios_nos_v31_0_2(df)
+            versao = arq_oper.versao
+            if versao is not None:
+                if versao <= "31.0.2":
+                    df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -831,8 +839,10 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_gnl()
             df = arq_oper.tabela
-            if arq_oper.versao <= "31.0.2":
-                df = self.__stub_cenarios_nos_v31_0_2(df)
+            versao = arq_oper.versao
+            if versao is not None:
+                if versao <= "31.0.2":
+                    df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -851,8 +861,10 @@ class OperationSynthetizer:
             with self.uow:
                 arq_oper = self.uow.files.get_dec_oper_interc()
             df = arq_oper.tabela
-            if arq_oper.versao <= "31.0.2":
-                df = self.__stub_cenarios_nos_v31_0_2(df)
+            versao = arq_oper.versao
+            if versao is not None:
+                if versao <= "31.0.2":
+                    df = self.__stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
