@@ -30,6 +30,7 @@ class OperationSynthetizer:
 
     DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
         "CMO_SBM_EST",
+        "CMO_SBM_PAT",
         "CTER_SIN_EST",
         "COP_SIN_EST",
         "CFU_SIN_EST",
@@ -320,6 +321,13 @@ class OperationSynthetizer:
                     "geracao_eolica_MW",
                     self.patamares,
                 ),
+            ),
+            (
+                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.processa_dec_oper_ree(
+                "ena_MWmes",
             ),
             (
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,

@@ -51,6 +51,8 @@ Informações da execução do modelo, como ambiente escolhido, recursos computa
      - `TEMPO`
    * - Convergência
      - `CONVERGENCIA`
+   * - Inviabilidades do caso
+     - `INVIABILIDADES`
    * - Recursos Computacionais do Job
      - `RECURSOS_JOB`
    * - Recursos Computacionais do Cluster
@@ -62,7 +64,16 @@ e sim por outras ferramentas adicionais. Portanto, não devem ser utilizados em 
 Cenários
 *********
 
-Informações sobre os cenários visitados (gerados, fornecidos, processados, etc.) durante o processo de otimização. (TODO)
+Informações sobre os cenários visitados (gerados, fornecidos, processados, etc.) durante o processo de otimização.
+
+.. list-table:: Dados de Cenários
+   :widths: 50 10
+   :header-rows: 1
+
+   * - VARIÁVEL
+     - MNEMÔNICO
+   * - Probabilidades dos cenários
+     - `PROBABILIDADES`
 
 Política
 *********
@@ -85,81 +96,79 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
 
    * - VARIÁVEL
      - MNEMÔNICO
-   * - Custo de Operação (Presente)
+   * - Custo de Operação (Presente - 10^3 R$)
      - `COP`
-   * - Custo Futuro
+   * - Custo Futuro (10^3 R$)
      - `CFU`
-   * - Custo Marginal de Operação
+   * - Custo Marginal de Operação (R$/MWh)
      - `CMO`
-   * - Valor da Água
+   * - Valor da Água (R$/hm3)
      - `VAGUA`
-   * - Custo da Geração Térmica
+   * - Custo da Geração Térmica (10^3 R$)
      - `CTER`
-   * - Energia Natural Afluente Absoluta
+   * - Energia Natural Afluente Absoluta (MWmes)
      - `ENAA`
-   * - Energia Natural Afluente (% MLT)
-     - `ENAM`
-   * - Energia Armazenada Inicial
+   * - Energia Armazenada Inicial (MWmes)
      - `EARMI`
    * - Energia Armazenada Inicial (%)
      - `EARPI`
-   * - Energia Armazenada Final
+   * - Energia Armazenada Final (MWmes)
      - `EARMF`
    * - Energia Armazenada Final (%)
      - `EARPF`
-   * - Geração Hidráulica
+   * - Geração Hidráulica (MWmed)
      - `GHID`
-   * - Geração Térmica
+   * - Geração Térmica (MWmed)
      - `GTER`
-   * - Geração Eólica
+   * - Geração Eólica (MWmed)
      - `GEOL`
-   * - Energia Vertida
+   * - Energia Vertida (MWmed)
      - `EVER`
-   * - Energia Vertida Turbinável
+   * - Energia Vertida Turbinável (MWmed)
      - `EVERT`
-   * - Energia Vertida Não-Turbinável
+   * - Energia Vertida Não-Turbinável (MWmed)
      - `EVERNT`
-   * - Energia Vertida em Reservatórios
+   * - Energia Vertida em Reservatórios (MWmed)
      - `EVERR`
-   * - Energia Vertida Turbinável em Reservatórios
+   * - Energia Vertida Turbinável em Reservatórios (MWmed)
      - `EVERRT`
-   * - Energia Vertida Não-Turbinável em Reservatórios
+   * - Energia Vertida Não-Turbinável em Reservatórios (MWmed)
      - `EVERRNT`
-   * - Energia Vertida em Fio d'Água
+   * - Energia Vertida em Fio d'Água (MWmed)
      - `EVERF`
-   * - Energia Vertida Turbinável em Fio d'Água
+   * - Energia Vertida Turbinável em Fio d'Água (MWmed)
      - `EVERFT`
-   * - Energia Vertida Não-Turbinável em Fio d'Água
+   * - Energia Vertida Não-Turbinável em Fio d'Água (MWmed)
      - `EVERFNT`
-   * - Vazão Afluente
+   * - Vazão Afluente (m3/s)
      - `QAFL`
-   * - Vazão Defluente
+   * - Vazão Defluente (m3/s)
      - `QDEF`
-   * - Vazão Incremental
+   * - Vazão Incremental (m3/s)
      - `QINC`
-   * - Vazão Turbinada
+   * - Vazão Turbinada (m3/s)
      - `QTUR`
-   * - Vazão Vertida
+   * - Vazão Vertida (m3/s)
      - `QVER`
-   * - Velocidade do Vento
+   * - Velocidade do Vento (m/s)
      - `VENTO`
-   * - Mercado de Energia
+   * - Mercado de Energia (MWmed)
      - `MER`
-   * - Déficit
+   * - Déficit (MWmed)
      - `DEF`
-   * - Intercâmbio
+   * - Intercâmbio (MWmed)
      - `INT`
-   * - Volume Armazenado Inicial
+   * - Volume Armazenado Inicial (hm3)
      - `VARMI`
    * - Volume Armazenado Inicial (%)
      - `VARPI`
-   * - Volume Armazenado Final
+   * - Volume Armazenado Final (hm3)
      - `VARMF`
    * - Volume Armazenado Final (%)
      - `VARPF`
-   * - Volume Vertido
+   * - Volume Vertido (hm3)
      - `VVER`
-   * - Volume Turbinado
+   * - Volume Turbinado (hm3)
      - `VTUR`
 
 Agregação Espacial
@@ -234,7 +243,7 @@ que estão disponíveis no modelo.
      - `EST`
    * - `CMO`
      - `SBM`
-     - `EST``
+     - `EST`, `PAT`
    * - `VAGUA`
      - 
      - 
@@ -244,20 +253,17 @@ que estão disponíveis no modelo.
    * - `ENAA`
      - `SIN`, `SBM`
      - `EST`
-   * - `ENAM`
-     - 
-     - 
    * - `EARMI`
-     - `SIN`, `SBM`
+     - `SIN`, `SBM`, `REE`
      - `EST`
    * - `EARPI`
-     - `SIN`, `SBM`
+     - `SIN`, `SBM`, `REE`
      - `EST`
    * - `EARMF`
-     - `SIN`, `SBM`
+     - `SIN`, `SBM`, `REE`
      - `EST`
    * - `EARPF`
-     - `SIN`, `SBM`
+     - `SIN`, `SBM`, `REE`
      - `EST`
    * - `EVER`
      - 
