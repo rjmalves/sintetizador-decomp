@@ -234,34 +234,26 @@ class ExecutionSynthetizer:
         # monitor-job.parquet.gzip
         with self.uow:
             file = "monitor-job.parquet.gzip"
+            logger = Log.log()
             if pathlib.Path(file).exists():
                 try:
-                    df = pd.read_parquet("monitor-job.parquet.gzip")
+                    df = pd.read_parquet(file)
                 except Exception as e:
-                    logger = Log.log()
                     if logger is not None:
                         logger.info(
-                            f"Erro ao acessar arquivo monitor-job.parquet.gzip: {str(e)}"
+                            f"Erro ao acessar arquivo {file}: {str(e)}"
                         )
                     return None
                 return df
+            else:
+                if logger is not None:
+                    logger.info(f"Arquivo {file} não encontrado")
+
             return None
 
     def _resolve_cluster_resources(self) -> pd.DataFrame:
         # Le o do job para saber tempo inicial e final
-        df_job = None
-        with self.uow:
-            file = "monitor-job.parquet.gzip"
-            if pathlib.Path(file).exists():
-                try:
-                    df_job = pd.read_parquet("monitor-job.parquet.gzip")
-                except Exception as e:
-                    logger = Log.log()
-                    if logger is not None:
-                        logger.info(
-                            f"Erro ao acessar arquivo monitor-job.parquet.gzip: {str(e)}"
-                        )
-                    return None
+        df_job = self._resolve_job_resources()
         if df_job is None:
             return None
         jobTimeInstants = pd.to_datetime(
@@ -271,11 +263,11 @@ class ExecutionSynthetizer:
         # monitor-(hostname).parquet.gzip
         with set_directory(str(pathlib.Path.home())):
             file = f"monitor-{socket.gethostname()}.parquet.gzip"
+            logger = Log.log()
             if pathlib.Path(file).exists():
                 try:
                     df = pd.read_parquet(file)
                 except Exception as e:
-                    logger = Log.log()
                     if logger is not None:
                         logger.info(
                             f"Erro ao acessar arquivo {file}: {str(e)}"
@@ -288,6 +280,9 @@ class ExecutionSynthetizer:
                     (df["timeInstant"] >= jobTimeInstants[0])
                     & (df["timeInstant"] <= jobTimeInstants[-1])
                 ]
+            else:
+                if logger is not None:
+                    logger.info(f"Arquivo {file} não encontrado")
         return None
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
