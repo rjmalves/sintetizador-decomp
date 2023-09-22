@@ -247,7 +247,7 @@ class ExecutionSynthetizer:
                 return df
             else:
                 if logger is not None:
-                    logger.info(f"Arquivo {file} não encontrado")
+                    logger.warning(f"Arquivo {file} não encontrado")
 
             return None
 
@@ -282,7 +282,7 @@ class ExecutionSynthetizer:
                 ]
             else:
                 if logger is not None:
-                    logger.info(f"Arquivo {file} não encontrado")
+                    logger.warning(f"Arquivo {file} não encontrado")
         return None
 
     def __resolve_inviabilidades(self) -> List[Inviabilidade]:
