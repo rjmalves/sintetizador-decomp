@@ -110,7 +110,6 @@ class OperationSynthetizer:
 
     def __init__(self) -> None:
         self.__uow: Optional[AbstractUnitOfWork] = None
-        self.__subsystems: Optional[List[str]] = None
         self.__patamares: Optional[List[int]] = None
         self.__stages_durations: Optional[pd.DataFrame] = None
         self.__earmax_sin: Optional[float] = None
@@ -132,6 +131,11 @@ class OperationSynthetizer:
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.ESTAGIO,
             ): lambda: self.processa_dec_oper_sist("cmo"),
+            (
+                Variable.CUSTO_MARGINAL_OPERACAO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda: self.processa_dec_oper_sist("cmo", self.patamares),
             (
                 Variable.CUSTO_GERACAO_TERMICA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
