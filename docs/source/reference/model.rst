@@ -96,16 +96,22 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
 
    * - VARIÁVEL
      - MNEMÔNICO
+   * - Corte de Geração Eólica (MWMes)
+     - `VEOL`
+   * - Cota de Jusante (m)
+     - `HJUS`
+   * - Cota de Montante (m)
+     - `HMON`
    * - Custo de Operação (Presente - 10^3 R$)
      - `COP`
    * - Custo Futuro (10^3 R$)
      - `CFU`
    * - Custo Marginal de Operação (R$/MWh)
      - `CMO`
-   * - Valor da Água (R$/hm3)
-     - `VAGUA`
    * - Custo da Geração Térmica (10^3 R$)
      - `CTER`
+   * - Déficit (MWmed)
+     - `DEF`
    * - Energia Natural Afluente Absoluta (MWmes)
      - `ENAA`
    * - Energia Armazenada Inicial (MWmes)
@@ -116,12 +122,6 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
      - `EARMF`
    * - Energia Armazenada Final (%)
      - `EARPF`
-   * - Geração Hidráulica (MWmed)
-     - `GHID`
-   * - Geração Térmica (MWmed)
-     - `GTER`
-   * - Geração Eólica (MWmed)
-     - `GEOL`
    * - Energia Vertida (MWmed)
      - `EVER`
    * - Energia Vertida Turbinável (MWmed)
@@ -140,24 +140,38 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
      - `EVERFT`
    * - Energia Vertida Não-Turbinável em Fio d'Água (MWmed)
      - `EVERFNT`
+   * - Geração Hidráulica (MWmed)
+     - `GHID`
+   * - Geração Térmica (MWmed)
+     - `GTER`
+   * - Geração Eólica (MWmed)
+     - `GEOL`
+   * - Intercâmbio (MWmed)
+     - `INT`
+   * - Mercado de Energia (MWmed)
+     - `MER`
+   * - Mercado de Energia Líquido (MWmes)
+     - `MERL`
+   * - Queda Líquida (m)
+     - `HLIQ`
+   * - Valor da Água (R$/hm3)
+     - `VAGUA`
    * - Vazão Afluente (m3/s)
      - `QAFL`
    * - Vazão Defluente (m3/s)
      - `QDEF`
+   * - Vazão Desviada (m3/s)
+     - `QDES`
    * - Vazão Incremental (m3/s)
      - `QINC`
+   * - Vazão Retirada (m3/s)
+     - `QRET`
    * - Vazão Turbinada (m3/s)
      - `QTUR`
    * - Vazão Vertida (m3/s)
      - `QVER`
    * - Velocidade do Vento (m/s)
      - `VENTO`
-   * - Mercado de Energia (MWmed)
-     - `MER`
-   * - Déficit (MWmed)
-     - `DEF`
-   * - Intercâmbio (MWmed)
-     - `INT`
    * - Volume Armazenado Inicial (hm3)
      - `VARMI`
    * - Volume Armazenado Inicial (%)
@@ -166,10 +180,20 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
      - `VARMF`
    * - Volume Armazenado Final (%)
      - `VARPF`
-   * - Volume Vertido (hm3)
-     - `VVER`
+   * - Volume Afluente (hm3)
+     - `VAFL`
+   * - Volume Defluente (hm3)
+     - `VDEF`
+   * - Volume Desviado (hm3)
+     - `VDES`
+   * - Volume Incremental (hm3)
+     - `VINC`
+   * - Volume Retirado (hm3)
+     - `VRET`
    * - Volume Turbinado (hm3)
      - `VTUR`
+   * - Volume Vertido (hm3)
+     - `VVER`
 
 Agregação Espacial
 ===================
@@ -235,6 +259,15 @@ que estão disponíveis no modelo.
    * - VARIÁVEL
      - AGREGAÇÃO ESPACIAL
      - AGREGAÇÃO TEMPORAL
+   * - `VEOL`
+     - 
+     - 
+   * - `HJUS`
+     - 
+     - 
+   * - `HMON`
+     - 
+     - 
    * - `COP`
      - `SIN`
      - `EST`
@@ -244,14 +277,14 @@ que estão disponíveis no modelo.
    * - `CMO`
      - `SBM`
      - `EST`, `PAT`
-   * - `VAGUA`
-     - 
-     - 
    * - `CTER`
      - `SIN`, `UTE`
      - `EST`
-   * - `ENAA`
+   * - `DEF`
      - `SIN`, `SBM`
+     - `EST`, `PAT`
+   * - `ENAA`
+     - `SIN`, `SBM`, `REE`
      - `EST`
    * - `EARMI`
      - `SIN`, `SBM`, `REE`
@@ -266,21 +299,30 @@ que estão disponíveis no modelo.
      - `SIN`, `SBM`, `REE`
      - `EST`
    * - `EVER`
-     - 
-     - 
-   * - `EVERF`
-     - 
-     - 
-   * - `EVERR`
-     - 
-     - 
+     - `SIN`, `SBM`, `REE`, `UHE`
+     - `EST`
    * - `EVERT`
      - `SIN`, `SBM`, `REE`, `UHE`
      - `EST`
    * - `EVERNT`
      - `SIN`, `SBM`, `REE`, `UHE`
      - `EST`
+   * - `EVERF`
+     - 
+     - 
+   * - `EVERR`
+     - 
+     - 
    * - `EVERFT`
+     - 
+     - 
+   * - `EVERFNT`
+     - 
+     - 
+   * - `EVERRT`
+     - 
+     - 
+   * - `EVERRNT`
      - 
      - 
    * - `GHID`
@@ -292,13 +334,34 @@ que estão disponíveis no modelo.
    * - `GEOL`
      - `SIN`, `SBM`
      - `EST`, `PAT`
+   * - `INT`
+     - `SBP`
+     - `EST`, `PAT`
+   * - `MER`
+     - `SIN`, `SBM`
+     - `EST`, `PAT`
+   * - `MERL`
+     - `SIN`, `SBM`
+     - `EST`, `PAT`
+   * - `HLIQ`
+     -
+     -
+   * - `VAGUA`
+     - 
+     - 
    * - `QAFL`
      - `UHE`
      - `EST`
+   * - `QDES`
+     -
+     -
    * - `QDEF`
      - `UHE`
      - `EST`
    * - `QINC`
+     - 
+     - 
+   * - `QRET`
      - 
      - 
    * - `QTUR`
@@ -310,9 +373,6 @@ que estão disponíveis no modelo.
    * - `VENTO`
      - 
      -
-   * - `INT`
-     - 
-     - 
    * - `VARMI`
      - `SIN`, `SBM`, `REE`, `UHE`
      - `EST`
@@ -325,17 +385,26 @@ que estão disponíveis no modelo.
    * - `VARPF`
      - `UHE`
      - `EST`
+   * - `VAFL`
+     - 
+     - 
+   * - `VDEF`
+     - 
+     - 
+   * - `VDES`
+     - 
+     - 
+   * - `VINC`
+     - 
+     - 
+   * - `VRET`
+     - 
+     - 
    * - `VVER`
      - 
      - 
    * - `VTUR`
      - 
      - 
-   * - `MER`
-     - `SIN`, `SBM`
-     - `EST`, `PAT`
-   * - `DEF`
-     - `SIN`, `SBM`
-     - `EST`, `PAT`
 
 São exemplos de elementos de dados válidos para as sínteses da operação `EARPF_SBM_EST`, `VARPF_UHE_EST`, `GHID_UHE_PAT`, `CMO_SBM_EST`, dentre outras.
