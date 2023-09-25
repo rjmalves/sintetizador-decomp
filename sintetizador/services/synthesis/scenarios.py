@@ -51,24 +51,16 @@ class ScenarioSynthetizer:
 
     def _resolve_probabilities(self) -> pd.DataFrame:
         with self.uow:
-            r = self.uow.files.get_relato()
-            r2 = self.uow.files.get_relato2()
+            vaz = self.uow.files.get_vazoes()
 
-        df = (
-            pd.concat(
-                [r.balanco_energetico, r2.balanco_energetico],
-                ignore_index=True,
+        df = vaz.probabilidades
+        if df is None:
+            logger = Log.log()
+            if logger is not None:
+                logger.warning("Erro na leitura do arquivo de vazões")
+            return pd.DataFrame(
+                columns=["estagio", "cenario", "probabilidade"]
             )
-            if r2 is not None
-            else r.balanco_energetico
-        )
-        df = df.rename(
-            columns={
-                "Estágio": "estagio",
-                "Cenário": "cenario",
-                "Probabilidade": "probabilidade",
-            }
-        )
         df_subset = df[
             ["estagio", "cenario", "probabilidade"]
         ].drop_duplicates(ignore_index=True)

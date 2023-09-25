@@ -13,6 +13,7 @@ from idecomp.decomp.relato import Relato
 from idecomp.decomp.decomptim import DecompTim
 from idecomp.decomp.relgnl import RelGNL
 from idecomp.decomp.hidr import Hidr
+from idecomp.decomp.vazoes import Vazoes
 from idecomp.decomp.dec_oper_usih import DecOperUsih
 from idecomp.decomp.dec_oper_usit import DecOperUsit
 from idecomp.decomp.dec_oper_gnl import DecOperGnl
@@ -76,6 +77,10 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_vazoes(self) -> Vazoes:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_dec_oper_usih(self) -> DecOperUsih:
         raise NotImplementedError
 
@@ -127,6 +132,7 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_inviabunic = False
         self.__read_relgnl = False
         self.__read_hidr = False
+        self.__read_vazoes = False
         self.__read_dec_oper_usih = False
         self.__read_dec_oper_usit = False
         self.__read_dec_oper_gnl = False
@@ -306,6 +312,23 @@ class RawFilesRepository(AbstractFilesRepository):
                     logger.error(f"Erro na leitura do {arq_hidr}: {e}")
                 raise e
         return self.__hidr
+
+    def get_vazoes(self) -> Vazoes:
+        if self.__read_vazoes is False:
+            self.__read_vazoes = True
+            logger = Log.log()
+            try:
+                arq_vazoes = self.arquivos.vazoes
+                if arq_vazoes is None:
+                    raise FileNotFoundError()
+                if logger is not None:
+                    logger.info(f"Lendo arquivo {arq_vazoes}")
+                self.__vazoes = Vazoes.read(join(self.__tmppath, arq_vazoes))
+            except Exception as e:
+                if logger is not None:
+                    logger.error(f"Erro na leitura do {arq_vazoes}: {e}")
+                raise e
+        return self.__vazoes
 
     def get_dec_oper_usih(self) -> DecOperUsih:
         if self.__read_dec_oper_usih is False:
