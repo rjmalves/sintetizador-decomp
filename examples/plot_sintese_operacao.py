@@ -11,27 +11,20 @@ Síntese da Operação
 # Além dos arquivos dos quais são extraídas as variáveis em si, são lidos também alguns arquivos de entrada
 # do modelo, como o `dadger.rvX` e `hidr.dat``. Neste contexto, basta fazer::
 #
-#    $ sintetizador-newave operacao CMO_SBM_EST EARMF_SIN_EST
+#    $ sintetizador-decomp operacao CMO_SBM_EST EARMF_SIN_EST
 #
 
 # %%
 # O sintetizador irá exibir o log da sua execução::
 #
-#    >>> 2023-02-10 02:02:05,214 INFO: # Realizando síntese da OPERACAO #
-#    >>> 2023-02-10 02:02:05,225 INFO: Lendo arquivo dger.dat
-#    >>> 2023-02-10 02:02:05,227 INFO: Lendo arquivo ree.dat
-#    >>> 2023-02-10 02:02:05,232 INFO: Caso com geração de cenários de eólica: False
-#    >>> 2023-02-10 02:02:05,232 INFO: Caso com modelagem híbrida: True
-#    >>> 2023-02-10 02:02:05,232 INFO: Variáveis: [CMO_SBM_EST, EARMF_SIN_EST]
-#    >>> 2023-02-10 02:02:05,232 INFO: Realizando síntese de CMO_SBM_EST
-#    >>> 2023-02-10 02:02:05,232 INFO: Lendo arquivo sistema.dat
-#    >>> 2023-02-10 02:02:05,248 INFO: Processando arquivo do submercado: 1 - SUDESTE
-#    >>> 2023-02-10 02:02:05,427 INFO: Processando arquivo do submercado: 2 - SUL
-#    >>> 2023-02-10 02:02:05,605 INFO: Processando arquivo do submercado: 3 - NORDESTE
-#    >>> 2023-02-10 02:02:05,782 INFO: Processando arquivo do submercado: 4 - NORTE
-#    >>> 2023-02-10 02:02:06,300 INFO: Realizando síntese de EARMF_SIN_EST
-#    >>> 2023-02-10 02:02:06,300 INFO: Processando arquivo do SIN
-#    >>> 2023-02-10 02:02:06,636 INFO: # Fim da síntese #
+# >>> 2023-09-25 15:08:15,466 INFO: # Realizando síntese da OPERACAO #
+# >>> 2023-09-25 15:08:15,466 INFO: Variáveis: [CMO_SBM_EST, EARMF_SBM_EST]
+# >>> 2023-09-25 15:08:15,466 INFO: Realizando síntese de CMO_SBM_EST
+# >>> 2023-09-25 15:08:15,467 INFO: Lendo arquivo dec_oper_sist.csv
+# >>> 2023-09-25 15:08:15,632 INFO: Lendo arquivo dec_eco_discr.csv
+# >>> 2023-09-25 15:08:15,649 INFO: Lendo arquivo dadger.rv0
+# >>> 2023-09-25 15:08:18,544 INFO: Realizando síntese de EARMF_SBM_EST
+# >>> 2023-09-25 15:08:18,742 INFO: # Fim da síntese #
 
 
 # %%
