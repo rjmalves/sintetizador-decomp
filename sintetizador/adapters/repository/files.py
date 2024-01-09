@@ -10,7 +10,7 @@ from idecomp.decomp.dadger import Dadger
 from idecomp.decomp.dadgnl import Dadgnl
 from idecomp.decomp.inviabunic import InviabUnic
 from idecomp.decomp.relato import Relato
-from idecomp.decomp.decomptim import DecompTim
+from idecomp.decomp.decomptim import Decomptim
 from idecomp.decomp.relgnl import Relgnl
 from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.vazoes import Vazoes
@@ -61,7 +61,7 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_decomptim(self) -> DecompTim:
+    def get_decomptim(self) -> Decomptim:
         raise NotImplementedError
 
     @abstractmethod
@@ -240,14 +240,14 @@ class RawFilesRepository(AbstractFilesRepository):
                 raise e
         return self.__relato2
 
-    def get_decomptim(self) -> DecompTim:
+    def get_decomptim(self) -> Decomptim:
         if self.__read_decomptim is False:
             self.__read_decomptim = True
             logger = Log.log()
             try:
                 if logger is not None:
                     logger.info("Lendo arquivo decomp.tim")
-                self.__decomptim = DecompTim.read(
+                self.__decomptim = Decomptim.read(
                     join(self.__tmppath, "decomp.tim")
                 )
             except Exception as e:
