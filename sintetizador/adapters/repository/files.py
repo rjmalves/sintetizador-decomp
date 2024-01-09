@@ -11,7 +11,7 @@ from idecomp.decomp.dadgnl import Dadgnl
 from idecomp.decomp.inviabunic import InviabUnic
 from idecomp.decomp.relato import Relato
 from idecomp.decomp.decomptim import DecompTim
-from idecomp.decomp.relgnl import RelGNL
+from idecomp.decomp.relgnl import Relgnl
 from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.vazoes import Vazoes
 from idecomp.decomp.dec_oper_usih import DecOperUsih
@@ -69,7 +69,7 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_relgnl(self) -> RelGNL:
+    def get_relgnl(self) -> Relgnl:
         raise NotImplementedError
 
     @abstractmethod
@@ -277,7 +277,7 @@ class RawFilesRepository(AbstractFilesRepository):
                 raise e
         return self.__inviabunic
 
-    def get_relgnl(self) -> RelGNL:
+    def get_relgnl(self) -> Relgnl:
         if self.__read_relgnl is False:
             self.__read_relgnl = True
             logger = Log.log()
@@ -285,7 +285,7 @@ class RawFilesRepository(AbstractFilesRepository):
                 arq_relgnl = f"relgnl.{self.extensao}"
                 if logger is not None:
                     logger.info(f"Lendo arquivo {arq_relgnl}")
-                self.__relgnl = RelGNL.read(join(self.__tmppath, arq_relgnl))
+                self.__relgnl = Relgnl.read(join(self.__tmppath, arq_relgnl))
             except FileNotFoundError:
                 if logger is not None:
                     logger.info(f"Não encontrado arquivo {arq_relgnl}")
