@@ -7,7 +7,7 @@ from os.path import join
 from idecomp.decomp.caso import Caso
 from idecomp.decomp.arquivos import Arquivos
 from idecomp.decomp.dadger import Dadger
-from idecomp.decomp.dadgnl import DadGNL
+from idecomp.decomp.dadgnl import Dadgnl
 from idecomp.decomp.inviabunic import InviabUnic
 from idecomp.decomp.relato import Relato
 from idecomp.decomp.decomptim import DecompTim
@@ -49,7 +49,7 @@ class AbstractFilesRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_dadgnl(self) -> DadGNL:
+    def get_dadgnl(self) -> Dadgnl:
         raise NotImplementedError
 
     @abstractmethod
@@ -189,7 +189,7 @@ class RawFilesRepository(AbstractFilesRepository):
                 raise e
         return self.__dadger
 
-    def get_dadgnl(self) -> DadGNL:
+    def get_dadgnl(self) -> Dadgnl:
         if self.__read_dadgnl is False:
             self.__read_dadgnl = True
             logger = Log.log()
@@ -199,7 +199,7 @@ class RawFilesRepository(AbstractFilesRepository):
                     raise FileNotFoundError()
                 if logger is not None:
                     logger.info(f"Lendo arquivo {arq_dadgnl}")
-                self.__dadgnl = DadGNL.read(join(self.__tmppath, arq_dadgnl))
+                self.__dadgnl = Dadgnl.read(join(self.__tmppath, arq_dadgnl))
             except Exception as e:
                 if logger is not None:
                     logger.info(f"Erro na leitura do dadgnl: {e}")
