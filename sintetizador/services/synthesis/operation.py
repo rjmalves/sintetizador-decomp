@@ -894,11 +894,11 @@ class OperationSynthetizer:
 
     @staticmethod
     def __stub_cenarios_nos_v31_0_2(df: pd.DataFrame) -> pd.DataFrame:
-        periodos = df["periodo"].unique().tolist()
+        estagios = df["estagio"].unique().tolist()
         # Para todos os estágios antes do último, fixa cenário em 1
-        df.loc[df["periodo"].isin(periodos[:-1]), "cenario"] = 1
+        df.loc[df["estagio"].isin(estagios[:-1]), "cenario"] = 1
         # Subtrai dos cenários o valor de n_semanas
-        df.loc[df["periodo"] == periodos[-1], "cenario"] -= len(periodos) - 1
+        df.loc[df["estagio"] == estagios[-1], "cenario"] -= len(estagios) - 1
         return df.copy()
 
     @property
@@ -928,7 +928,7 @@ class OperationSynthetizer:
     @property
     def stages_durations(self) -> pd.DataFrame:
         """
-        - periodo (`int`)
+        - estagio (`int`)
         - data_inicio (`datetime`)
         - data_fim (`datetime`)
         - numero_aberturas (`int`)
@@ -940,7 +940,7 @@ class OperationSynthetizer:
             df["data_inicio"] = df.apply(
                 lambda linha: self.data_inicio_estudo
                 + timedelta(
-                    hours=df.loc[df["periodo"] < linha["periodo"], "duracao"]
+                    hours=df.loc[df["estagio"] < linha["estagio"], "duracao"]
                     .to_numpy()
                     .sum()
                 ),
@@ -952,7 +952,7 @@ class OperationSynthetizer:
                 axis=1,
             )
             self.__stages_durations = df[
-                ["periodo", "data_inicio", "data_fim", "numero_aberturas"]
+                ["estagio", "data_inicio", "data_fim", "numero_aberturas"]
             ].copy()
         return self.__stages_durations
 
@@ -989,7 +989,7 @@ class OperationSynthetizer:
     def adiciona_datas_df(self, linha: pd.Series) -> np.ndarray:
         return (
             self.stages_durations.loc[
-                self.stages_durations["periodo"] == linha["periodo"],
+                self.stages_durations["estagio"] == linha["estagio"],
                 ["data_inicio", "data_fim"],
             ]
             .to_numpy()
@@ -1029,7 +1029,6 @@ class OperationSynthetizer:
             df[col] = 0.0
         df = df.rename(
             columns={
-                "periodo": "estagio",
                 "nome_submercado": "submercado",
                 col: "valor",
             }
@@ -1069,7 +1068,6 @@ class OperationSynthetizer:
             df[col] = 0.0
         df = df.rename(
             columns={
-                "periodo": "estagio",
                 "nome_ree": "ree",
                 col: "valor",
             }
@@ -1125,7 +1123,6 @@ class OperationSynthetizer:
             df[col] = 0.0
         df = df.rename(
             columns={
-                "periodo": "estagio",
                 "nome_usina": "usina",
                 col: "valor",
             }
@@ -1181,7 +1178,6 @@ class OperationSynthetizer:
             df[col] = 0.0
         df = df.rename(
             columns={
-                "periodo": "estagio",
                 "nome_usina": "usina",
                 col: "valor",
             }
@@ -1234,7 +1230,6 @@ class OperationSynthetizer:
             ]
         df = df.rename(
             columns={
-                "periodo": "estagio",
                 "nome_submercado_de": "submercadoDe",
                 "nome_submercado_para": "submercadoPara",
                 col: "valor",
@@ -1520,9 +1515,9 @@ class OperationSynthetizer:
                     df_cenarios_estagio = df.loc[
                         df["estagio"] == e, cols_cenarios
                     ].mul(probabilidades, fill_value=0.0)
-                    df.loc[
-                        df["estagio"] == e, "mean"
-                    ] = df_cenarios_estagio.sum(axis=1).astype(np.float64)
+                    df.loc[df["estagio"] == e, "mean"] = (
+                        df_cenarios_estagio.sum(axis=1).astype(np.float64)
+                    )
         else:
             df["mean"] = df[cols_cenarios].mean(axis=1)
         return df
