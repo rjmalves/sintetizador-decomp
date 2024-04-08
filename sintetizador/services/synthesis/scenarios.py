@@ -15,7 +15,7 @@ class ScenarioSynthetizer:
 
     @classmethod
     def _get_rule(cls, s: ScenarioSynthesis) -> Callable:
-        rules = Dict[Variable, Callable] = {
+        rules: Dict[Variable, Callable] = {
             Variable.PROBABILIDADES: cls._resolve_probabilities,
         }
         return rules[s]

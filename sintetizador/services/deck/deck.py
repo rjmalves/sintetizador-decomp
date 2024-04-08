@@ -1,7 +1,7 @@
 from idecomp.decomp import Relato, InviabUnic, Hidr, Decomptim, Vazoes
 import logging
 import pandas as pd  # type: ignore
-from typing import Any, Optional, TypeVar, Type
+from typing import Any, Optional, TypeVar, Type, Dict
 
 from sintetizador.services.unitofwork import AbstractUnitOfWork
 from sintetizador.model.execution.inviabilidade import Inviabilidade
@@ -14,7 +14,7 @@ class Deck:
     T = TypeVar("T")
     logger: Optional[logging.Logger] = None
 
-    DECK_DATA_CACHING: dict[str, Any] = {}
+    DECK_DATA_CACHING: Dict[str, Any] = {}
 
     @classmethod
     def _get_relato(cls, uow: AbstractUnitOfWork) -> Relato:
@@ -113,11 +113,11 @@ class Deck:
         return inviabilidades_simulacao_final
 
     @classmethod
-    def inviabilidades(cls, uow: AbstractUnitOfWork) -> Relato:
+    def inviabilidades(cls, uow: AbstractUnitOfWork) -> list:
         inviabilidades = cls.DECK_DATA_CACHING.get("inviabilidades")
         if inviabilidades is None:
-            df_iter = cls.inviabilidades_iteracoes
-            df_sf = cls.inviabilidades_simulacao_final
+            df_iter = cls.inviabilidades_iteracoes(uow)
+            df_sf = cls.inviabilidades_simulacao_final(uow)
             df_sf["iteracao"] = -1
             df_inviabs = pd.concat([df_iter, df_sf], ignore_index=True)
             inviabilidades_aux = []
@@ -129,7 +129,7 @@ class Deck:
                 )
             inviabilidades = cls._validate_data(
                 inviabilidades_aux,
-                pd.DataFrame,
+                list,
                 "inviabilidades",
             )
             cls.DECK_DATA_CACHING["inviabilidades"] = inviabilidades

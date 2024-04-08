@@ -51,7 +51,7 @@ class ExecutionSynthetizer:
 
     @classmethod
     def _get_rule(cls, s: ExecutionSynthesis) -> Callable:
-        rules = Dict[Variable, Callable] = {
+        rules: Dict[Variable, Callable] = {
             Variable.PROGRAMA: cls._resolve_program,
             Variable.CONVERGENCIA: cls._resolve_convergence,
             Variable.TEMPO_EXECUCAO: cls._resolve_tempo,
@@ -310,11 +310,11 @@ class ExecutionSynthetizer:
     ) -> pd.DataFrame:
         df = pd.concat(
             [
-                cls._resolve_inviabilidades_codigo(),
-                cls._resolve_inviabilidades_patamar(),
-                cls._resolve_inviabilidades_patamar_limite(),
-                cls._resolve_inviabilidades_limite(),
-                cls._resolve_inviabilidades_submercado_patamar(),
+                cls._resolve_inviabilidades_codigo(uow),
+                cls._resolve_inviabilidades_patamar(uow),
+                cls._resolve_inviabilidades_patamar_limite(uow),
+                cls._resolve_inviabilidades_limite(uow),
+                cls._resolve_inviabilidades_submercado_patamar(uow),
             ],
             ignore_index=True,
         )
