@@ -38,7 +38,7 @@ class SystemSynthetizer:
 
     @classmethod
     def _get_rule(cls, s: SystemSynthesis) -> Callable:
-        rules = Dict[Variable, Callable] = {
+        rules: Dict[Variable, Callable] = {
             Variable.EST: cls._resolve_EST,
             Variable.PAT: cls._resolve_PAT,
             Variable.SBM: cls._resolve_SBM,

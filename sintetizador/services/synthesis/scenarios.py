@@ -50,8 +50,8 @@ class ScenarioSynthetizer:
 
     @classmethod
     def _resolve_probabilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            df = Deck.probabilidades(uow)
+
+        df = Deck.probabilidades(uow)
 
         if df is None:
             logger = Log.log()
