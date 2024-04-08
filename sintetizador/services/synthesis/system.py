@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 import pandas as pd  # type: ignore
 from datetime import datetime, timedelta
 
@@ -32,27 +32,24 @@ class SystemSynthetizer:
         "UHE",
     ]
 
-    def __init__(self) -> None:
-        self.__uow: Optional[AbstractUnitOfWork] = None
-        self.__rules: Dict[Variable, Callable] = {
-            Variable.EST: self.__resolve_EST,
-            Variable.PAT: self.__resolve_PAT,
-            Variable.SBM: self.__resolve_SBM,
-            Variable.UTE: self.__resolve_UTE,
-            Variable.UHE: self.__resolve_UHE,
+    @classmethod
+    def _default_args(cls) -> List[str]:
+        return cls.DEFAULT_SYSTEM_SYNTHESIS_ARGS
+
+    @classmethod
+    def _get_rule(cls, s: SystemSynthesis) -> Callable:
+        rules = Dict[Variable, Callable] = {
+            Variable.EST: cls._resolve_EST,
+            Variable.PAT: cls._resolve_PAT,
+            Variable.SBM: cls._resolve_SBM,
+            Variable.UTE: cls._resolve_UTE,
+            Variable.UHE: cls._resolve_UHE,
         }
+        return rules[s]
 
-    @property
-    def uow(self) -> AbstractUnitOfWork:
-        if self.__uow is None:
-            raise RuntimeError()
-        return self.__uow
-
-    def _default_args(self) -> List[str]:
-        return self.__class__.DEFAULT_SYSTEM_SYNTHESIS_ARGS
-
+    @classmethod
     def _process_variable_arguments(
-        self,
+        cls,
         args: List[str],
     ) -> List[SystemSynthesis]:
         args_data = [SystemSynthesis.factory(c) for c in args]
@@ -65,8 +62,9 @@ class SystemSynthetizer:
                 return []
         return valid_args
 
+    @classmethod
     def filter_valid_variables(
-        self, variables: List[SystemSynthesis]
+        cls, variables: List[SystemSynthesis]
     ) -> List[SystemSynthesis]:
         valid_variables: List[SystemSynthesis] = []
         # TODO - verificar existência de PEE
@@ -80,9 +78,10 @@ class SystemSynthetizer:
             logger.info(f"Variáveis: {valid_variables}")
         return valid_variables
 
-    def __resolve_EST(self) -> pd.DataFrame:
-        with self.uow:
-            dadger = self.uow.files.get_dadger()
+    @classmethod
+    def _resolve_EST(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with uow:
+            dadger = uow.files.get_dadger()
         logger = Log.log()
         registro_dt = dadger.dt
         if registro_dt is None:
@@ -120,9 +119,10 @@ class SystemSynthetizer:
             }
         )
 
-    def __resolve_PAT(self) -> pd.DataFrame:
-        with self.uow:
-            dadger = self.uow.files.get_dadger()
+    @classmethod
+    def _resolve_PAT(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with uow:
+            dadger = uow.files.get_dadger()
         # Assume que sempre existe subsistema de id = 1
         dps = dadger.dp(codigo_submercado=1)
         logger = Log.log()
@@ -154,9 +154,10 @@ class SystemSynthetizer:
         )
         return df
 
-    def __resolve_SBM(self) -> pd.DataFrame:
-        with self.uow:
-            dadger = self.uow.files.get_dadger()
+    @classmethod
+    def _resolve_SBM(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with uow:
+            dadger = uow.files.get_dadger()
         logger = Log.log()
         sbs = dadger.sb()
         if isinstance(sbs, pd.DataFrame) or sbs is None:
@@ -171,9 +172,10 @@ class SystemSynthetizer:
             }
         )
 
-    def __resolve_UTE(self) -> pd.DataFrame:
-        with self.uow:
-            dadger = self.uow.files.get_dadger()
+    @classmethod
+    def _resolve_UTE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with uow:
+            dadger = uow.files.get_dadger()
         logger = Log.log()
         cts = dadger.ct()
         if isinstance(cts, pd.DataFrame) or cts is None:
@@ -189,10 +191,11 @@ class SystemSynthetizer:
                 dados["nome"].append(ct.nome_usina)
         return pd.DataFrame(data=dados)
 
-    def __resolve_UHE(self) -> pd.DataFrame:
-        with self.uow:
-            dadger = self.uow.files.get_dadger()
-            hidr = self.uow.files.get_hidr()
+    @classmethod
+    def _resolve_UHE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with uow:
+            dadger = uow.files.get_dadger()
+            hidr = uow.files.get_hidr()
         logger = Log.log()
         uhs = dadger.uh()
         if isinstance(uhs, pd.DataFrame) or uhs is None:
@@ -217,18 +220,18 @@ class SystemSynthetizer:
             dados["volumeInicial"].append(uh.volume_inicial)
         return pd.DataFrame(data=dados)
 
-    def synthetize(self, variables: List[str], uow: AbstractUnitOfWork):
-        self.__uow = uow
+    @classmethod
+    def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
         logger = Log.log()
         if len(variables) == 0:
-            variables = self._default_args()
-        synthesis_variables = self._process_variable_arguments(variables)
-        valid_synthesis = self.filter_valid_variables(synthesis_variables)
+            variables = cls._default_args()
+        synthesis_variables = cls._process_variable_arguments(variables)
+        valid_synthesis = cls.filter_valid_variables(synthesis_variables)
         for s in valid_synthesis:
             filename = str(s)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
-            df = self.__rules[s.variable]()
+            df = cls._get_rule(s.variable)(uow)
             if df is not None:
-                with self.uow:
-                    self.uow.export.synthetize_df(df, filename)
+                with uow:
+                    uow.export.synthetize_df(df, filename)
