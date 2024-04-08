@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Any
 from traceback import print_exc
 import pandas as pd  # type: ignore
 import numpy as np
@@ -48,30 +48,28 @@ class ExecutionSynthetizer:
     RUNTIME_FILE = "TEMPO"
     INVIABS_FILE = "INVIABILIDADES"
 
-    def __init__(self) -> None:
-        self.__uow: Optional[AbstractUnitOfWork] = None
-        self.__inviabilidades: Optional[List[Inviabilidade]] = None
-        self.__rules: Dict[Variable, Callable] = {
-            Variable.PROGRAMA: self._resolve_program,
-            Variable.CONVERGENCIA: self._resolve_convergence,
-            Variable.TEMPO_EXECUCAO: self._resolve_tempo,
-            Variable.CUSTOS: self._resolve_costs,
-            Variable.RECURSOS_JOB: self._resolve_job_resources,
-            Variable.RECURSOS_CLUSTER: self._resolve_cluster_resources,
-            Variable.INVIABILIDADES: self._resolve_inviabilidades_completas,
+    DECK_DATA: Dict[str, Any] = {"inviabilidades": None}
+
+    @classmethod
+    def _get_rule(cls, s: ExecutionSynthesis) -> Callable:
+        rules = Dict[Variable, Callable] = {
+            Variable.PROGRAMA: cls._resolve_program,
+            Variable.CONVERGENCIA: cls._resolve_convergence,
+            Variable.TEMPO_EXECUCAO: cls._resolve_tempo,
+            Variable.CUSTOS: cls._resolve_costs,
+            Variable.RECURSOS_JOB: cls._resolve_job_resources,
+            Variable.RECURSOS_CLUSTER: cls._resolve_cluster_resources,
+            Variable.INVIABILIDADES: cls._resolve_inviabilidades_completas,
         }
+        return rules[s]
 
-    @property
-    def uow(self) -> AbstractUnitOfWork:
-        if self.__uow is None:
-            raise RuntimeError()
-        return self.__uow
+    @classmethod
+    def _default_args(cls) -> List[str]:
+        return cls.DEFAULT_EXECUTION_SYNTHESIS_ARGS
 
-    def _default_args(self) -> List[str]:
-        return self.__class__.DEFAULT_EXECUTION_SYNTHESIS_ARGS
-
+    @classmethod
     def _process_variable_arguments(
-        self,
+        cls,
         args: List[str],
     ) -> List[ExecutionSynthesis]:
         args_data = [ExecutionSynthesis.factory(c) for c in args]
@@ -84,11 +82,12 @@ class ExecutionSynthetizer:
                 return []
         return valid_args
 
+    @classmethod
     def filter_valid_variables(
-        self, variables: List[ExecutionSynthesis]
+        cls, variables: List[ExecutionSynthesis], uow: AbstractUnitOfWork
     ) -> List[ExecutionSynthesis]:
-        with self.uow:
-            existe_inviabunic = self.uow.files.get_inviabunic() is not None
+        with uow:
+            existe_inviabunic = uow.files.get_inviabunic() is not None
         invs_vars = [
             Variable.INVIABILIDADES_CODIGO,
             Variable.INVIABILIDADES_PATAMAR,
@@ -103,12 +102,14 @@ class ExecutionSynthetizer:
             logger.info(f"Variáveis: {variables}")
         return variables
 
-    def _resolve_program(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_program(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         return pd.DataFrame(data={"programa": ["DECOMP"]})
 
-    def _resolve_convergence(self) -> pd.DataFrame:
-        with self.uow:
-            relato = self.uow.files.get_relato()
+    @classmethod
+    def _resolve_convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with uow:
+            relato = uow.files.get_relato()
         df = relato.convergencia
         logger = Log.log()
         if df is None:
@@ -144,7 +145,7 @@ class ExecutionSynthetizer:
         df_processed.loc[1:, "dZinf"] /= df_processed["zinf"].to_numpy()[:-1]
         df_processed.at[0, "dZinf"] = np.nan
 
-        conv = self.uow.export.read_df(self.CONVERGENCE_FILE)
+        conv = uow.export.read_df(cls.CONVERGENCE_FILE)
         if conv is None:
             df_processed["execucao"] = 0
             return df_processed
@@ -152,9 +153,10 @@ class ExecutionSynthetizer:
             df_processed["execucao"] = conv["execucao"].max() + 1
             return pd.concat([conv, df_processed], ignore_index=True)
 
-    def _resolve_tempo(self) -> pd.DataFrame:
-        with self.uow:
-            decomptim = self.uow.files.get_decomptim()
+    @classmethod
+    def _resolve_tempo(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with uow:
+            decomptim = uow.files.get_decomptim()
         df = decomptim.tempos_etapas
         logger = Log.log()
         if df is None:
@@ -165,7 +167,7 @@ class ExecutionSynthetizer:
 
         df["tempo"] = df["tempo"].dt.total_seconds()
 
-        tempo = self.uow.export.read_df(self.RUNTIME_FILE)
+        tempo = uow.export.read_df(cls.RUNTIME_FILE)
         if tempo is None:
             df["execucao"] = 0
             return df
@@ -173,9 +175,10 @@ class ExecutionSynthetizer:
             df["execucao"] = tempo["execucao"].max() + 1
             return pd.concat([tempo, df], ignore_index=True)
 
-    def _resolve_costs(self) -> pd.DataFrame:
-        with self.uow:
-            relato = self.uow.files.get_relato()
+    @classmethod
+    def _resolve_costs(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with uow:
+            relato = uow.files.get_relato()
         df = relato.relatorio_operacao_custos
         logger = Log.log()
         if df is None:
@@ -229,10 +232,11 @@ class ExecutionSynthetizer:
         df_completo = df_completo.reset_index()
         return df_completo[["parcela", "mean", "std"]]
 
-    def _resolve_job_resources(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_job_resources(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
         # monitor-job.parquet.gzip
-        with self.uow:
+        with uow:
             file = "monitor-job.parquet.gzip"
             logger = Log.log()
             if pathlib.Path(file).exists():
@@ -251,9 +255,12 @@ class ExecutionSynthetizer:
 
             return None
 
-    def _resolve_cluster_resources(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_cluster_resources(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         # Le o do job para saber tempo inicial e final
-        df_job = self._resolve_job_resources()
+        df_job = cls._resolve_job_resources(uow)
         if df_job is None:
             return None
         jobTimeInstants = pd.to_datetime(
@@ -285,14 +292,17 @@ class ExecutionSynthetizer:
                     logger.warning(f"Arquivo {file} não encontrado")
         return None
 
-    def __resolve_inviabilidades(self) -> List[Inviabilidade]:
-        with self.uow:
+    @classmethod
+    def __resolve_inviabilidades(
+        cls, uow: AbstractUnitOfWork
+    ) -> List[Inviabilidade]:
+        with uow:
             logger = Log.log()
             if logger is not None:
                 logger.info("Obtendo Inviabilidades")
-            inviabunic = self.uow.files.get_inviabunic()
-            hidr = self.uow.files.get_hidr()
-            relato = self.uow.files.get_relato()
+            inviabunic = uow.files.get_inviabunic()
+            hidr = uow.files.get_hidr()
+            relato = uow.files.get_relato()
         df_iter = inviabunic.inviabilidades_iteracoes
         df_sf = inviabunic.inviabilidades_simulacao_final
         if df_iter is None or df_sf is None:
@@ -306,25 +316,29 @@ class ExecutionSynthetizer:
             inviabilidades.append(Inviabilidade.factory(linha, hidr, relato))
         return inviabilidades
 
-    @property
-    def inviabilidades(self) -> List[Inviabilidade]:
-        if self.__inviabilidades is None:
-            self.__inviabilidades = self.__resolve_inviabilidades()
-        return self.__inviabilidades
+    @classmethod
+    def inviabilidades(cls, uow: AbstractUnitOfWork) -> List[Inviabilidade]:
+        if cls.DECK_DATA["inviabilidades"] is None:
+            cls.DECK_DATA["inviabilidades"] = cls.__resolve_inviabilidades(uow)
+        return cls.DECK_DATA["inviabilidades"]
 
-    def _resolve_inviabilidades_completas(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_inviabilidades_completas(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         df = pd.concat(
             [
-                self._resolve_inviabilidades_codigo(),
-                self._resolve_inviabilidades_patamar(),
-                self._resolve_inviabilidades_patamar_limite(),
-                self._resolve_inviabilidades_limite(),
-                self._resolve_inviabilidades_submercado_patamar(),
+                cls._resolve_inviabilidades_codigo(),
+                cls._resolve_inviabilidades_patamar(),
+                cls._resolve_inviabilidades_patamar_limite(),
+                cls._resolve_inviabilidades_limite(),
+                cls._resolve_inviabilidades_submercado_patamar(),
             ],
             ignore_index=True,
         )
         df = df.astype({"iteracao": int, "cenario": int, "estagio": int})
-        inviabs = self.uow.export.read_df(self.INVIABS_FILE)
+        with uow:
+            inviabs = uow.export.read_df(cls.INVIABS_FILE)
         if inviabs is None:
             df["execucao"] = 0
             return df
@@ -332,11 +346,12 @@ class ExecutionSynthetizer:
             df["execucao"] = inviabs["execucao"].max() + 1
             return pd.concat([inviabs, df], ignore_index=True)
 
-    def _resolve_inviabilidades_codigo(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_inviabilidades_codigo(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         inviabs_codigo = [
-            i
-            for i in self.inviabilidades
-            if type(i) in self.__class__.INVIABS_CODIGO
+            i for i in cls.inviabilidades(uow) if type(i) in cls.INVIABS_CODIGO
         ]
         tipos: List[str] = []
         iteracoes: List[int] = []
@@ -366,11 +381,14 @@ class ExecutionSynthetizer:
             }
         )
 
-    def _resolve_inviabilidades_patamar(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_inviabilidades_patamar(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         inviabs_codigo = [
             i
-            for i in self.inviabilidades
-            if type(i) in self.__class__.INVIABS_PATAMAR
+            for i in cls.inviabilidades(uow)
+            if type(i) in cls.INVIABS_PATAMAR
         ]
         tipos: List[str] = []
         iteracoes: List[int] = []
@@ -403,11 +421,14 @@ class ExecutionSynthetizer:
             }
         )
 
-    def _resolve_inviabilidades_patamar_limite(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_inviabilidades_patamar_limite(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         inviabs_codigo = [
             i
-            for i in self.inviabilidades
-            if type(i) in self.__class__.INVIABS_PATAMAR_LIMITE
+            for i in cls.inviabilidades(uow)
+            if type(i) in cls.INVIABS_PATAMAR_LIMITE
         ]
         tipos: List[str] = []
         iteracoes: List[int] = []
@@ -443,11 +464,12 @@ class ExecutionSynthetizer:
             }
         )
 
-    def _resolve_inviabilidades_limite(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_inviabilidades_limite(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         inviabs_codigo = [
-            i
-            for i in self.inviabilidades
-            if type(i) in self.__class__.INVIABS_LIMITE
+            i for i in cls.inviabilidades(uow) if type(i) in cls.INVIABS_LIMITE
         ]
         tipos: List[str] = []
         iteracoes: List[int] = []
@@ -480,11 +502,14 @@ class ExecutionSynthetizer:
             }
         )
 
-    def _resolve_inviabilidades_submercado_patamar(self) -> pd.DataFrame:
+    @classmethod
+    def _resolve_inviabilidades_submercado_patamar(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         inviabs_codigo = [
             i
-            for i in self.inviabilidades
-            if type(i) in self.__class__.INVIABS_SBM_PATAMAR
+            for i in cls.inviabilidades(uow)
+            if type(i) in cls.INVIABS_SBM_PATAMAR
         ]
         tipos: List[str] = []
         iteracoes: List[int] = []
@@ -517,22 +542,22 @@ class ExecutionSynthetizer:
             }
         )
 
-    def synthetize(self, variables: List[str], uow: AbstractUnitOfWork):
-        self.__uow = uow
+    @classmethod
+    def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
         logger = Log.log()
         if len(variables) == 0:
-            variables = self._default_args()
-        synthesis_variables = self._process_variable_arguments(variables)
-        valid_synthesis = self.filter_valid_variables(synthesis_variables)
+            variables = cls._default_args()
+        synthesis_variables = cls._process_variable_arguments(variables)
+        valid_synthesis = cls.filter_valid_variables(synthesis_variables, uow)
         for s in valid_synthesis:
             filename = str(s)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
             try:
-                df = self.__rules[s.variable]()
+                df = cls._get_rule(s.variable)(uow)
             except Exception:
                 print_exc()
                 continue
             if df is not None:
-                with self.uow:
-                    self.uow.export.synthetize_df(df, filename)
+                with uow:
+                    uow.export.synthetize_df(df, filename)
