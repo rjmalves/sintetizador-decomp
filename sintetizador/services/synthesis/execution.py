@@ -85,8 +85,7 @@ class ExecutionSynthetizer:
     def filter_valid_variables(
         cls, variables: List[ExecutionSynthesis], uow: AbstractUnitOfWork
     ) -> List[ExecutionSynthesis]:
-        with uow:
-            existe_inviabunic = Deck._get_inviabunic(uow) is not None
+        existe_inviabunic = Deck._get_inviabunic(uow) is not None
         invs_vars = [
             Variable.INVIABILIDADES_CODIGO,
             Variable.INVIABILIDADES_PATAMAR,
@@ -107,8 +106,7 @@ class ExecutionSynthetizer:
 
     @classmethod
     def _resolve_convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            df = Deck.convergencia(uow)
+        df = Deck.convergencia(uow)
         logger = Log.log()
         if df is None:
             if logger is not None:
@@ -153,9 +151,7 @@ class ExecutionSynthetizer:
 
     @classmethod
     def _resolve_tempo(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            decomptim = uow.files.get_decomptim()
-        df = decomptim.tempos_etapas
+        df = Deck.tempos_por_etapa(uow)
         logger = Log.log()
         if df is None:
             if logger is not None:
@@ -175,8 +171,7 @@ class ExecutionSynthetizer:
 
     @classmethod
     def _resolve_costs(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            relato = Deck.relato(uow)
+        relato = Deck.relato(uow)
         df = relato.relatorio_operacao_custos
         logger = Log.log()
         if df is None:
@@ -258,8 +253,7 @@ class ExecutionSynthetizer:
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
         # Le o do job para saber tempo inicial e final
-        with uow:
-            df_job = cls._resolve_job_resources(uow)
+        df_job = cls._resolve_job_resources(uow)
         if df_job is None:
             return None
         jobTimeInstants = pd.to_datetime(
@@ -293,11 +287,10 @@ class ExecutionSynthetizer:
 
     @classmethod
     def inviabilidades(cls, uow: AbstractUnitOfWork) -> List[Inviabilidade]:
-        with uow:
-            logger = Log.log()
-            if logger is not None:
-                logger.info("Obtendo Inviabilidades")
-            inviabilidades = Deck.inviabilidades(uow)
+        logger = Log.log()
+        if logger is not None:
+            logger.info("Obtendo Inviabilidades")
+        inviabilidades = Deck.inviabilidades(uow)
         if inviabilidades is None:
             if logger is not None:
                 logger.warning("Não foram encontradas inviabilidades")
