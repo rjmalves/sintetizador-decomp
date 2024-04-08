@@ -5,6 +5,7 @@ from sintetizador.services.unitofwork import AbstractUnitOfWork
 from sintetizador.utils.log import Log
 from sintetizador.model.scenarios.variable import Variable
 from sintetizador.model.scenarios.scenariosynthesis import ScenarioSynthesis
+from sintetizador.services.deck.deck import Deck
 
 
 class ScenarioSynthetizer:
@@ -50,9 +51,8 @@ class ScenarioSynthetizer:
     @classmethod
     def _resolve_probabilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         with uow:
-            vaz = uow.files.get_vazoes()
+            df = Deck.probabilidades(uow)
 
-        df = vaz.probabilidades
         if df is None:
             logger = Log.log()
             if logger is not None:

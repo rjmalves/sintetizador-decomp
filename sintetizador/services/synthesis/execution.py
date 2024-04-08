@@ -18,6 +18,7 @@ from sintetizador.model.execution.inviabilidade import (
     InviabilidadeFP,
     InviabilidadeDeficit,
 )
+from sintetizador.services.deck.deck import Deck
 from sintetizador.services.unitofwork import AbstractUnitOfWork
 from sintetizador.utils.log import Log
 from sintetizador.utils.fs import set_directory
@@ -47,8 +48,6 @@ class ExecutionSynthetizer:
     CONVERGENCE_FILE = "CONVERGENCIA"
     RUNTIME_FILE = "TEMPO"
     INVIABS_FILE = "INVIABILIDADES"
-
-    DECK_DATA: Dict[str, Any] = {"inviabilidades": None}
 
     @classmethod
     def _get_rule(cls, s: ExecutionSynthesis) -> Callable:
@@ -87,7 +86,7 @@ class ExecutionSynthetizer:
         cls, variables: List[ExecutionSynthesis], uow: AbstractUnitOfWork
     ) -> List[ExecutionSynthesis]:
         with uow:
-            existe_inviabunic = uow.files.get_inviabunic() is not None
+            existe_inviabunic = Deck._get_inviabunic(uow) is not None
         invs_vars = [
             Variable.INVIABILIDADES_CODIGO,
             Variable.INVIABILIDADES_PATAMAR,
@@ -109,8 +108,7 @@ class ExecutionSynthetizer:
     @classmethod
     def _resolve_convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         with uow:
-            relato = uow.files.get_relato()
-        df = relato.convergencia
+            df = Deck.convergencia(uow)
         logger = Log.log()
         if df is None:
             if logger is not None:
@@ -178,7 +176,7 @@ class ExecutionSynthetizer:
     @classmethod
     def _resolve_costs(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         with uow:
-            relato = uow.files.get_relato()
+            relato = Deck.relato(uow)
         df = relato.relatorio_operacao_custos
         logger = Log.log()
         if df is None:
@@ -260,7 +258,8 @@ class ExecutionSynthetizer:
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
         # Le o do job para saber tempo inicial e final
-        df_job = cls._resolve_job_resources(uow)
+        with uow:
+            df_job = cls._resolve_job_resources(uow)
         if df_job is None:
             return None
         jobTimeInstants = pd.to_datetime(
@@ -293,34 +292,17 @@ class ExecutionSynthetizer:
         return None
 
     @classmethod
-    def __resolve_inviabilidades(
-        cls, uow: AbstractUnitOfWork
-    ) -> List[Inviabilidade]:
+    def inviabilidades(cls, uow: AbstractUnitOfWork) -> List[Inviabilidade]:
         with uow:
             logger = Log.log()
             if logger is not None:
                 logger.info("Obtendo Inviabilidades")
-            inviabunic = uow.files.get_inviabunic()
-            hidr = uow.files.get_hidr()
-            relato = uow.files.get_relato()
-        df_iter = inviabunic.inviabilidades_iteracoes
-        df_sf = inviabunic.inviabilidades_simulacao_final
-        if df_iter is None or df_sf is None:
+            inviabilidades = Deck.inviabilidades(uow)
+        if inviabilidades is None:
             if logger is not None:
                 logger.warning("Não foram encontradas inviabilidades")
             return []
-        df_sf["iteracao"] = -1
-        df_inviabs = pd.concat([df_iter, df_sf], ignore_index=True)
-        inviabilidades = []
-        for _, linha in df_inviabs.iterrows():
-            inviabilidades.append(Inviabilidade.factory(linha, hidr, relato))
         return inviabilidades
-
-    @classmethod
-    def inviabilidades(cls, uow: AbstractUnitOfWork) -> List[Inviabilidade]:
-        if cls.DECK_DATA["inviabilidades"] is None:
-            cls.DECK_DATA["inviabilidades"] = cls.__resolve_inviabilidades(uow)
-        return cls.DECK_DATA["inviabilidades"]
 
     @classmethod
     def _resolve_inviabilidades_completas(
