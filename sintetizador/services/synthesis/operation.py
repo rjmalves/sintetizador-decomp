@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any, Callable
 import pandas as pd  # type: ignore
 import numpy as np
 from traceback import print_exc
@@ -108,6 +108,8 @@ class OperationSynthetizer:
         "INT_SBP_PAT",
     ]
 
+    DECK_FILES: Dict[str, Any] = {}
+
     def __init__(self) -> None:
         self.__uow: Optional[AbstractUnitOfWork] = None
         self.__patamares: Optional[List[int]] = None
@@ -116,577 +118,11 @@ class OperationSynthetizer:
         self.__dadger: Optional[Dadger] = None
         self.__data_inicio_estudo: Optional[datetime] = None
         self.__dec_eco_discr: Optional[pd.DataFrame] = None
-        self.__dec_oper_sist: Optional[pd.DataFrame] = None
         self.__dec_oper_ree: Optional[pd.DataFrame] = None
         self.__dec_oper_usih: Optional[pd.DataFrame] = None
         self.__dec_oper_usit: Optional[pd.DataFrame] = None
         self.__dec_oper_gnl: Optional[pd.DataFrame] = None
         self.__dec_oper_interc: Optional[pd.DataFrame] = None
-        self.__rules: Dict[
-            Tuple[Variable, SpatialResolution, TemporalResolution],
-            pd.DataFrame,
-        ] = {
-            (
-                Variable.CUSTO_MARGINAL_OPERACAO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("cmo"),
-            (
-                Variable.CUSTO_MARGINAL_OPERACAO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_sist("cmo", self.patamares),
-            (
-                Variable.CUSTO_GERACAO_TERMICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__processa_bloco_relatorio_operacao(
-                "geracao_termica"
-            ),
-            (
-                Variable.CUSTO_OPERACAO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__processa_bloco_relatorio_operacao(
-                "custo_presente"
-            ),
-            (
-                Variable.CUSTO_FUTURO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__processa_bloco_relatorio_operacao(
-                "custo_futuro"
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_ree("earm_inicial_MWmes"),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_ree("earm_inicial_percentual"),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("earm_inicial_MWmes"),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("earm_inicial_percentual"),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist("earm_inicial_MWmes")
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.stub_earmax_sin(
-                self.__agrupa_submercados(
-                    self.processa_dec_oper_sist("earm_inicial_MWmes")
-                )
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_ree("earm_final_MWmes"),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_ree("earm_final_percentual"),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("earm_final_MWmes"),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("earm_final_percentual"),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist("earm_final_MWmes")
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.stub_earmax_sin(
-                self.__agrupa_submercados(
-                    self.processa_dec_oper_sist("earm_final_MWmes")
-                )
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("geracao_termica_total_MW"),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_sist(
-                "geracao_termica_total_MW",
-                self.patamares,
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist(
-                    "geracao_termica_total_MW",
-                )
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist(
-                    "geracao_termica_total_MW",
-                    self.patamares,
-                )
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist(
-                "geracao_hidro_com_itaipu_MW"
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_sist(
-                "geracao_hidro_com_itaipu_MW", self.patamares
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist("geracao_hidro_com_itaipu_MW")
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist(
-                    "geracao_hidro_com_itaipu_MW",
-                    self.patamares,
-                ),
-            ),
-            (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist(
-                "geracao_eolica_MW",
-            ),
-            (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_sist(
-                "geracao_eolica_MW",
-                self.patamares,
-            ),
-            (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist(
-                    "geracao_eolica_MW",
-                ),
-            ),
-            (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist(
-                    "geracao_eolica_MW",
-                    self.patamares,
-                ),
-            ),
-            (
-                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_ree(
-                "ena_MWmes",
-            ),
-            (
-                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist(
-                "ena_MWmes",
-            ),
-            (
-                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist(
-                    "ena_MWmes",
-                ),
-            ),
-            (
-                Variable.MERCADO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist("demanda_MW", self.patamares),
-            ),
-            (
-                Variable.MERCADO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist("demanda_MW"),
-            ),
-            (
-                Variable.MERCADO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_sist(
-                "demanda_MW", self.patamares
-            ),
-            (
-                Variable.MERCADO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("demanda_MW"),
-            (
-                Variable.MERCADO_LIQUIDO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist(
-                    "demanda_liquida_MW", self.patamares
-                )
-            ),
-            (
-                Variable.MERCADO_LIQUIDO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist("demanda_liquida_MW")
-            ),
-            (
-                Variable.MERCADO_LIQUIDO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_sist(
-                "demanda_liquida_MW", self.patamares
-            ),
-            (
-                Variable.MERCADO_LIQUIDO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("demanda_liquida_MW"),
-            (
-                Variable.DEFICIT,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist("deficit_MW", self.patamares)
-            ),
-            (
-                Variable.DEFICIT,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_submercados(
-                self.processa_dec_oper_sist("deficit_MW")
-            ),
-            (
-                Variable.DEFICIT,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_sist(
-                "deficit_MW", self.patamares
-            ),
-            (
-                Variable.DEFICIT,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_sist("deficit_MW"),
-            (
-                Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih(
-                "volume_util_inicial_percentual"
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih(
-                "volume_util_final_percentual"
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih("volume_util_inicial_hm3"),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih("volume_util_final_hm3"),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.processa_dec_oper_usih("volume_util_inicial_hm3"),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.processa_dec_oper_usih("volume_util_final_hm3"),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.processa_dec_oper_usih("volume_util_inicial_hm3"),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.processa_dec_oper_usih("volume_util_final_hm3"),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.processa_dec_oper_usih("volume_util_inicial_hm3"),
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.processa_dec_oper_usih("volume_util_final_hm3"),
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ),
-            (
-                Variable.VAZAO_INCREMENTAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih("vazao_incremental_m3s"),
-            (
-                Variable.VAZAO_AFLUENTE,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih("vazao_afluente_m3s"),
-            (
-                Variable.VAZAO_DEFLUENTE,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih("vazao_defluente_m3s"),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_usih(
-                "geracao_MW", self.patamares
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih("geracao_MW"),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.__agrupa_uhes(
-                self.processa_dec_oper_usih("geracao_MW", self.patamares),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.processa_dec_oper_usih("geracao_MW"),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
-                "vertimento_turbinavel"
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__processa_bloco_relatorio_operacao_uhe(
-                "vertimento_nao_turbinavel"
-            ),
-            (
-                Variable.ENERGIA_VERTIDA,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__stub_ever_uhes(),
-            (
-                Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__processa_bloco_relatorio_operacao_uhe(
-                    "vertimento_turbinavel"
-                ),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__processa_bloco_relatorio_operacao_uhe(
-                    "vertimento_nao_turbinavel"
-                ),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__stub_ever_uhes(),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__processa_bloco_relatorio_operacao_uhe(
-                    "vertimento_turbinavel"
-                ),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__stub_ever_uhes(),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__processa_bloco_relatorio_operacao_uhe(
-                    "vertimento_nao_turbinavel"
-                ),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__processa_bloco_relatorio_operacao_uhe(
-                    "vertimento_turbinavel"
-                ),
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__processa_bloco_relatorio_operacao_uhe(
-                    "vertimento_nao_turbinavel"
-                ),
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.__agrupa_uhes(
-                self.__stub_ever_uhes(),
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ),
-            (
-                Variable.VAZAO_TURBINADA,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih("vazao_turbinada_m3s"),
-            (
-                Variable.VAZAO_VERTIDA,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usih("vazao_vertida_m3s"),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.USINA_TERMELETRICA,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_usit(
-                "geracao_MW", self.patamares
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.USINA_TERMELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usit("geracao_MW"),
-            (
-                Variable.CUSTO_GERACAO_TERMICA,
-                SpatialResolution.USINA_TERMELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_usit("custo_geracao"),
-            (
-                Variable.INTERCAMBIO,
-                SpatialResolution.PAR_SUBMERCADOS,
-                TemporalResolution.ESTAGIO,
-            ): lambda: self.processa_dec_oper_interc("intercambio_origem_MW"),
-            (
-                Variable.INTERCAMBIO,
-                SpatialResolution.PAR_SUBMERCADOS,
-                TemporalResolution.PATAMAR,
-            ): lambda: self.processa_dec_oper_interc(
-                "intercambio_origem_MW", self.patamares
-            ),
-        }
 
     @property
     def uow(self) -> AbstractUnitOfWork:
@@ -694,15 +130,662 @@ class OperationSynthetizer:
             raise RuntimeError()
         return self.__uow
 
-    def get_dadger(self) -> Dadger:
-        if self.__dadger is None:
-            self.__dadger = self.uow.files.get_dadger()
-        return self.__dadger
+    @classmethod
+    def _get_rule(
+        cls, synthesis: Tuple[Variable, SpatialResolution, TemporalResolution]
+    ) -> Callable:
+        _rules: Dict[
+            Tuple[Variable, SpatialResolution, TemporalResolution],
+            Callable,
+        ] = {
+            (
+                Variable.CUSTO_MARGINAL_OPERACAO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(uow, "cmo"),
+            (
+                Variable.CUSTO_MARGINAL_OPERACAO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "cmo", cls.get_patamares(uow)
+            ),
+            (
+                Variable.CUSTO_GERACAO_TERMICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._processa_bloco_relatorio_operacao(
+                uow, "geracao_termica"
+            ),
+            (
+                Variable.CUSTO_OPERACAO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._processa_bloco_relatorio_operacao(
+                uow, "custo_presente"
+            ),
+            (
+                Variable.CUSTO_FUTURO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._processa_bloco_relatorio_operacao(
+                uow, "custo_futuro"
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_ree(
+                uow, "earm_inicial_MWmes"
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_ree(
+                uow, "earm_inicial_percentual"
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "earm_inicial_MWmes"
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "earm_inicial_percentual"
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(uow, "earm_inicial_MWmes")
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.stub_earmax_sin(
+                uow,
+                cls._agrupa_submercados(
+                    cls.processa_dec_oper_sist(uow, "earm_inicial_MWmes")
+                ),
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_ree(uow, "earm_final_MWmes"),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_ree(
+                uow, "earm_final_percentual"
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(uow, "earm_final_MWmes"),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "earm_final_percentual"
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(uow, "earm_final_MWmes")
+            ),
+            (
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.stub_earmax_sin(
+                uow,
+                cls._agrupa_submercados(
+                    cls.processa_dec_oper_sist(uow, "earm_final_MWmes")
+                ),
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "geracao_termica_total_MW"
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow,
+                "geracao_termica_total_MW",
+                cls.get_patamares(uow),
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow,
+                    "geracao_termica_total_MW",
+                )
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow,
+                    "geracao_termica_total_MW",
+                    cls.get_patamares(uow),
+                )
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "geracao_hidro_com_itaipu_MW"
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "geracao_hidro_com_itaipu_MW", cls.get_patamares(uow)
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(uow, "geracao_hidro_com_itaipu_MW")
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow,
+                    "geracao_hidro_com_itaipu_MW",
+                    cls.get_patamares(uow),
+                ),
+            ),
+            (
+                Variable.GERACAO_EOLICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow,
+                "geracao_eolica_MW",
+            ),
+            (
+                Variable.GERACAO_EOLICA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow,
+                "geracao_eolica_MW",
+                cls.get_patamares(uow),
+            ),
+            (
+                Variable.GERACAO_EOLICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow,
+                    "geracao_eolica_MW",
+                ),
+            ),
+            (
+                Variable.GERACAO_EOLICA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow,
+                    "geracao_eolica_MW",
+                    cls.get_patamares(uow),
+                ),
+            ),
+            (
+                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_ree(
+                uow,
+                "ena_MWmes",
+            ),
+            (
+                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow,
+                "ena_MWmes",
+            ),
+            (
+                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow,
+                    "ena_MWmes",
+                ),
+            ),
+            (
+                Variable.MERCADO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow, "demanda_MW", cls.get_patamares(uow)
+                ),
+            ),
+            (
+                Variable.MERCADO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(uow, "demanda_MW"),
+            ),
+            (
+                Variable.MERCADO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "demanda_MW", cls.get_patamares(uow)
+            ),
+            (
+                Variable.MERCADO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(uow, "demanda_MW"),
+            (
+                Variable.MERCADO_LIQUIDO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow, "demanda_liquida_MW", cls.get_patamares(uow)
+                )
+            ),
+            (
+                Variable.MERCADO_LIQUIDO,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(uow, "demanda_liquida_MW")
+            ),
+            (
+                Variable.MERCADO_LIQUIDO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "demanda_liquida_MW", cls.get_patamares(uow)
+            ),
+            (
+                Variable.MERCADO_LIQUIDO,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "demanda_liquida_MW"
+            ),
+            (
+                Variable.DEFICIT,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(
+                    uow, "deficit_MW", cls.get_patamares(uow)
+                )
+            ),
+            (
+                Variable.DEFICIT,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_submercados(
+                cls.processa_dec_oper_sist(uow, "deficit_MW")
+            ),
+            (
+                Variable.DEFICIT,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_sist(
+                uow, "deficit_MW", cls.get_patamares(uow)
+            ),
+            (
+                Variable.DEFICIT,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_sist(uow, "deficit_MW"),
+            (
+                Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "volume_util_inicial_percentual"
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "volume_util_final_percentual"
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "volume_util_inicial_hm3"
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "volume_util_final_hm3"
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls.processa_dec_oper_usih(uow, "volume_util_inicial_hm3"),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls.processa_dec_oper_usih(uow, "volume_util_final_hm3"),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls.processa_dec_oper_usih(uow, "volume_util_inicial_hm3"),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls.processa_dec_oper_usih(uow, "volume_util_final_hm3"),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls.processa_dec_oper_usih(uow, "volume_util_inicial_hm3"),
+                SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls.processa_dec_oper_usih(uow, "volume_util_final_hm3"),
+                SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.VAZAO_INCREMENTAL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "vazao_incremental_m3s"
+            ),
+            (
+                Variable.VAZAO_AFLUENTE,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "vazao_afluente_m3s"
+            ),
+            (
+                Variable.VAZAO_DEFLUENTE,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "vazao_defluente_m3s"
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "geracao_MW", cls.get_patamares(uow)
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(uow, "geracao_MW"),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls.processa_dec_oper_usih(
+                    uow, "geracao_MW", cls.get_patamares(uow)
+                ),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.GERACAO_HIDRAULICA,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls.processa_dec_oper_usih(uow, "geracao_MW"),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._processa_bloco_relatorio_operacao_uhe(
+                uow, "vertimento_turbinavel"
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._processa_bloco_relatorio_operacao_uhe(
+                uow, "vertimento_nao_turbinavel"
+            ),
+            (
+                Variable.ENERGIA_VERTIDA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._stub_ever_uhes(uow),
+            (
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._processa_bloco_relatorio_operacao_uhe(
+                    uow, "vertimento_turbinavel"
+                ),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._processa_bloco_relatorio_operacao_uhe(
+                    uow, "vertimento_nao_turbinavel"
+                ),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._stub_ever_uhes(uow),
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._processa_bloco_relatorio_operacao_uhe(
+                    uow, "vertimento_turbinavel"
+                ),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._stub_ever_uhes(uow),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                SpatialResolution.SUBMERCADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._processa_bloco_relatorio_operacao_uhe(
+                    uow, "vertimento_nao_turbinavel"
+                ),
+                SpatialResolution.SUBMERCADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._processa_bloco_relatorio_operacao_uhe(
+                    uow, "vertimento_turbinavel"
+                ),
+                SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._processa_bloco_relatorio_operacao_uhe(
+                    uow, "vertimento_nao_turbinavel"
+                ),
+                SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.ENERGIA_VERTIDA,
+                SpatialResolution.SISTEMA_INTERLIGADO,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls._agrupa_uhes(
+                uow,
+                cls._stub_ever_uhes(uow),
+                SpatialResolution.SISTEMA_INTERLIGADO,
+            ),
+            (
+                Variable.VAZAO_TURBINADA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "vazao_turbinada_m3s"
+            ),
+            (
+                Variable.VAZAO_VERTIDA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usih(
+                uow, "vazao_vertida_m3s"
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.USINA_TERMELETRICA,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_usit(
+                uow, "geracao_MW", cls.get_patamares(uow)
+            ),
+            (
+                Variable.GERACAO_TERMICA,
+                SpatialResolution.USINA_TERMELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usit(uow, "geracao_MW"),
+            (
+                Variable.CUSTO_GERACAO_TERMICA,
+                SpatialResolution.USINA_TERMELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_usit(uow, "custo_geracao"),
+            (
+                Variable.INTERCAMBIO,
+                SpatialResolution.PAR_SUBMERCADOS,
+                TemporalResolution.ESTAGIO,
+            ): lambda uow: cls.processa_dec_oper_interc(
+                uow, "intercambio_origem_MW"
+            ),
+            (
+                Variable.INTERCAMBIO,
+                SpatialResolution.PAR_SUBMERCADOS,
+                TemporalResolution.PATAMAR,
+            ): lambda uow: cls.processa_dec_oper_interc(
+                uow, "intercambio_origem_MW", cls.get_patamares(uow)
+            ),
+        }
 
-    def get_dec_eco_discr(self) -> pd.DataFrame:
-        if self.__dec_eco_discr is None:
-            with self.uow:
-                arq_discr = self.uow.files.get_dec_eco_discr()
+        return _rules[synthesis]
+
+    @classmethod
+    def get_dadger(cls, uow: AbstractUnitOfWork) -> Dadger:
+        name = "dadger"
+        if name not in cls.DECK_FILES:
+            with uow:
+                cls.DECK_FILES[name] = uow.files.get_dadger()
+        return cls.DECK_FILES[name]
+
+    @classmethod
+    def get_dec_eco_discr(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_eco_discr"
+        if name not in cls.DECK_FILES:
+            with uow:
+                arq_discr = uow.files.get_dec_eco_discr()
             df = arq_discr.tabela
             if df is None:
                 logger = Log.log()
@@ -711,18 +794,20 @@ class OperationSynthetizer:
                         "Erro na leitura do arquivo dec_eco_discr.csv"
                     )
                 raise RuntimeError()
-            self.__dec_eco_discr = df
-        return self.__dec_eco_discr
+            cls.DECK_FILES[name] = df
+        return cls.DECK_FILES[name].copy()
 
-    def get_dec_oper_sist(self) -> pd.DataFrame:
-        if self.__dec_oper_sist is None:
-            with self.uow:
-                arq_oper = self.uow.files.get_dec_oper_sist()
+    @classmethod
+    def get_dec_oper_sist(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_oper_sist"
+        if name not in cls.DECK_FILES:
+            with uow:
+                arq_oper = uow.files.get_dec_oper_sist()
             df = arq_oper.tabela
             versao = arq_oper.versao
             if versao is not None:
                 if versao <= "31.0.2":
-                    df = self.__stub_cenarios_nos_v31_0_2(df)
+                    df = cls._stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -731,54 +816,58 @@ class OperationSynthetizer:
                     )
                 raise RuntimeError()
             df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: self.adiciona_datas_df(linha),
+                lambda linha: cls.adiciona_datas_df(linha, uow),
                 axis=1,
                 result_type="expand",
             )
             df["geracao_termica_total_MW"] = (
                 df["geracao_termica_MW"] + df["geracao_termica_antecipada_MW"]
             )
-            df["itaipu_60MW"].fillna(0.0, inplace=True)
+            df["itaipu_60MW"] = df["itaipu_60MW"].fillna(0.0)
             df["geracao_hidro_com_itaipu_MW"] = (
                 df["geracao_hidroeletrica_MW"] + df["itaipu_60MW"]
             )
             df["demanda_liquida_MW"] = (
                 df["demanda_MW"] - df["geracao_pequenas_usinas_MW"]
             )
-            self.__dec_oper_sist = df
-        return self.__dec_oper_sist
+            cls.DECK_FILES[name] = df
+        return cls.DECK_FILES[name].copy()
 
-    def get_dec_oper_ree(self) -> pd.DataFrame:
-        if self.__dec_oper_ree is None:
-            with self.uow:
-                arq_oper = self.uow.files.get_dec_oper_ree()
+    @classmethod
+    def get_dec_oper_ree(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_oper_ree"
+        if name not in cls.DECK_FILES:
+            with uow:
+                arq_oper = uow.files.get_dec_oper_ree()
             df = arq_oper.tabela
             versao = arq_oper.versao
             if versao is not None:
                 if versao <= "31.0.2":
-                    df = self.__stub_cenarios_nos_v31_0_2(df)
+                    df = cls._stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
                     logger.error("Erro na leitura do arquivo dec_oper_ree.csv")
                 raise RuntimeError()
             df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: self.adiciona_datas_df(linha),
+                lambda linha: cls.adiciona_datas_df(linha, uow),
                 axis=1,
                 result_type="expand",
             )
-            self.__dec_oper_ree = df
-        return self.__dec_oper_ree
+            cls.DECK_FILES[name] = df
+        return cls.DECK_FILES[name].copy()
 
-    def get_dec_oper_usih(self) -> pd.DataFrame:
-        if self.__dec_oper_usih is None:
-            with self.uow:
-                arq_oper = self.uow.files.get_dec_oper_usih()
+    @classmethod
+    def get_dec_oper_usih(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_oper_usih"
+        if name not in cls.DECK_FILES:
+            with uow:
+                arq_oper = uow.files.get_dec_oper_usih()
             df = arq_oper.tabela
             versao = arq_oper.versao
             if versao is not None:
                 if versao <= "31.0.2":
-                    df = self.__stub_cenarios_nos_v31_0_2(df)
+                    df = cls._stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -787,22 +876,24 @@ class OperationSynthetizer:
                     )
                 raise RuntimeError()
             df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: self.adiciona_datas_df(linha),
+                lambda linha: cls.adiciona_datas_df(linha, uow),
                 axis=1,
                 result_type="expand",
             )
-            self.__dec_oper_usih = df
-        return self.__dec_oper_usih
+            cls.DECK_FILES[name] = df
+        return cls.DECK_FILES[name].copy()
 
-    def get_dec_oper_usit(self) -> pd.DataFrame:
-        if self.__dec_oper_usit is None:
-            with self.uow:
-                arq_oper = self.uow.files.get_dec_oper_usit()
+    @classmethod
+    def get_dec_oper_usit(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_oper_usit"
+        if name not in cls.DECK_FILES:
+            with uow:
+                arq_oper = uow.files.get_dec_oper_usit()
             df = arq_oper.tabela
             versao = arq_oper.versao
             if versao is not None:
                 if versao <= "31.0.2":
-                    df = self.__stub_cenarios_nos_v31_0_2(df)
+                    df = cls._stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -811,7 +902,7 @@ class OperationSynthetizer:
                     )
                 raise RuntimeError()
             df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: self.adiciona_datas_df(linha),
+                lambda linha: cls.adiciona_datas_df(linha, uow),
                 axis=1,
                 result_type="expand",
             )
@@ -843,40 +934,44 @@ class OperationSynthetizer:
                 )
             )
             df.loc[~filtro, "geracao_percentual_flexivel"] = 100.0
-            self.__dec_oper_usit = df
-        return self.__dec_oper_usit
+            cls.DECK_FILES[name] = df
+        return cls.DECK_FILES[name]
 
-    def get_dec_oper_gnl(self) -> pd.DataFrame:
-        if self.__dec_oper_gnl is None:
-            with self.uow:
-                arq_oper = self.uow.files.get_dec_oper_gnl()
+    @classmethod
+    def get_dec_oper_gnl(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_oper_gnl"
+        if name not in cls.DECK_FILES:
+            with uow:
+                arq_oper = uow.files.get_dec_oper_gnl()
             df = arq_oper.tabela
             versao = arq_oper.versao
             if versao is not None:
                 if versao <= "31.0.2":
-                    df = self.__stub_cenarios_nos_v31_0_2(df)
+                    df = cls._stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
                     logger.error("Erro na leitura do arquivo dec_oper_gnl.csv")
                 raise RuntimeError()
             df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: self.adiciona_datas_df(linha),
+                lambda linha: cls.adiciona_datas_df(linha, uow),
                 axis=1,
                 result_type="expand",
             )
-            self.__dec_oper_gnl = df
-        return self.__dec_oper_gnl
+            cls.DECK_FILES[name] = df
+        return cls.DECK_FILES[name]
 
-    def get_dec_oper_interc(self) -> pd.DataFrame:
-        if self.__dec_oper_interc is None:
-            with self.uow:
-                arq_oper = self.uow.files.get_dec_oper_interc()
+    @classmethod
+    def get_dec_oper_interc(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_oper_interc"
+        if name not in cls.DECK_FILES:
+            with uow:
+                arq_oper = uow.files.get_dec_oper_interc()
             df = arq_oper.tabela
             versao = arq_oper.versao
             if versao is not None:
                 if versao <= "31.0.2":
-                    df = self.__stub_cenarios_nos_v31_0_2(df)
+                    df = cls._stub_cenarios_nos_v31_0_2(df)
             if df is None:
                 logger = Log.log()
                 if logger is not None:
@@ -885,15 +980,15 @@ class OperationSynthetizer:
                     )
                 raise RuntimeError()
             df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: self.adiciona_datas_df(linha),
+                lambda linha: cls.adiciona_datas_df(linha, uow),
                 axis=1,
                 result_type="expand",
             )
-            self.__dec_oper_interc = df
-        return self.__dec_oper_interc
+            cls.DECK_FILES[name] = df
+        return cls.DECK_FILES[name]
 
     @staticmethod
-    def __stub_cenarios_nos_v31_0_2(df: pd.DataFrame) -> pd.DataFrame:
+    def _stub_cenarios_nos_v31_0_2(df: pd.DataFrame) -> pd.DataFrame:
         estagios = df["estagio"].unique().tolist()
         # Para todos os estágios antes do último, fixa cenário em 1
         df.loc[df["estagio"].isin(estagios[:-1]), "cenario"] = 1
@@ -901,11 +996,12 @@ class OperationSynthetizer:
         df.loc[df["estagio"] == estagios[-1], "cenario"] -= len(estagios) - 1
         return df.copy()
 
-    @property
-    def data_inicio_estudo(self) -> datetime:
-        if self.__data_inicio_estudo is None:
+    @classmethod
+    def get_data_inicio_estudo(cls, uow: AbstractUnitOfWork) -> datetime:
+        name = "data_inicio_estudo"
+        if name not in cls.DECK_FILES:
             logger = Log.log()
-            registro_dt = self.get_dadger().dt
+            registro_dt = cls.get_dadger(uow).dt
             if registro_dt is None:
                 if logger is not None:
                     logger.error("Não foi encontrado registro DT")
@@ -915,30 +1011,32 @@ class OperationSynthetizer:
                 if logger is not None:
                     logger.error("Erro no processamento do registro DT")
                 raise RuntimeError()
-            self.__data_inicio_estudo = datetime(ano, mes, dia)
-        return self.__data_inicio_estudo
+            cls.DECK_FILES[name] = datetime(ano, mes, dia)
+        return cls.DECK_FILES[name]
 
-    @property
-    def patamares(self) -> List[int]:
-        if self.__patamares is None:
-            df = self.get_dec_eco_discr()
-            self.__patamares = df["patamar"].dropna().unique().tolist()
-        return self.__patamares
+    @classmethod
+    def get_patamares(cls, uow: AbstractUnitOfWork) -> List[int]:
+        name = "patamares"
+        if name not in cls.DECK_FILES:
+            df = cls.get_dec_eco_discr(uow)
+            cls.DECK_FILES[name] = df["patamar"].dropna().unique().tolist()
+        return cls.DECK_FILES[name]
 
-    @property
-    def stages_durations(self) -> pd.DataFrame:
+    @classmethod
+    def get_stages_durations(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         """
         - estagio (`int`)
         - data_inicio (`datetime`)
         - data_fim (`datetime`)
         - numero_aberturas (`int`)
         """
-        if self.__stages_durations is None:
-            df = self.get_dec_eco_discr()
+        name = "stages_durations"
+        if name not in cls.DECK_FILES:
+            df = cls.get_dec_eco_discr(uow)
             df = df.loc[df["patamar"].isna()]
             df["duracao_acumulada"] = df["duracao"].cumsum()
             df["data_inicio"] = df.apply(
-                lambda linha: self.data_inicio_estudo
+                lambda linha: cls.get_data_inicio_estudo(uow)
                 + timedelta(
                     hours=df.loc[df["estagio"] < linha["estagio"], "duracao"]
                     .to_numpy()
@@ -951,25 +1049,26 @@ class OperationSynthetizer:
                 + timedelta(hours=linha["duracao"]),
                 axis=1,
             )
-            self.__stages_durations = df[
+            cls.DECK_FILES[name] = df[
                 ["estagio", "data_inicio", "data_fim", "numero_aberturas"]
             ].copy()
-        return self.__stages_durations
+        return cls.DECK_FILES[name]
 
-    @property
-    def stages_start_date(self) -> List[datetime]:
-        return self.stages_durations["data_inicio"].tolist()
+    @classmethod
+    def get_stages_start_date(cls, uow: AbstractUnitOfWork) -> List[datetime]:
+        return cls.get_stages_durations(uow)["data_inicio"].tolist()
 
-    @property
-    def stages_end_date(self) -> List[datetime]:
-        return self.stages_durations["data_fim"].tolist()
+    @classmethod
+    def get_stages_end_date(cls, uow: AbstractUnitOfWork) -> List[datetime]:
+        return cls.get_stages_durations(uow)["data_fim"].tolist()
 
-    @property
-    def earmax_sin(self) -> float:
-        if self.__earmax_sin is None:
-            with self.uow:
+    @classmethod
+    def get_earmax_sin(cls, uow: AbstractUnitOfWork) -> float:
+        name = "earmax_sin"
+        if name not in cls.DECK_FILES:
+            with uow:
                 earmax = (
-                    self.uow.files.get_relato().energia_armazenada_maxima_submercado
+                    uow.files.get_relato().energia_armazenada_maxima_submercado
                 )
             if earmax is None:
                 logger = Log.log()
@@ -978,28 +1077,39 @@ class OperationSynthetizer:
                         "Erro na leitura do bloco de EARMax do relato"
                     )
                 raise RuntimeError()
-            self.__earmax_sin = earmax["energia_armazenada_maxima"].sum()
-        return self.__earmax_sin
+            cls.DECK_FILES[name] = earmax["energia_armazenada_maxima"].sum()
+        return cls.DECK_FILES[name]
 
-    def stub_earmax_sin(self, df: pd.DataFrame) -> pd.DataFrame:
+    @classmethod
+    def stub_earmax_sin(
+        cls, uow: AbstractUnitOfWork, df: pd.DataFrame
+    ) -> pd.DataFrame:
         cols_cenarios = [c for c in df.columns if str(c).isnumeric()]
-        df[cols_cenarios] *= 100.0 / self.earmax_sin
+        df[cols_cenarios] *= 100.0 / cls.get_earmax_sin(uow)
         return df.copy()
 
-    def adiciona_datas_df(self, linha: pd.Series) -> np.ndarray:
+    @classmethod
+    def adiciona_datas_df(
+        cls, linha: pd.Series, uow: AbstractUnitOfWork
+    ) -> np.ndarray:
+        df = cls.get_stages_durations(uow)
         return (
-            self.stages_durations.loc[
-                self.stages_durations["estagio"] == linha["estagio"],
+            df.loc[
+                df["estagio"] == linha["estagio"],
                 ["data_inicio", "data_fim"],
             ]
             .to_numpy()
             .flatten()
         )
 
+    @classmethod
     def processa_dec_oper_sist(
-        self, col: str, patamares: Optional[List[int]] = None
+        cls,
+        uow: AbstractUnitOfWork,
+        col: str,
+        patamares: Optional[List[int]] = None,
     ):
-        df = self.get_dec_oper_sist().copy()
+        df = cls.get_dec_oper_sist(uow).copy()
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
             cols = [
@@ -1046,13 +1156,17 @@ class OperationSynthetizer:
             "valor",
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
+            observed=False,
         ).reset_index()
         df = df.ffill(axis=1)
         df = df.astype({"submercado": str})
         return df.copy()
 
-    def processa_dec_oper_ree(self, col: str):
-        df = self.get_dec_oper_ree().copy()
+    @classmethod
+    def processa_dec_oper_ree(
+        cls, uow: AbstractUnitOfWork, col: str
+    ) -> pd.DataFrame:
+        df = cls.get_dec_oper_ree(uow).copy()
         cols = [
             "ree",
             "estagio",
@@ -1085,15 +1199,20 @@ class OperationSynthetizer:
             "valor",
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
+            observed=False,
         ).reset_index()
         df = df.ffill(axis=1)
         df = df.astype({"ree": str})
         return df.copy()
 
+    @classmethod
     def processa_dec_oper_usih(
-        self, col: str, patamares: Optional[List[int]] = None
+        cls,
+        uow: AbstractUnitOfWork,
+        col: str,
+        patamares: Optional[List[int]] = None,
     ):
-        df = self.get_dec_oper_usih().copy()
+        df = cls.get_dec_oper_usih(uow).copy()
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
             cols = [
@@ -1140,15 +1259,20 @@ class OperationSynthetizer:
             "valor",
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
+            observed=False,
         ).reset_index()
         df = df.ffill(axis=1)
         df = df.astype({"usina": str})
         return df.copy()
 
+    @classmethod
     def processa_dec_oper_usit(
-        self, col: str, patamares: Optional[List[int]] = None
+        cls,
+        uow: AbstractUnitOfWork,
+        col: str,
+        patamares: Optional[List[int]] = None,
     ):
-        df = self.get_dec_oper_usit().copy()
+        df = cls.get_dec_oper_usit(uow).copy()
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
             cols = [
@@ -1195,15 +1319,20 @@ class OperationSynthetizer:
             "valor",
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
+            observed=False,
         ).reset_index()
         df = df.ffill(axis=1)
         df = df.astype({"usina": str})
         return df.copy()
 
+    @classmethod
     def processa_dec_oper_interc(
-        self, col: str, patamares: Optional[List[int]] = None
-    ):
-        df = self.get_dec_oper_interc().copy()
+        cls,
+        uow: AbstractUnitOfWork,
+        col: str,
+        patamares: Optional[List[int]] = None,
+    ) -> pd.DataFrame:
+        df = cls.get_dec_oper_interc(uow).copy()
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
             cols = [
@@ -1261,16 +1390,18 @@ class OperationSynthetizer:
             "valor",
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
+            observed=False,
         ).reset_index()
         df = df.ffill(axis=1)
         df = df.astype({"submercadoDe": str, "submercadoPara": str})
         return df.copy()
 
-    def __agrupa_submercados(self, df: pd.DataFrame) -> pd.DataFrame:
+    @classmethod
+    def _agrupa_submercados(cls, df: pd.DataFrame) -> pd.DataFrame:
         cols_group = [
             c
             for c in df.columns
-            if c in self.IDENTIFICATION_COLUMNS and c != "submercado"
+            if c in cls.IDENTIFICATION_COLUMNS and c != "submercado"
         ]
         df_group = (
             df.groupby(cols_group)
@@ -1280,11 +1411,12 @@ class OperationSynthetizer:
         )
         return df_group
 
-    def __agrupa_uhes(
-        self, df: pd.DataFrame, s: SpatialResolution
+    @classmethod
+    def _agrupa_uhes(
+        cls, uow: AbstractUnitOfWork, df: pd.DataFrame, s: SpatialResolution
     ) -> pd.DataFrame:
-        with self.uow:
-            relato = self.uow.files.get_relato()
+        with uow:
+            relato = uow.files.get_relato()
             uhes_rees = relato.uhes_rees_submercados
             if uhes_rees is None:
                 logger = Log.log()
@@ -1324,7 +1456,7 @@ class OperationSynthetizer:
             cols_group = ["group"] + [
                 c
                 for c in df.columns
-                if c in self.IDENTIFICATION_COLUMNS and c != "usina"
+                if c in cls.IDENTIFICATION_COLUMNS and c != "usina"
             ]
             df_group = df.groupby(cols_group).sum().reset_index()
 
@@ -1341,12 +1473,13 @@ class OperationSynthetizer:
     #  ---------------  DADOS DA OPERACAO DAS UHE   --------------   #
     # Não existe informação de energia vertida no dec_oper_usih.csv,
     # por isso ainda são extraídas do relato.
-    def __processa_bloco_relatorio_operacao_uhe(
-        self, col: str
+    @classmethod
+    def _processa_bloco_relatorio_operacao_uhe(
+        cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
-        with self.uow:
-            r1 = self.uow.files.get_relato()
-            r2 = self.uow.files.get_relato2()
+        with uow:
+            r1 = uow.files.get_relato()
+            r2 = uow.files.get_relato2()
         logger = Log.log()
         df1 = r1.relatorio_operacao_uhe
         if df1 is None:
@@ -1368,19 +1501,20 @@ class OperationSynthetizer:
         for u in usinas_relatorio:
             df1_u = df1.loc[df1["nome_usina"] == u, :]
             df2_u = df2.loc[df2["nome_usina"] == u, :]
-            df_u = self.__process_df_relato1_relato2(df1_u, df2_u, col)
+            df_u = cls._process_df_relato1_relato2(df1_u, df2_u, col, uow)
             cols_df_u = df_u.columns.to_list()
             df_u["usina"] = u
             df_final = pd.concat([df_final, df_u], ignore_index=True)
         df_final = df_final[["usina"] + cols_df_u]
         return df_final
 
-    def __stub_ever_uhes(self):
-        evert = self.__processa_bloco_relatorio_operacao_uhe(
-            "vertimento_turbinavel"
+    @classmethod
+    def _stub_ever_uhes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        evert = cls._processa_bloco_relatorio_operacao_uhe(
+            uow, "vertimento_turbinavel"
         )
-        evernt = self.__processa_bloco_relatorio_operacao_uhe(
-            "vertimento_nao_turbinavel"
+        evernt = cls._processa_bloco_relatorio_operacao_uhe(
+            uow, "vertimento_nao_turbinavel"
         )
         cols_cenarios = [
             c
@@ -1393,10 +1527,13 @@ class OperationSynthetizer:
 
     #  ---------------  DADOS DA OPERACAO GERAL     --------------   #
 
-    def __processa_bloco_relatorio_operacao(self, col: str) -> pd.DataFrame:
-        with self.uow:
-            r1 = self.uow.files.get_relato()
-            r2 = self.uow.files.get_relato2()
+    @classmethod
+    def _processa_bloco_relatorio_operacao(
+        cls, uow: AbstractUnitOfWork, col: str
+    ) -> pd.DataFrame:
+        with uow:
+            r1 = uow.files.get_relato()
+            r2 = uow.files.get_relato2()
         logger = Log.log()
         df1 = r1.relatorio_operacao_custos
         if df1 is None:
@@ -1411,17 +1548,22 @@ class OperationSynthetizer:
             if r2.relatorio_operacao_custos is not None
             else pd.DataFrame(columns=df1.columns)
         )
-        df_s = self.__process_df_relato1_relato2(df1, df2, col)
+        df_s = cls._process_df_relato1_relato2(df1, df2, col, uow)
         return df_s
 
-    def __process_df_relato1_relato2(
-        self, df1: pd.DataFrame, df2: pd.DataFrame, col: str
+    @classmethod
+    def _process_df_relato1_relato2(
+        cls,
+        df1: pd.DataFrame,
+        df2: pd.DataFrame,
+        col: str,
+        uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
         estagios_r1 = df1["estagio"].unique().tolist()
         estagios_r2 = df2["estagio"].unique().tolist()
         estagios = list(set(estagios_r1 + estagios_r2))
-        start_dates = [self.stages_start_date[i - 1] for i in estagios]
-        end_dates = [self.stages_end_date[i - 1] for i in estagios]
+        start_dates = [cls.get_stages_start_date(uow)[i - 1] for i in estagios]
+        end_dates = [cls.get_stages_end_date(uow)[i - 1] for i in estagios]
         scenarios_r1 = df1["cenario"].unique().tolist()
         scenarios_r2 = df2["cenario"].unique().tolist()
         scenarios = list(set(scenarios_r1 + scenarios_r2))
@@ -1446,11 +1588,13 @@ class OperationSynthetizer:
         ]
         return df_processed
 
-    def _default_args(self) -> List[str]:
-        return self.__class__.DEFAULT_OPERATION_SYNTHESIS_ARGS
+    @classmethod
+    def _default_args(cls) -> List[str]:
+        return cls.DEFAULT_OPERATION_SYNTHESIS_ARGS
 
+    @classmethod
     def _process_variable_arguments(
-        self,
+        cls,
         args: List[str],
     ) -> List[OperationSynthesis]:
         args_data = [OperationSynthesis.factory(c) for c in args]
@@ -1463,21 +1607,23 @@ class OperationSynthetizer:
                 return []
         return valid_args
 
+    @classmethod
     def filter_valid_variables(
-        self, variables: List[OperationSynthesis]
+        cls, variables: List[OperationSynthesis]
     ) -> List[OperationSynthesis]:
         logger = Log.log()
         if logger is not None:
             logger.info(f"Variáveis: {variables}")
         return variables
 
+    @classmethod
     def _processa_media(
-        self, df: pd.DataFrame, probabilities: Optional[pd.DataFrame] = None
+        cls, df: pd.DataFrame, probabilities: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         cols_cenarios = [
             col
             for col in df.columns.tolist()
-            if col not in self.IDENTIFICATION_COLUMNS
+            if col not in cls.IDENTIFICATION_COLUMNS
         ]
         cols_cenarios = [c for c in cols_cenarios if c.isnumeric()]
         estagios = [int(e) for e in df["estagio"].unique()]
@@ -1522,13 +1668,14 @@ class OperationSynthetizer:
             df["mean"] = df[cols_cenarios].mean(axis=1)
         return df
 
+    @classmethod
     def _processa_quantis(
-        self, df: pd.DataFrame, quantiles: List[float]
+        cls, df: pd.DataFrame, quantiles: List[float]
     ) -> pd.DataFrame:
         cols_cenarios = [
             col
             for col in df.columns.tolist()
-            if col not in self.IDENTIFICATION_COLUMNS
+            if col not in cls.IDENTIFICATION_COLUMNS
         ]
         for q in quantiles:
             if q == 0:
@@ -1542,16 +1689,17 @@ class OperationSynthetizer:
             df[label] = df[cols_cenarios].quantile(q, axis=1)
         return df
 
+    @classmethod
     def _postprocess(
-        self, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
+        cls, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
-        df = self._processa_quantis(df, [0.05 * i for i in range(21)])
-        df = self._processa_media(df, probabilities)
+        df = cls._processa_quantis(df, [0.05 * i for i in range(21)])
+        df = cls._processa_media(df, probabilities)
         cols_not_scenarios = [
-            c for c in df.columns if c in self.IDENTIFICATION_COLUMNS
+            c for c in df.columns if c in cls.IDENTIFICATION_COLUMNS
         ]
         cols_scenarios = [
-            c for c in df.columns if c not in self.IDENTIFICATION_COLUMNS
+            c for c in df.columns if c not in cls.IDENTIFICATION_COLUMNS
         ]
         df = pd.melt(
             df,
@@ -1562,27 +1710,27 @@ class OperationSynthetizer:
         )
         return df
 
-    def synthetize(self, variables: List[str], uow: AbstractUnitOfWork):
-        self.__uow = uow
+    @classmethod
+    def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
         logger = Log.log()
         if len(variables) == 0:
-            variables = self._default_args()
-        synthesis_variables = self._process_variable_arguments(variables)
-        valid_synthesis = self.filter_valid_variables(synthesis_variables)
+            variables = cls._default_args()
+        synthesis_variables = cls._process_variable_arguments(variables)
+        valid_synthesis = cls.filter_valid_variables(synthesis_variables)
         for s in valid_synthesis:
             filename = str(s)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
             try:
-                df = self.__rules[
+                df = cls._get_rule(
                     (s.variable, s.spatial_resolution, s.temporal_resolution)
-                ]()
+                )(uow)
             except Exception:
                 print_exc()
                 continue
             if df is None:
                 continue
-            with self.uow:
-                probs = self.uow.export.read_df(self.PROBABILITIES_FILE)
-                df = self._postprocess(df, probs)
-                self.uow.export.synthetize_df(df, filename)
+            with uow:
+                probs = uow.export.read_df(cls.PROBABILITIES_FILE)
+                df = cls._postprocess(df, probs)
+                uow.export.synthetize_df(df, filename)
