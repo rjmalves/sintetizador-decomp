@@ -2,9 +2,8 @@ from typing import Dict, List, Tuple, Optional, Any, Callable
 import pandas as pd  # type: ignore
 import numpy as np
 from traceback import print_exc
-from datetime import datetime, timedelta
-from idecomp.decomp.dadger import Dadger
 
+from sintetizador.services.deck.deck import Deck
 from sintetizador.services.unitofwork import AbstractUnitOfWork
 from sintetizador.utils.log import Log
 from sintetizador.model.operation.variable import Variable
@@ -110,26 +109,6 @@ class OperationSynthetizer:
 
     DECK_FILES: Dict[str, Any] = {}
 
-    def __init__(self) -> None:
-        self.__uow: Optional[AbstractUnitOfWork] = None
-        self.__patamares: Optional[List[int]] = None
-        self.__stages_durations: Optional[pd.DataFrame] = None
-        self.__earmax_sin: Optional[float] = None
-        self.__dadger: Optional[Dadger] = None
-        self.__data_inicio_estudo: Optional[datetime] = None
-        self.__dec_eco_discr: Optional[pd.DataFrame] = None
-        self.__dec_oper_ree: Optional[pd.DataFrame] = None
-        self.__dec_oper_usih: Optional[pd.DataFrame] = None
-        self.__dec_oper_usit: Optional[pd.DataFrame] = None
-        self.__dec_oper_gnl: Optional[pd.DataFrame] = None
-        self.__dec_oper_interc: Optional[pd.DataFrame] = None
-
-    @property
-    def uow(self) -> AbstractUnitOfWork:
-        if self.__uow is None:
-            raise RuntimeError()
-        return self.__uow
-
     @classmethod
     def _get_rule(
         cls, synthesis: Tuple[Variable, SpatialResolution, TemporalResolution]
@@ -148,7 +127,7 @@ class OperationSynthetizer:
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "cmo", cls.get_patamares(uow)
+                uow, "cmo", Deck.blocks(uow)
             ),
             (
                 Variable.CUSTO_GERACAO_TERMICA,
@@ -271,7 +250,7 @@ class OperationSynthetizer:
             ): lambda uow: cls.processa_dec_oper_sist(
                 uow,
                 "geracao_termica_total_MW",
-                cls.get_patamares(uow),
+                Deck.blocks(uow),
             ),
             (
                 Variable.GERACAO_TERMICA,
@@ -291,7 +270,7 @@ class OperationSynthetizer:
                 cls.processa_dec_oper_sist(
                     uow,
                     "geracao_termica_total_MW",
-                    cls.get_patamares(uow),
+                    Deck.blocks(uow),
                 )
             ),
             (
@@ -306,7 +285,7 @@ class OperationSynthetizer:
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "geracao_hidro_com_itaipu_MW", cls.get_patamares(uow)
+                uow, "geracao_hidro_com_itaipu_MW", Deck.blocks(uow)
             ),
             (
                 Variable.GERACAO_HIDRAULICA,
@@ -323,7 +302,7 @@ class OperationSynthetizer:
                 cls.processa_dec_oper_sist(
                     uow,
                     "geracao_hidro_com_itaipu_MW",
-                    cls.get_patamares(uow),
+                    Deck.blocks(uow),
                 ),
             ),
             (
@@ -341,7 +320,7 @@ class OperationSynthetizer:
             ): lambda uow: cls.processa_dec_oper_sist(
                 uow,
                 "geracao_eolica_MW",
-                cls.get_patamares(uow),
+                Deck.blocks(uow),
             ),
             (
                 Variable.GERACAO_EOLICA,
@@ -361,7 +340,7 @@ class OperationSynthetizer:
                 cls.processa_dec_oper_sist(
                     uow,
                     "geracao_eolica_MW",
-                    cls.get_patamares(uow),
+                    Deck.blocks(uow),
                 ),
             ),
             (
@@ -396,7 +375,7 @@ class OperationSynthetizer:
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls._agrupa_submercados(
                 cls.processa_dec_oper_sist(
-                    uow, "demanda_MW", cls.get_patamares(uow)
+                    uow, "demanda_MW", Deck.blocks(uow)
                 ),
             ),
             (
@@ -411,7 +390,7 @@ class OperationSynthetizer:
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "demanda_MW", cls.get_patamares(uow)
+                uow, "demanda_MW", Deck.blocks(uow)
             ),
             (
                 Variable.MERCADO,
@@ -424,7 +403,7 @@ class OperationSynthetizer:
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls._agrupa_submercados(
                 cls.processa_dec_oper_sist(
-                    uow, "demanda_liquida_MW", cls.get_patamares(uow)
+                    uow, "demanda_liquida_MW", Deck.blocks(uow)
                 )
             ),
             (
@@ -439,7 +418,7 @@ class OperationSynthetizer:
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "demanda_liquida_MW", cls.get_patamares(uow)
+                uow, "demanda_liquida_MW", Deck.blocks(uow)
             ),
             (
                 Variable.MERCADO_LIQUIDO,
@@ -453,9 +432,7 @@ class OperationSynthetizer:
                 SpatialResolution.SISTEMA_INTERLIGADO,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow, "deficit_MW", cls.get_patamares(uow)
-                )
+                cls.processa_dec_oper_sist(uow, "deficit_MW", Deck.blocks(uow))
             ),
             (
                 Variable.DEFICIT,
@@ -469,7 +446,7 @@ class OperationSynthetizer:
                 SpatialResolution.SUBMERCADO,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "deficit_MW", cls.get_patamares(uow)
+                uow, "deficit_MW", Deck.blocks(uow)
             ),
             (
                 Variable.DEFICIT,
@@ -584,7 +561,7 @@ class OperationSynthetizer:
                 SpatialResolution.USINA_HIDROELETRICA,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls.processa_dec_oper_usih(
-                uow, "geracao_MW", cls.get_patamares(uow)
+                uow, "geracao_MW", Deck.blocks(uow)
             ),
             (
                 Variable.GERACAO_HIDRAULICA,
@@ -598,7 +575,7 @@ class OperationSynthetizer:
             ): lambda uow: cls._agrupa_uhes(
                 uow,
                 cls.processa_dec_oper_usih(
-                    uow, "geracao_MW", cls.get_patamares(uow)
+                    uow, "geracao_MW", Deck.blocks(uow)
                 ),
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
             ),
@@ -742,7 +719,7 @@ class OperationSynthetizer:
                 SpatialResolution.USINA_TERMELETRICA,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls.processa_dec_oper_usit(
-                uow, "geracao_MW", cls.get_patamares(uow)
+                uow, "geracao_MW", Deck.blocks(uow)
             ),
             (
                 Variable.GERACAO_TERMICA,
@@ -766,341 +743,19 @@ class OperationSynthetizer:
                 SpatialResolution.PAR_SUBMERCADOS,
                 TemporalResolution.PATAMAR,
             ): lambda uow: cls.processa_dec_oper_interc(
-                uow, "intercambio_origem_MW", cls.get_patamares(uow)
+                uow, "intercambio_origem_MW", Deck.blocks(uow)
             ),
         }
 
         return _rules[synthesis]
 
     @classmethod
-    def get_dadger(cls, uow: AbstractUnitOfWork) -> Dadger:
-        name = "dadger"
-        if name not in cls.DECK_FILES:
-            with uow:
-                cls.DECK_FILES[name] = uow.files.get_dadger()
-        return cls.DECK_FILES[name]
-
-    @classmethod
-    def get_dec_eco_discr(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        name = "dec_eco_discr"
-        if name not in cls.DECK_FILES:
-            with uow:
-                arq_discr = uow.files.get_dec_eco_discr()
-            df = arq_discr.tabela
-            if df is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error(
-                        "Erro na leitura do arquivo dec_eco_discr.csv"
-                    )
-                raise RuntimeError()
-            cls.DECK_FILES[name] = df
-        return cls.DECK_FILES[name].copy()
-
-    @classmethod
-    def get_dec_oper_sist(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        name = "dec_oper_sist"
-        if name not in cls.DECK_FILES:
-            with uow:
-                arq_oper = uow.files.get_dec_oper_sist()
-            df = arq_oper.tabela
-            versao = arq_oper.versao
-            if versao is not None:
-                if versao <= "31.0.2":
-                    df = cls._stub_cenarios_nos_v31_0_2(df)
-            if df is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error(
-                        "Erro na leitura do arquivo dec_oper_sist.csv"
-                    )
-                raise RuntimeError()
-            df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: cls.adiciona_datas_df(linha, uow),
-                axis=1,
-                result_type="expand",
-            )
-            df["geracao_termica_total_MW"] = (
-                df["geracao_termica_MW"] + df["geracao_termica_antecipada_MW"]
-            )
-            df["itaipu_60MW"] = df["itaipu_60MW"].fillna(0.0)
-            df["geracao_hidro_com_itaipu_MW"] = (
-                df["geracao_hidroeletrica_MW"] + df["itaipu_60MW"]
-            )
-            df["demanda_liquida_MW"] = (
-                df["demanda_MW"] - df["geracao_pequenas_usinas_MW"]
-            )
-            cls.DECK_FILES[name] = df
-        return cls.DECK_FILES[name].copy()
-
-    @classmethod
-    def get_dec_oper_ree(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        name = "dec_oper_ree"
-        if name not in cls.DECK_FILES:
-            with uow:
-                arq_oper = uow.files.get_dec_oper_ree()
-            df = arq_oper.tabela
-            versao = arq_oper.versao
-            if versao is not None:
-                if versao <= "31.0.2":
-                    df = cls._stub_cenarios_nos_v31_0_2(df)
-            if df is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error("Erro na leitura do arquivo dec_oper_ree.csv")
-                raise RuntimeError()
-            df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: cls.adiciona_datas_df(linha, uow),
-                axis=1,
-                result_type="expand",
-            )
-            cls.DECK_FILES[name] = df
-        return cls.DECK_FILES[name].copy()
-
-    @classmethod
-    def get_dec_oper_usih(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        name = "dec_oper_usih"
-        if name not in cls.DECK_FILES:
-            with uow:
-                arq_oper = uow.files.get_dec_oper_usih()
-            df = arq_oper.tabela
-            versao = arq_oper.versao
-            if versao is not None:
-                if versao <= "31.0.2":
-                    df = cls._stub_cenarios_nos_v31_0_2(df)
-            if df is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error(
-                        "Erro na leitura do arquivo dec_oper_usih.csv"
-                    )
-                raise RuntimeError()
-            df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: cls.adiciona_datas_df(linha, uow),
-                axis=1,
-                result_type="expand",
-            )
-            cls.DECK_FILES[name] = df
-        return cls.DECK_FILES[name].copy()
-
-    @classmethod
-    def get_dec_oper_usit(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        name = "dec_oper_usit"
-        if name not in cls.DECK_FILES:
-            with uow:
-                arq_oper = uow.files.get_dec_oper_usit()
-            df = arq_oper.tabela
-            versao = arq_oper.versao
-            if versao is not None:
-                if versao <= "31.0.2":
-                    df = cls._stub_cenarios_nos_v31_0_2(df)
-            if df is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error(
-                        "Erro na leitura do arquivo dec_oper_usit.csv"
-                    )
-                raise RuntimeError()
-            df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: cls.adiciona_datas_df(linha, uow),
-                axis=1,
-                result_type="expand",
-            )
-            df["geracao_percentual_maxima"] = (
-                100 * df["geracao_MW"] / df["geracao_maxima_MW"]
-            )
-            filtro = df["geracao_maxima_MW"] != df["geracao_minima_MW"]
-            df.loc[
-                filtro,
-                "geracao_percentual_flexivel",
-            ] = (
-                100
-                * (
-                    df.loc[
-                        filtro,
-                        "geracao_MW",
-                    ]
-                    - df.loc[
-                        filtro,
-                        "geracao_minima_MW",
-                    ]
-                )
-                / (
-                    df.loc[
-                        filtro,
-                        "geracao_maxima_MW",
-                    ]
-                    - df.loc[filtro, "geracao_minima_MW"]
-                )
-            )
-            df.loc[~filtro, "geracao_percentual_flexivel"] = 100.0
-            cls.DECK_FILES[name] = df
-        return cls.DECK_FILES[name]
-
-    @classmethod
-    def get_dec_oper_gnl(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        name = "dec_oper_gnl"
-        if name not in cls.DECK_FILES:
-            with uow:
-                arq_oper = uow.files.get_dec_oper_gnl()
-            df = arq_oper.tabela
-            versao = arq_oper.versao
-            if versao is not None:
-                if versao <= "31.0.2":
-                    df = cls._stub_cenarios_nos_v31_0_2(df)
-            if df is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error("Erro na leitura do arquivo dec_oper_gnl.csv")
-                raise RuntimeError()
-            df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: cls.adiciona_datas_df(linha, uow),
-                axis=1,
-                result_type="expand",
-            )
-            cls.DECK_FILES[name] = df
-        return cls.DECK_FILES[name]
-
-    @classmethod
-    def get_dec_oper_interc(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        name = "dec_oper_interc"
-        if name not in cls.DECK_FILES:
-            with uow:
-                arq_oper = uow.files.get_dec_oper_interc()
-            df = arq_oper.tabela
-            versao = arq_oper.versao
-            if versao is not None:
-                if versao <= "31.0.2":
-                    df = cls._stub_cenarios_nos_v31_0_2(df)
-            if df is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error(
-                        "Erro na leitura do arquivo dec_oper_interc.csv"
-                    )
-                raise RuntimeError()
-            df[["dataInicio", "dataFim"]] = df.apply(
-                lambda linha: cls.adiciona_datas_df(linha, uow),
-                axis=1,
-                result_type="expand",
-            )
-            cls.DECK_FILES[name] = df
-        return cls.DECK_FILES[name]
-
-    @staticmethod
-    def _stub_cenarios_nos_v31_0_2(df: pd.DataFrame) -> pd.DataFrame:
-        estagios = df["estagio"].unique().tolist()
-        # Para todos os estágios antes do último, fixa cenário em 1
-        df.loc[df["estagio"].isin(estagios[:-1]), "cenario"] = 1
-        # Subtrai dos cenários o valor de n_semanas
-        df.loc[df["estagio"] == estagios[-1], "cenario"] -= len(estagios) - 1
-        return df.copy()
-
-    @classmethod
-    def get_data_inicio_estudo(cls, uow: AbstractUnitOfWork) -> datetime:
-        name = "data_inicio_estudo"
-        if name not in cls.DECK_FILES:
-            logger = Log.log()
-            registro_dt = cls.get_dadger(uow).dt
-            if registro_dt is None:
-                if logger is not None:
-                    logger.error("Não foi encontrado registro DT")
-                raise RuntimeError()
-            ano, mes, dia = registro_dt.ano, registro_dt.mes, registro_dt.dia
-            if ano is None or mes is None or dia is None:
-                if logger is not None:
-                    logger.error("Erro no processamento do registro DT")
-                raise RuntimeError()
-            cls.DECK_FILES[name] = datetime(ano, mes, dia)
-        return cls.DECK_FILES[name]
-
-    @classmethod
-    def get_patamares(cls, uow: AbstractUnitOfWork) -> List[int]:
-        name = "patamares"
-        if name not in cls.DECK_FILES:
-            df = cls.get_dec_eco_discr(uow)
-            cls.DECK_FILES[name] = df["patamar"].dropna().unique().tolist()
-        return cls.DECK_FILES[name]
-
-    @classmethod
-    def get_stages_durations(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        """
-        - estagio (`int`)
-        - data_inicio (`datetime`)
-        - data_fim (`datetime`)
-        - numero_aberturas (`int`)
-        """
-        name = "stages_durations"
-        if name not in cls.DECK_FILES:
-            df = cls.get_dec_eco_discr(uow)
-            df = df.loc[df["patamar"].isna()]
-            df["duracao_acumulada"] = df["duracao"].cumsum()
-            df["data_inicio"] = df.apply(
-                lambda linha: cls.get_data_inicio_estudo(uow)
-                + timedelta(
-                    hours=df.loc[df["estagio"] < linha["estagio"], "duracao"]
-                    .to_numpy()
-                    .sum()
-                ),
-                axis=1,
-            )
-            df["data_fim"] = df.apply(
-                lambda linha: linha["data_inicio"]
-                + timedelta(hours=linha["duracao"]),
-                axis=1,
-            )
-            cls.DECK_FILES[name] = df[
-                ["estagio", "data_inicio", "data_fim", "numero_aberturas"]
-            ].copy()
-        return cls.DECK_FILES[name]
-
-    @classmethod
-    def get_stages_start_date(cls, uow: AbstractUnitOfWork) -> List[datetime]:
-        return cls.get_stages_durations(uow)["data_inicio"].tolist()
-
-    @classmethod
-    def get_stages_end_date(cls, uow: AbstractUnitOfWork) -> List[datetime]:
-        return cls.get_stages_durations(uow)["data_fim"].tolist()
-
-    @classmethod
-    def get_earmax_sin(cls, uow: AbstractUnitOfWork) -> float:
-        name = "earmax_sin"
-        if name not in cls.DECK_FILES:
-            with uow:
-                earmax = (
-                    uow.files.get_relato().energia_armazenada_maxima_submercado
-                )
-            if earmax is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error(
-                        "Erro na leitura do bloco de EARMax do relato"
-                    )
-                raise RuntimeError()
-            cls.DECK_FILES[name] = earmax["energia_armazenada_maxima"].sum()
-        return cls.DECK_FILES[name]
-
-    @classmethod
     def stub_earmax_sin(
         cls, uow: AbstractUnitOfWork, df: pd.DataFrame
     ) -> pd.DataFrame:
         cols_cenarios = [c for c in df.columns if str(c).isnumeric()]
-        df[cols_cenarios] *= 100.0 / cls.get_earmax_sin(uow)
+        df[cols_cenarios] *= 100.0 / Deck.earmax_sin(uow)
         return df.copy()
-
-    @classmethod
-    def adiciona_datas_df(
-        cls, linha: pd.Series, uow: AbstractUnitOfWork
-    ) -> np.ndarray:
-        df = cls.get_stages_durations(uow)
-        return (
-            df.loc[
-                df["estagio"] == linha["estagio"],
-                ["data_inicio", "data_fim"],
-            ]
-            .to_numpy()
-            .flatten()
-        )
 
     @classmethod
     def processa_dec_oper_sist(
@@ -1109,7 +764,7 @@ class OperationSynthetizer:
         col: str,
         patamares: Optional[List[int]] = None,
     ):
-        df = cls.get_dec_oper_sist(uow).copy()
+        df = Deck.dec_oper_sist(uow)
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
             cols = [
@@ -1166,7 +821,7 @@ class OperationSynthetizer:
     def processa_dec_oper_ree(
         cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
-        df = cls.get_dec_oper_ree(uow).copy()
+        df = Deck.dec_oper_ree(uow)
         cols = [
             "ree",
             "estagio",
@@ -1212,7 +867,7 @@ class OperationSynthetizer:
         col: str,
         patamares: Optional[List[int]] = None,
     ):
-        df = cls.get_dec_oper_usih(uow).copy()
+        df = Deck.dec_oper_usih(uow)
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
             cols = [
@@ -1272,7 +927,7 @@ class OperationSynthetizer:
         col: str,
         patamares: Optional[List[int]] = None,
     ):
-        df = cls.get_dec_oper_usit(uow).copy()
+        df = Deck.dec_oper_usit(uow)
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
             cols = [
@@ -1332,7 +987,7 @@ class OperationSynthetizer:
         col: str,
         patamares: Optional[List[int]] = None,
     ) -> pd.DataFrame:
-        df = cls.get_dec_oper_interc(uow).copy()
+        df = Deck.dec_oper_interc(uow)
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
             cols = [
@@ -1415,60 +1070,59 @@ class OperationSynthetizer:
     def _agrupa_uhes(
         cls, uow: AbstractUnitOfWork, df: pd.DataFrame, s: SpatialResolution
     ) -> pd.DataFrame:
-        with uow:
-            relato = uow.files.get_relato()
-            uhes_rees = relato.uhes_rees_submercados
-            if uhes_rees is None:
-                logger = Log.log()
-                if logger is not None:
-                    logger.error(
-                        "Erro na leitura da relação entre UHEs"
-                        + " e REEs no relato."
-                    )
-                raise RuntimeError()
+        relato = Deck.relato(uow)
+        uhes_rees = relato.uhes_rees_submercados
+        if uhes_rees is None:
+            logger = Log.log()
+            if logger is not None:
+                logger.error(
+                    "Erro na leitura da relação entre UHEs"
+                    + " e REEs no relato."
+                )
+            raise RuntimeError()
+        df["group"] = df.apply(
+            lambda linha: int(
+                uhes_rees.loc[
+                    uhes_rees["nome_usina"] == linha["usina"], "codigo_ree"
+                ].iloc[0]
+            ),
+            axis=1,
+        )
+
+        if s == SpatialResolution.RESERVATORIO_EQUIVALENTE:
             df["group"] = df.apply(
-                lambda linha: int(
-                    uhes_rees.loc[
-                        uhes_rees["nome_usina"] == linha["usina"], "codigo_ree"
-                    ].iloc[0]
-                ),
+                lambda linha: uhes_rees.loc[
+                    uhes_rees["codigo_ree"] == linha["group"], "nome_ree"
+                ].iloc[0],
                 axis=1,
             )
+        elif s == SpatialResolution.SUBMERCADO:
+            df["group"] = df.apply(
+                lambda linha: uhes_rees.loc[
+                    uhes_rees["codigo_ree"] == linha["group"],
+                    "nome_submercado",
+                ].iloc[0],
+                axis=1,
+            )
+        elif s == SpatialResolution.SISTEMA_INTERLIGADO:
+            df["group"] = 1
 
-            if s == SpatialResolution.RESERVATORIO_EQUIVALENTE:
-                df["group"] = df.apply(
-                    lambda linha: uhes_rees.loc[
-                        uhes_rees["codigo_ree"] == linha["group"], "nome_ree"
-                    ].iloc[0],
-                    axis=1,
-                )
-            elif s == SpatialResolution.SUBMERCADO:
-                df["group"] = df.apply(
-                    lambda linha: uhes_rees.loc[
-                        uhes_rees["codigo_ree"] == linha["group"],
-                        "nome_submercado",
-                    ].iloc[0],
-                    axis=1,
-                )
-            elif s == SpatialResolution.SISTEMA_INTERLIGADO:
-                df["group"] = 1
+        cols_group = ["group"] + [
+            c
+            for c in df.columns
+            if c in cls.IDENTIFICATION_COLUMNS and c != "usina"
+        ]
+        df_group = df.groupby(cols_group).sum().reset_index()
 
-            cols_group = ["group"] + [
-                c
-                for c in df.columns
-                if c in cls.IDENTIFICATION_COLUMNS and c != "usina"
-            ]
-            df_group = df.groupby(cols_group).sum().reset_index()
-
-            group_name = {
-                SpatialResolution.RESERVATORIO_EQUIVALENTE: "ree",
-                SpatialResolution.SUBMERCADO: "submercado",
-            }
-            if s == SpatialResolution.SISTEMA_INTERLIGADO:
-                df_group = df_group.drop(columns=["group"])
-            else:
-                df_group = df_group.rename(columns={"group": group_name[s]})
-            return df_group
+        group_name = {
+            SpatialResolution.RESERVATORIO_EQUIVALENTE: "ree",
+            SpatialResolution.SUBMERCADO: "submercado",
+        }
+        if s == SpatialResolution.SISTEMA_INTERLIGADO:
+            df_group = df_group.drop(columns=["group"])
+        else:
+            df_group = df_group.rename(columns={"group": group_name[s]})
+        return df_group
 
     #  ---------------  DADOS DA OPERACAO DAS UHE   --------------   #
     # Não existe informação de energia vertida no dec_oper_usih.csv,
@@ -1477,9 +1131,8 @@ class OperationSynthetizer:
     def _processa_bloco_relatorio_operacao_uhe(
         cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
-        with uow:
-            r1 = uow.files.get_relato()
-            r2 = uow.files.get_relato2()
+        r1 = Deck.relato(uow)
+        r2 = Deck.relato2(uow)
         logger = Log.log()
         df1 = r1.relatorio_operacao_uhe
         if df1 is None:
@@ -1531,9 +1184,8 @@ class OperationSynthetizer:
     def _processa_bloco_relatorio_operacao(
         cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
-        with uow:
-            r1 = uow.files.get_relato()
-            r2 = uow.files.get_relato2()
+        r1 = Deck.relato(uow)
+        r2 = Deck.relato2(uow)
         logger = Log.log()
         df1 = r1.relatorio_operacao_custos
         if df1 is None:
@@ -1562,8 +1214,8 @@ class OperationSynthetizer:
         estagios_r1 = df1["estagio"].unique().tolist()
         estagios_r2 = df2["estagio"].unique().tolist()
         estagios = list(set(estagios_r1 + estagios_r2))
-        start_dates = [cls.get_stages_start_date(uow)[i - 1] for i in estagios]
-        end_dates = [cls.get_stages_end_date(uow)[i - 1] for i in estagios]
+        start_dates = [Deck.stages_start_date(uow)[i - 1] for i in estagios]
+        end_dates = [Deck.stages_end_date(uow)[i - 1] for i in estagios]
         scenarios_r1 = df1["cenario"].unique().tolist()
         scenarios_r2 = df2["cenario"].unique().tolist()
         scenarios = list(set(scenarios_r1 + scenarios_r2))
