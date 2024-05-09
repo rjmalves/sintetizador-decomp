@@ -3,15 +3,15 @@ from os import chdir, curdir
 from typing import Dict, Type
 from pathlib import Path
 
-from sintetizador.model.settings import Settings
-from sintetizador.adapters.repository.files import (
+from app.model.settings import Settings
+from app.adapters.repository.files import (
     AbstractFilesRepository,
     RawFilesRepository,
 )
-from sintetizador.adapters.repository.export import (
+from app.adapters.repository.export import (
     AbstractExportRepository,
 )
-from sintetizador.adapters.repository.export import (
+from app.adapters.repository.export import (
     factory as export_factory,
 )
 

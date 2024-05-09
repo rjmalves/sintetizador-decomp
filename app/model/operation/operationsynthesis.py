@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
-from sintetizador.model.operation.variable import Variable
-from sintetizador.model.operation.spatialresolution import SpatialResolution
-from sintetizador.model.operation.temporalresolution import TemporalResolution
+from app.model.operation.variable import Variable
+from app.model.operation.spatialresolution import SpatialResolution
+from app.model.operation.temporalresolution import TemporalResolution
 
 
 @dataclass

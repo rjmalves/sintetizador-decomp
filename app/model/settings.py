@@ -1,4 +1,4 @@
-from sintetizador.utils.singleton import Singleton
+from app.utils.singleton import Singleton
 from os import getenv
 
 

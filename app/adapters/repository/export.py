@@ -4,7 +4,7 @@ import pandas as pd  # type: ignore
 import os
 import pathlib
 
-from sintetizador.utils.log import Log
+from app.utils.log import Log
 
 
 class AbstractExportRepository(ABC):

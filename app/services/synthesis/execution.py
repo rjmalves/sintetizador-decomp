@@ -5,7 +5,7 @@ import numpy as np
 import socket
 import pathlib
 
-from sintetizador.model.execution.inviabilidade import (
+from app.model.execution.inviabilidade import (
     Inviabilidade,
     InviabilidadeTI,
     InviabilidadeEV,
@@ -18,12 +18,12 @@ from sintetizador.model.execution.inviabilidade import (
     InviabilidadeFP,
     InviabilidadeDeficit,
 )
-from sintetizador.services.deck.deck import Deck
-from sintetizador.services.unitofwork import AbstractUnitOfWork
-from sintetizador.utils.log import Log
-from sintetizador.utils.fs import set_directory
-from sintetizador.model.execution.variable import Variable
-from sintetizador.model.execution.executionsynthesis import ExecutionSynthesis
+from app.services.deck.deck import Deck
+from app.services.unitofwork import AbstractUnitOfWork
+from app.utils.log import Log
+from app.utils.fs import set_directory
+from app.model.execution.variable import Variable
+from app.model.execution.executionsynthesis import ExecutionSynthesis
 
 
 class ExecutionSynthetizer:

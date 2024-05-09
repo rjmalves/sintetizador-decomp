@@ -1,4 +1,4 @@
-from sintetizador.adapters.repository.export import factory
+from app.adapters.repository.export import factory
 import pandas as pd
 from unittest.mock import patch
 

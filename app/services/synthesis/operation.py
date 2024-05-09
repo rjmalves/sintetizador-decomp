@@ -3,13 +3,13 @@ import pandas as pd  # type: ignore
 import numpy as np
 from traceback import print_exc
 
-from sintetizador.services.deck.deck import Deck
-from sintetizador.services.unitofwork import AbstractUnitOfWork
-from sintetizador.utils.log import Log
-from sintetizador.model.operation.variable import Variable
-from sintetizador.model.operation.spatialresolution import SpatialResolution
-from sintetizador.model.operation.temporalresolution import TemporalResolution
-from sintetizador.model.operation.operationsynthesis import OperationSynthesis
+from app.services.deck.deck import Deck
+from app.services.unitofwork import AbstractUnitOfWork
+from app.utils.log import Log
+from app.model.operation.variable import Variable
+from app.model.operation.spatialresolution import SpatialResolution
+from app.model.operation.temporalresolution import TemporalResolution
+from app.model.operation.operationsynthesis import OperationSynthesis
 
 
 class OperationSynthetizer:

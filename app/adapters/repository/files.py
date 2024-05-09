@@ -22,9 +22,9 @@ from idecomp.decomp.dec_oper_sist import DecOperSist
 from idecomp.decomp.dec_oper_interc import DecOperInterc
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
 
-from sintetizador.model.settings import Settings
-from sintetizador.utils.encoding import converte_codificacao
-from sintetizador.utils.log import Log
+from app.model.settings import Settings
+from app.utils.encoding import converte_codificacao
+from app.utils.log import Log
 
 
 import platform

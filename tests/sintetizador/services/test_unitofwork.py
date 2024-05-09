@@ -1,4 +1,4 @@
-from sintetizador.services.unitofwork import factory
+from app.services.unitofwork import factory
 import pandas as pd
 from unittest.mock import patch
 from tests.conftest import DECK_TEST_DIR

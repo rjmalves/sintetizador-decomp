@@ -4,7 +4,7 @@ import pandas as pd  # type: ignore
 from typing import Dict, Callable
 from idecomp.decomp.hidr import Hidr
 from idecomp.decomp.relato import Relato
-from sintetizador.utils.log import Log
+from app.utils.log import Log
 
 
 class Inviabilidade:

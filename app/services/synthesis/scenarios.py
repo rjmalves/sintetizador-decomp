@@ -1,11 +1,11 @@
 from typing import Callable, Dict, List
 import pandas as pd  # type: ignore
 
-from sintetizador.services.unitofwork import AbstractUnitOfWork
-from sintetizador.utils.log import Log
-from sintetizador.model.scenarios.variable import Variable
-from sintetizador.model.scenarios.scenariosynthesis import ScenarioSynthesis
-from sintetizador.services.deck.deck import Deck
+from app.services.unitofwork import AbstractUnitOfWork
+from app.utils.log import Log
+from app.model.scenarios.variable import Variable
+from app.model.scenarios.scenariosynthesis import ScenarioSynthesis
+from app.services.deck.deck import Deck
 
 
 class ScenarioSynthetizer:

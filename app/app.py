@@ -2,8 +2,8 @@ import click
 import os
 import sintetizador.domain.commands as commands
 import sintetizador.services.handlers as handlers
-from sintetizador.services.unitofwork import factory
-from sintetizador.utils.log import Log
+from app.services.unitofwork import factory
+from app.utils.log import Log
 
 
 @click.group()

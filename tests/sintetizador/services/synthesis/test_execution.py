@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
-from sintetizador.services.unitofwork import factory
-from sintetizador.services.synthesis.execution import ExecutionSynthetizer
+from app.services.unitofwork import factory
+from app.services.synthesis.execution import ExecutionSynthetizer
 import numpy as np
 from tests.conftest import DECK_TEST_DIR
 
@@ -11,7 +11,7 @@ synthetizer = ExecutionSynthetizer()
 def test_sintese_programa(test_settings):
     m = MagicMock(lambda df, filename: df)
     with patch(
-        "sintetizador.adapters.repository.export.ParquetExportRepository.synthetize_df",
+        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
         new=m,
     ):
         synthetizer.synthetize(["PROGRAMA"], uow)
@@ -23,7 +23,7 @@ def test_sintese_programa(test_settings):
 def test_sintese_convergencia(test_settings):
     m = MagicMock(lambda df, filename: df)
     with patch(
-        "sintetizador.adapters.repository.export.ParquetExportRepository.synthetize_df",
+        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
         new=m,
     ):
         synthetizer.synthetize(["CONVERGENCIA"], uow)
@@ -46,7 +46,7 @@ def test_sintese_convergencia(test_settings):
 def test_sintese_tempo(test_settings):
     m = MagicMock(lambda df, filename: df)
     with patch(
-        "sintetizador.adapters.repository.export.ParquetExportRepository.synthetize_df",
+        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
         new=m,
     ):
         synthetizer.synthetize(["TEMPO"], uow)
@@ -60,7 +60,7 @@ def test_sintese_tempo(test_settings):
 def test_sintese_custos(test_settings):
     m = MagicMock(lambda df, filename: df)
     with patch(
-        "sintetizador.adapters.repository.export.ParquetExportRepository.synthetize_df",
+        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
         new=m,
     ):
         synthetizer.synthetize(["CUSTOS"], uow)
@@ -74,7 +74,7 @@ def test_sintese_custos(test_settings):
 def test_sintese_inviabilidades(test_settings):
     m = MagicMock(lambda df, filename: df)
     with patch(
-        "sintetizador.adapters.repository.export.ParquetExportRepository.synthetize_df",
+        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
         new=m,
     ):
         synthetizer.synthetize(["INVIABILIDADES"], uow)

@@ -1,4 +1,4 @@
-from sintetizador.utils.terminal import run_terminal_retry
+from app.utils.terminal import run_terminal_retry
 import platform
 
 TIMEOUT_DEFAULT = 10.0

@@ -1,5 +1,5 @@
-from sintetizador.app import app
-from sintetizador.utils.log import Log
+from app.app import app
+from app.utils.log import Log
 import os
 import pathlib
 

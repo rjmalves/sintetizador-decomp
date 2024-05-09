@@ -1,4 +1,4 @@
-from sintetizador.adapters.repository.files import factory
+from app.adapters.repository.files import factory
 
 
 import pandas as pd

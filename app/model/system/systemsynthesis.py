@@ -1,17 +1,17 @@
 from dataclasses import dataclass
 from typing import Optional
-from sintetizador.model.execution.variable import Variable
+from app.model.system.variable import Variable
 
 
 @dataclass
-class ExecutionSynthesis:
+class SystemSynthesis:
     variable: Variable
 
     def __repr__(self) -> str:
         return self.variable.value
 
     @classmethod
-    def factory(cls, synthesis: str) -> Optional["ExecutionSynthesis"]:
+    def factory(cls, synthesis: str) -> Optional["SystemSynthesis"]:
         return cls(
             Variable.factory(synthesis),
         )

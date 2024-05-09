@@ -2,7 +2,7 @@ import logging
 import logging.handlers
 from typing import Optional
 
-from sintetizador.utils.singleton import Singleton
+from app.utils.singleton import Singleton
 
 
 class Log(metaclass=Singleton):

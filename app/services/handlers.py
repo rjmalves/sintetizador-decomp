@@ -1,12 +1,12 @@
 import pathlib
 import shutil
-from sintetizador.model.settings import Settings
+from app.model.settings import Settings
 import sintetizador.domain.commands as commands
-from sintetizador.services.unitofwork import AbstractUnitOfWork
-from sintetizador.services.synthesis.system import SystemSynthetizer
-from sintetizador.services.synthesis.execution import ExecutionSynthetizer
-from sintetizador.services.synthesis.scenarios import ScenarioSynthetizer
-from sintetizador.services.synthesis.operation import OperationSynthetizer
+from app.services.unitofwork import AbstractUnitOfWork
+from app.services.synthesis.system import SystemSynthetizer
+from app.services.synthesis.execution import ExecutionSynthetizer
+from app.services.synthesis.scenarios import ScenarioSynthetizer
+from app.services.synthesis.operation import OperationSynthetizer
 
 
 def synthetize_system(

@@ -2,10 +2,10 @@ from typing import Callable, Dict, List
 import pandas as pd  # type: ignore
 from datetime import datetime, timedelta
 
-from sintetizador.services.unitofwork import AbstractUnitOfWork
-from sintetizador.utils.log import Log
-from sintetizador.model.system.variable import Variable
-from sintetizador.model.system.systemsynthesis import SystemSynthesis
+from app.services.unitofwork import AbstractUnitOfWork
+from app.utils.log import Log
+from app.model.system.variable import Variable
+from app.model.system.systemsynthesis import SystemSynthesis
 
 
 FATOR_HM3_M3S = 1.0 / 2.63

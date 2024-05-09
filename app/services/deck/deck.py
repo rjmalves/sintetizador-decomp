@@ -13,8 +13,8 @@ import pandas as pd  # type: ignore
 from typing import Any, Optional, TypeVar, Type, Dict, List
 from datetime import datetime, timedelta
 
-from sintetizador.services.unitofwork import AbstractUnitOfWork
-from sintetizador.model.execution.inviabilidade import Inviabilidade
+from app.services.unitofwork import AbstractUnitOfWork
+from app.model.execution.inviabilidade import Inviabilidade
 
 # from app.internal.constants import STRING_DF_TYPE
 
