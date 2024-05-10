@@ -15,6 +15,14 @@ from datetime import datetime, timedelta
 
 from app.services.unitofwork import AbstractUnitOfWork
 from app.model.execution.inviabilidade import Inviabilidade
+from app.internal.constants import (
+    ITERATION_COL,
+    STAGE_COL,
+    SCENARIO_COL,
+    BLOCK_COL,
+    START_DATE_COL,
+    END_DATE_COL,
+)
 
 # from app.internal.constants import STRING_DF_TYPE
 
@@ -131,8 +139,8 @@ class Deck:
         return dadger
 
     @classmethod
-    def data_inicio_estudo(cls, uow: AbstractUnitOfWork) -> datetime:
-        name = "data_inicio_estudo"
+    def study_starting_date(cls, uow: AbstractUnitOfWork) -> datetime:
+        name = "study_starting_date"
         if name not in cls.DECK_DATA_CACHING:
             dt_reg = cls._validate_data(
                 cls.dadger(uow).dt,
@@ -142,17 +150,17 @@ class Deck:
             year = cls._validate_data(
                 dt_reg.ano,
                 int,
-                "ano de inicio do estudo",
+                "ano de início do estudo",
             )
             month = cls._validate_data(
                 dt_reg.mes,
                 int,
-                "mes de inicio do estudo",
+                "mês de início do estudo",
             )
             day = cls._validate_data(
                 dt_reg.dia,
                 int,
-                "dia de inicio do estudo",
+                "dia de início do estudo",
             )
             cls.DECK_DATA_CACHING[name] = datetime(year, month, day)
         return cls.DECK_DATA_CACHING[name]
@@ -170,13 +178,13 @@ class Deck:
         return relato
 
     @classmethod
-    def earmax_sin(cls, uow: AbstractUnitOfWork) -> float:
-        name = "earmax_sin"
+    def stored_energy_upper_bounds(cls, uow: AbstractUnitOfWork) -> float:
+        name = "stored_energy_upper_bounds"
         if name not in cls.DECK_DATA_CACHING:
             df = cls._validate_data(
                 cls.relato(uow).energia_armazenada_maxima_submercado,
                 pd.DataFrame,
-                "Earmax SIN",
+                "energia armazenada máxima do SIN",
             )
             cls.DECK_DATA_CACHING[name] = df["energia_armazenada_maxima"].sum()
         return cls.DECK_DATA_CACHING[name]
@@ -194,105 +202,111 @@ class Deck:
         return relato
 
     @classmethod
-    def convergencia(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        convergencia = cls.DECK_DATA_CACHING.get("convergencia")
-        if convergencia is None:
-            convergencia = cls._validate_data(
+    def convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        convergence = cls.DECK_DATA_CACHING.get("convergence")
+        if convergence is None:
+            convergence = cls._validate_data(
                 cls.relato(uow).convergencia,
                 pd.DataFrame,
-                "convergencia",
+                "convergência",
             )
-            cls.DECK_DATA_CACHING["convergencia"] = convergencia
-        return convergencia
+            cls.DECK_DATA_CACHING["convergence"] = convergence
+        return convergence
 
     @classmethod
-    def inviabilidades_iteracoes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        inviabilidades_iteracoes = cls.DECK_DATA_CACHING.get(
-            "inviabilidades_iteracoes"
-        )
-        if inviabilidades_iteracoes is None:
-            inviabilidades_iteracoes = cls._validate_data(
-                cls._get_inviabunic(uow).inviabilidades_iteracoes,
-                pd.DataFrame,
-                "inviabilidades_iteracoes",
-            )
-            cls.DECK_DATA_CACHING["inviabilidades_iteracoes"] = (
-                inviabilidades_iteracoes
-            )
-        return inviabilidades_iteracoes
-
-    @classmethod
-    def inviabilidades_simulacao_final(
+    def infeasibilities_iterations(
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
-        inviabilidades_simulacao_final = cls.DECK_DATA_CACHING.get(
-            "inviabilidades_simulacao_final"
+        infeasibilities_iterations = cls.DECK_DATA_CACHING.get(
+            "infeasibilities_iterations"
         )
-        if inviabilidades_simulacao_final is None:
-            inviabilidades_simulacao_final = cls._validate_data(
-                cls._get_inviabunic(uow).inviabilidades_simulacao_final,
+        if infeasibilities_iterations is None:
+            infeasibilities_iterations = cls._validate_data(
+                cls._get_inviabunic(uow).inviabilidades_iteracoes,
                 pd.DataFrame,
-                "inviabilidades_simulacao_final",
+                "inviabilidades das iterações",
             )
-            cls.DECK_DATA_CACHING["inviabilidades_simulacao_final"] = (
-                inviabilidades_simulacao_final
+            cls.DECK_DATA_CACHING["infeasibilities_iterations"] = (
+                infeasibilities_iterations
             )
-        return inviabilidades_simulacao_final
+        return infeasibilities_iterations
 
     @classmethod
-    def inviabilidades(cls, uow: AbstractUnitOfWork) -> list:
-        inviabilidades = cls.DECK_DATA_CACHING.get("inviabilidades")
-        if inviabilidades is None:
-            df_iter = cls.inviabilidades_iteracoes(uow)
-            df_sf = cls.inviabilidades_simulacao_final(uow)
-            df_sf["iteracao"] = -1
-            df_inviabs = pd.concat([df_iter, df_sf], ignore_index=True)
-            inviabilidades_aux = []
-            for _, linha in df_inviabs.iterrows():
-                inviabilidades_aux.append(
+    def infeasibilities_final_simulation(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        infeasibilities_final_simulation = cls.DECK_DATA_CACHING.get(
+            "infeasibilities_final_simulation"
+        )
+        if infeasibilities_final_simulation is None:
+            infeasibilities_final_simulation = cls._validate_data(
+                cls._get_inviabunic(uow).inviabilidades_simulacao_final,
+                pd.DataFrame,
+                "inviabilidades da simulação final",
+            )
+            cls.DECK_DATA_CACHING["infeasibilities_final_simulation"] = (
+                infeasibilities_final_simulation
+            )
+        return infeasibilities_final_simulation
+
+    @classmethod
+    def infeasibilities(cls, uow: AbstractUnitOfWork) -> list:
+        infeasibilities = cls.DECK_DATA_CACHING.get("infeasibilities")
+        if infeasibilities is None:
+            df_iter = cls.infeasibilities_iterations(uow)
+            df_fs = cls.infeasibilities_final_simulation(uow)
+            df_fs[ITERATION_COL] = -1
+            df_infeas = pd.concat([df_iter, df_fs], ignore_index=True)
+            infleasibilities_aux = []
+            for _, linha in df_infeas.iterrows():
+                infleasibilities_aux.append(
                     Inviabilidade.factory(
                         linha, cls._get_hidr(uow), cls._get_relato(uow)
                     )
                 )
-            inviabilidades = cls._validate_data(
-                inviabilidades_aux,
+            infeasibilities = cls._validate_data(
+                infleasibilities_aux,
                 list,
                 "inviabilidades",
             )
-            cls.DECK_DATA_CACHING["inviabilidades"] = inviabilidades
-        return inviabilidades
+            cls.DECK_DATA_CACHING["infeasibilities"] = infeasibilities
+        return infeasibilities
 
     @classmethod
-    def tempos_por_etapa(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        tempos_por_etapa = cls.DECK_DATA_CACHING.get("tempos_por_etapa")
-        if tempos_por_etapa is None:
-            tempos_por_etapa = cls._validate_data(
+    def execution_time_per_step(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        execution_time_per_step = cls.DECK_DATA_CACHING.get(
+            "execution_time_per_step"
+        )
+        if execution_time_per_step is None:
+            execution_time_per_step = cls._validate_data(
                 cls._get_decomptim(uow).tempos_etapas,
                 pd.DataFrame,
-                "tempos_por_etapa",
+                "tempos de execução por etapa",
             )
-            cls.DECK_DATA_CACHING["tempos_por_etapa"] = tempos_por_etapa
-        return tempos_por_etapa
+            cls.DECK_DATA_CACHING["execution_time_per_step"] = (
+                execution_time_per_step
+            )
+        return execution_time_per_step
 
     @classmethod
-    def probabilidades(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        probabilidades = cls.DECK_DATA_CACHING.get("probabilidades")
-        if probabilidades is None:
-            probabilidades = cls._validate_data(
+    def probabilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        probabilities = cls.DECK_DATA_CACHING.get("probabilities")
+        if probabilities is None:
+            probabilities = cls._validate_data(
                 cls._get_vazoes(uow).probabilidades,
                 pd.DataFrame,
                 "probabilidades",
             )
-            cls.DECK_DATA_CACHING["probabilidades"] = probabilidades
-        return probabilidades
+            cls.DECK_DATA_CACHING["probabilities"] = probabilities
+        return probabilities
 
     @staticmethod
     def _stub_nodes_scenarios_v31_0_2(df: pd.DataFrame) -> pd.DataFrame:
-        estagios = df["estagio"].unique().tolist()
+        stages = df[STAGE_COL].unique().tolist()
         # Para todos os estágios antes do último, fixa cenário em 1
-        df.loc[df["estagio"].isin(estagios[:-1]), "cenario"] = 1
+        df.loc[df[STAGE_COL].isin(stages[:-1]), SCENARIO_COL] = 1
         # Subtrai dos cenários o valor de n_semanas
-        df.loc[df["estagio"] == estagios[-1], "cenario"] -= len(estagios) - 1
+        df.loc[df[STAGE_COL] == stages[-1], SCENARIO_COL] -= len(stages) - 1
         return df.copy()
 
     @classmethod
@@ -310,34 +324,28 @@ class Deck:
 
     @classmethod
     def stages_durations(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        """
-        - estagio (`int`)
-        - data_inicio (`datetime`)
-        - data_fim (`datetime`)
-        - numero_aberturas (`int`)
-        """
         name = "stages_durations"
         df = cls.DECK_DATA_CACHING.get(name)
         if df is None:
             df = cls.dec_eco_discr(uow)
-            df = df.loc[df["patamar"].isna()]
+            df = df.loc[df[BLOCK_COL].isna()]
             df["duracao_acumulada"] = df["duracao"].cumsum()
-            df["data_inicio"] = df.apply(
-                lambda linha: cls.data_inicio_estudo(uow)
+            df[START_DATE_COL] = df.apply(
+                lambda linha: cls.study_starting_date(uow)
                 + timedelta(
-                    hours=df.loc[df["estagio"] < linha["estagio"], "duracao"]
+                    hours=df.loc[df[STAGE_COL] < linha[STAGE_COL], "duracao"]
                     .to_numpy()
                     .sum()
                 ),
                 axis=1,
             )
-            df["data_fim"] = df.apply(
-                lambda linha: linha["data_inicio"]
+            df[END_DATE_COL] = df.apply(
+                lambda linha: linha[START_DATE_COL]
                 + timedelta(hours=linha["duracao"]),
                 axis=1,
             )
             df = df[
-                ["estagio", "data_inicio", "data_fim", "numero_aberturas"]
+                [STAGE_COL, START_DATE_COL, END_DATE_COL, "numero_aberturas"]
             ].copy()
             cls.DECK_DATA_CACHING[name] = df
         return df
@@ -347,7 +355,7 @@ class Deck:
         name = "stages_start_date"
         dates = cls.DECK_DATA_CACHING.get(name)
         if dates is None:
-            dates = cls.stages_durations(uow)["data_inicio"].tolist()
+            dates = cls.stages_durations(uow)[START_DATE_COL].tolist()
             cls.DECK_DATA_CACHING[name] = dates
         return dates
 
@@ -356,7 +364,7 @@ class Deck:
         name = "stages_end_date"
         dates = cls.DECK_DATA_CACHING.get(name)
         if dates is None:
-            dates = cls.stages_durations(uow)["data_fim"].tolist()
+            dates = cls.stages_durations(uow)[END_DATE_COL].tolist()
             cls.DECK_DATA_CACHING[name] = dates
         return dates
 
@@ -366,7 +374,7 @@ class Deck:
         if name not in cls.DECK_DATA_CACHING:
             df = cls.dec_eco_discr(uow)
             cls.DECK_DATA_CACHING[name] = (
-                df["patamar"].dropna().unique().tolist()
+                df[BLOCK_COL].dropna().unique().tolist()
             )
         return cls.DECK_DATA_CACHING[name]
 
@@ -377,8 +385,8 @@ class Deck:
         df = cls.stages_durations(uow)
         return (
             df.loc[
-                df["estagio"] == line["estagio"],
-                ["data_inicio", "data_fim"],
+                df[STAGE_COL] == line[STAGE_COL],
+                [START_DATE_COL, END_DATE_COL],
             ]
             .to_numpy()
             .flatten()
@@ -401,7 +409,7 @@ class Deck:
             )
             if version <= "31.0.2":
                 df = cls._stub_nodes_scenarios_v31_0_2(df)
-            df[["dataInicio", "dataFim"]] = df.apply(
+            df[[START_DATE_COL, END_DATE_COL]] = df.apply(
                 lambda line: cls._add_dates_to_df(line, uow),
                 axis=1,
                 result_type="expand",
@@ -436,7 +444,7 @@ class Deck:
             )
             if version <= "31.0.2":
                 df = cls._stub_nodes_scenarios_v31_0_2(df)
-            df[["dataInicio", "dataFim"]] = df.apply(
+            df[[START_DATE_COL, END_DATE_COL]] = df.apply(
                 lambda line: cls._add_dates_to_df(line, uow),
                 axis=1,
                 result_type="expand",
@@ -461,7 +469,7 @@ class Deck:
             )
             if version <= "31.0.2":
                 df = cls._stub_nodes_scenarios_v31_0_2(df)
-            df[["dataInicio", "dataFim"]] = df.apply(
+            df[[START_DATE_COL, END_DATE_COL]] = df.apply(
                 lambda line: cls._add_dates_to_df(line, uow),
                 axis=1,
                 result_type="expand",
@@ -486,7 +494,7 @@ class Deck:
             )
             if version <= "31.0.2":
                 df = cls._stub_nodes_scenarios_v31_0_2(df)
-            df[["dataInicio", "dataFim"]] = df.apply(
+            df[[START_DATE_COL, END_DATE_COL]] = df.apply(
                 lambda line: cls._add_dates_to_df(line, uow),
                 axis=1,
                 result_type="expand",
@@ -539,7 +547,7 @@ class Deck:
             )
             if version <= "31.0.2":
                 df = cls._stub_nodes_scenarios_v31_0_2(df)
-            df[["dataInicio", "dataFim"]] = df.apply(
+            df[[START_DATE_COL, END_DATE_COL]] = df.apply(
                 lambda line: cls._add_dates_to_df(line, uow),
                 axis=1,
                 result_type="expand",
@@ -564,7 +572,7 @@ class Deck:
             )
             if version <= "31.0.2":
                 df = cls._stub_nodes_scenarios_v31_0_2(df)
-            df[["dataInicio", "dataFim"]] = df.apply(
+            df[[START_DATE_COL, END_DATE_COL]] = df.apply(
                 lambda line: cls._add_dates_to_df(line, uow),
                 axis=1,
                 result_type="expand",
