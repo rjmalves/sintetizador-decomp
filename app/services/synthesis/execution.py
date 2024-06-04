@@ -27,6 +27,8 @@ from app.model.execution.executionsynthesis import ExecutionSynthesis
 
 
 class ExecutionSynthetizer:
+    # TODO - levar lista de argumentos suportados para o
+    # arquivo da ExecutionSynthesis
     DEFAULT_EXECUTION_SYNTHESIS_ARGS: List[str] = [
         "PROGRAMA",
         "CONVERGENCIA",
@@ -37,6 +39,10 @@ class ExecutionSynthetizer:
         "RECURSOS_CLUSTER",
     ]
 
+    # TODO - rever a forma como são processadas as inviabilidades
+    # Criar uma classe única para processar as inviabilidades
+    # com todas as possíveis inviabilidades e um Enum para diferenciar
+    # TODO - não precisa de sínteses de inviabilidades separadas por grupo
     INVIABS_CODIGO = [InviabilidadeTI, InviabilidadeEV]
     INVIABS_PATAMAR = [InviabilidadeDEFMIN, InviabilidadeFP]
     INVIABS_PATAMAR_LIMITE = [InviabilidadeRHQ, InviabilidadeRE]
@@ -45,6 +51,8 @@ class ExecutionSynthetizer:
         InviabilidadeDeficit,
     ]
 
+    # TODO - substituir por usar diretamente o valor da variável de síntese
+    # (s.variable.value ou str(s))
     CONVERGENCE_FILE = "CONVERGENCIA"
     RUNTIME_FILE = "TEMPO"
     INVIABS_FILE = "INVIABILIDADES"
@@ -62,10 +70,16 @@ class ExecutionSynthetizer:
         }
         return rules[s]
 
+    # TODO - padronizar o tipo de retorno de _default_args com
+    # _process_variable_arguments
     @classmethod
     def _default_args(cls) -> List[str]:
         return cls.DEFAULT_EXECUTION_SYNTHESIS_ARGS
 
+    # TODO - criar o método interno _log
+
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # Manter o processamento para sinalizar erros.
     @classmethod
     def _process_variable_arguments(
         cls,
@@ -81,6 +95,10 @@ class ExecutionSynthetizer:
                 return []
         return valid_args
 
+    # TODO - renomear para _filter_valid_variables
+    # Atualizar lógica considerando apenas uma síntese de inviabilidade
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - alterar idioma para inglês
     @classmethod
     def filter_valid_variables(
         cls, variables: List[ExecutionSynthesis], uow: AbstractUnitOfWork
@@ -100,10 +118,22 @@ class ExecutionSynthetizer:
             logger.info(f"Variáveis: {variables}")
         return variables
 
+    # TODO criar método _preprocess_synthesis_variables para juntar
+    # todos os pré-processamentos
+
+    # TODO - criar método _resolve para resolver cada variável de síntese
+
     @classmethod
     def _resolve_program(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         return pd.DataFrame(data={"programa": ["DECOMP"]})
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - rever se os nomes escolhidos são os mais adequados
+    # (padronizar com o newave, deixar de abreviar)
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - Modularizar a parte de adicionar "execucao" no dataframe
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         df = Deck.convergencia(uow)
@@ -149,6 +179,12 @@ class ExecutionSynthetizer:
             df_processed["execucao"] = conv["execucao"].max() + 1
             return pd.concat([conv, df_processed], ignore_index=True)
 
+    # TODO - atualizar idioma para inglês (_resolve_runtime)
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - rever se os nomes escolhidos são os mais adequados
+    # (padronizar com o newave, deixar de abreviar)
+    # TODO - Modularizar a parte de adicionar "execucao" no dataframe
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_tempo(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         df = Deck.tempos_por_etapa(uow)
@@ -169,6 +205,11 @@ class ExecutionSynthetizer:
             df["execucao"] = tempo["execucao"].max() + 1
             return pd.concat([tempo, df], ignore_index=True)
 
+    # TODO - atualizar idioma para inglês (_resolve_cost)
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - rever se os nomes escolhidos são os mais adequados
+    # (padronizar com o newave, deixar de abreviar)
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_costs(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         relato = Deck.relato(uow)
@@ -225,6 +266,7 @@ class ExecutionSynthetizer:
         df_completo = df_completo.reset_index()
         return df_completo[["parcela", "mean", "std"]]
 
+    # TODO - descontinuar sínteses de recursos
     @classmethod
     def _resolve_job_resources(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         # REGRA DE NEGOCIO: arquivos do hpc-job-monitor
@@ -248,6 +290,7 @@ class ExecutionSynthetizer:
 
             return None
 
+    # TODO - descontinuar sínteses de recursos
     @classmethod
     def _resolve_cluster_resources(
         cls, uow: AbstractUnitOfWork
@@ -285,6 +328,7 @@ class ExecutionSynthetizer:
                     logger.warning(f"Arquivo {file} não encontrado")
         return None
 
+    # TODO - avaliar obter como um dataframe direto do Deck
     @classmethod
     def inviabilidades(cls, uow: AbstractUnitOfWork) -> List[Inviabilidade]:
         logger = Log.log()
@@ -297,6 +341,10 @@ class ExecutionSynthetizer:
             return []
         return inviabilidades
 
+    # TODO - atualizar idioma para inglês (_resolve_infeasibilities)
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
+    # TODO - Modularizar a parte de adicionar "execucao" no dataframe
     @classmethod
     def _resolve_inviabilidades_completas(
         cls, uow: AbstractUnitOfWork
@@ -321,6 +369,7 @@ class ExecutionSynthetizer:
             df["execucao"] = inviabs["execucao"].max() + 1
             return pd.concat([inviabs, df], ignore_index=True)
 
+    # TODO - descontinuar pois só vai existir uma Inviabilidade
     @classmethod
     def _resolve_inviabilidades_codigo(
         cls, uow: AbstractUnitOfWork
@@ -356,6 +405,7 @@ class ExecutionSynthetizer:
             }
         )
 
+    # TODO - descontinuar pois só vai existir uma Inviabilidade
     @classmethod
     def _resolve_inviabilidades_patamar(
         cls, uow: AbstractUnitOfWork
@@ -396,6 +446,7 @@ class ExecutionSynthetizer:
             }
         )
 
+    # TODO - descontinuar pois só vai existir uma Inviabilidade
     @classmethod
     def _resolve_inviabilidades_patamar_limite(
         cls, uow: AbstractUnitOfWork
@@ -439,6 +490,7 @@ class ExecutionSynthetizer:
             }
         )
 
+    # TODO - descontinuar pois só vai existir uma Inviabilidade
     @classmethod
     def _resolve_inviabilidades_limite(
         cls, uow: AbstractUnitOfWork
@@ -477,6 +529,7 @@ class ExecutionSynthetizer:
             }
         )
 
+    # TODO - descontinuar pois só vai existir uma Inviabilidade
     @classmethod
     def _resolve_inviabilidades_submercado_patamar(
         cls, uow: AbstractUnitOfWork
@@ -517,6 +570,13 @@ class ExecutionSynthetizer:
             }
         )
 
+    # TODO - criar _export_metadata para exportar metadados
+    # TODO - modularizar a parte da síntese de uma variável
+    # em uma função à parte (_synthetize_single_variable)
+
+    # TODO - atualizar forma de logging
+    # TODO - exportar metadados ao final
+    # TODO - padronizar atribuições e chamadas com o do newave
     @classmethod
     def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
         logger = Log.log()

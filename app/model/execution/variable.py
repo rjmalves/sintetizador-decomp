@@ -24,3 +24,6 @@ class Variable(Enum):
 
     def __repr__(self) -> str:
         return self.value
+
+    # TODO - definir short_name e long_name
+    # para uso na composição dos metadados
