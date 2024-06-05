@@ -42,6 +42,7 @@ LTA_VALUE_COL = "valor_mlt"
 MONTH_COL = "mes"
 DATE_COL = "data"
 CONFIG_COL = "configuracao"
+RUNTIME_COL = "tempo"
 
 STATS_OR_SCENARIO_COL = "estatistica_ou_cenario"
 

@@ -23,21 +23,24 @@ from app.services.unitofwork import AbstractUnitOfWork
 from app.utils.log import Log
 from app.utils.fs import set_directory
 from app.model.execution.variable import Variable
-from app.model.execution.executionsynthesis import ExecutionSynthesis
+from app.model.execution.executionsynthesis import (
+    ExecutionSynthesis,
+    SUPPORTED_SYNTHESIS,
+)
+from app.internal.constants import (
+    ITERATION_COL,
+    STAGE_COL,
+    SCENARIO_COL,
+    UNIT_COL,
+    BLOCK_COL,
+    SUBMARKET_NAME_COL,
+    RUNTIME_COL,
+)
 
 
 class ExecutionSynthetizer:
-    # TODO - levar lista de argumentos suportados para o
-    # arquivo da ExecutionSynthesis
-    DEFAULT_EXECUTION_SYNTHESIS_ARGS: List[str] = [
-        "PROGRAMA",
-        "CONVERGENCIA",
-        "TEMPO",
-        "INVIABILIDADES",
-        "CUSTOS",
-        "RECURSOS_JOB",
-        "RECURSOS_CLUSTER",
-    ]
+
+    DEFAULT_EXECUTION_SYNTHESIS_ARGS: List[str] = SUPPORTED_SYNTHESIS
 
     # TODO - rever a forma como são processadas as inviabilidades
     # Criar uma classe única para processar as inviabilidades
@@ -51,22 +54,16 @@ class ExecutionSynthetizer:
         InviabilidadeDeficit,
     ]
 
-    # TODO - substituir por usar diretamente o valor da variável de síntese
-    # (s.variable.value ou str(s))
-    CONVERGENCE_FILE = "CONVERGENCIA"
-    RUNTIME_FILE = "TEMPO"
-    INVIABS_FILE = "INVIABILIDADES"
-
     @classmethod
     def _get_rule(cls, s: ExecutionSynthesis) -> Callable:
         rules: Dict[Variable, Callable] = {
             Variable.PROGRAMA: cls._resolve_program,
             Variable.CONVERGENCIA: cls._resolve_convergence,
-            Variable.TEMPO_EXECUCAO: cls._resolve_tempo,
+            Variable.TEMPO_EXECUCAO: cls._resolve_runtime,
             Variable.CUSTOS: cls._resolve_costs,
             Variable.RECURSOS_JOB: cls._resolve_job_resources,
             Variable.RECURSOS_CLUSTER: cls._resolve_cluster_resources,
-            Variable.INVIABILIDADES: cls._resolve_inviabilidades_completas,
+            Variable.INVIABILIDADES: cls._resolve_infeasibilities,
         }
         return rules[s]
 
@@ -98,21 +95,20 @@ class ExecutionSynthetizer:
     # TODO - renomear para _filter_valid_variables
     # Atualizar lógica considerando apenas uma síntese de inviabilidade
     # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - alterar idioma para inglês
     @classmethod
     def filter_valid_variables(
         cls, variables: List[ExecutionSynthesis], uow: AbstractUnitOfWork
     ) -> List[ExecutionSynthesis]:
-        existe_inviabunic = Deck._get_inviabunic(uow) is not None
-        invs_vars = [
+        infeas_file = Deck._get_inviabunic(uow) is not None
+        infeas_vars = [
             Variable.INVIABILIDADES_CODIGO,
             Variable.INVIABILIDADES_PATAMAR,
             Variable.INVIABILIDADES_PATAMAR_LIMITE,
             Variable.INVIABILIDADES_LIMITE,
             Variable.INVIABILIDADES_SBM_PATAMAR,
         ]
-        if not existe_inviabunic:
-            variables = [v for v in variables if v.variable not in invs_vars]
+        if not infeas_file:
+            variables = [v for v in variables if v.variable not in infeas_vars]
         logger = Log.log()
         if logger is not None:
             logger.info(f"Variáveis: {variables}")
@@ -127,16 +123,13 @@ class ExecutionSynthetizer:
     def _resolve_program(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         return pd.DataFrame(data={"programa": ["DECOMP"]})
 
-    # TODO - atualizar idioma para inglês
     # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - rever se os nomes escolhidos são os mais adequados
-    # (padronizar com o newave, deixar de abreviar)
     # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
     # TODO - Modularizar a parte de adicionar "execucao" no dataframe
     # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        df = Deck.convergencia(uow)
+        df = Deck.convergence(uow)
         logger = Log.log()
         if df is None:
             if logger is not None:
@@ -144,68 +137,68 @@ class ExecutionSynthetizer:
             raise RuntimeError()
         df_processed = df.rename(
             columns={
-                "iteracao": "iter",
+                "iteracao": ITERATION_COL,
                 "zinf": "zinf",
                 "zsup": "zsup",
                 "gap_percentual": "gap",
-                "tempo": "tempo",
+                "tempo": RUNTIME_COL,
                 "numero_inviabilidades ": "inviabilidades",
                 "deficit_demanda_MWmed": "deficit",
-                "inviabilidades_MWmed": "viol_MWmed",
-                "inviabilidades_m3s": "viol_m3s",
-                "inviabilidades_hm3": "viol_hm3",
+                "inviabilidades_MWmed": "violacao_MWmed",
+                "inviabilidades_m3s": "violacao_m3s",
+                "inviabilidades_hm3": "violacao_hm3",
             }
         )
         df_processed.drop(
             columns=["deficit_nivel_seguranca_MWmes"], inplace=True
         )
-        df_processed.loc[1:, "tempo"] = (
-            df_processed["tempo"].to_numpy()[1:]
-            - df_processed["tempo"].to_numpy()[:-1]
+        df_processed.loc[1:, RUNTIME_COL] = (
+            df_processed[RUNTIME_COL].to_numpy()[1:]
+            - df_processed[RUNTIME_COL].to_numpy()[:-1]
         )
-        df_processed["dZinf"] = df_processed["zinf"]
-        df_processed.loc[1:, "dZinf"] = (
+        df_processed["delta_zinf"] = df_processed["zinf"]
+        df_processed.loc[1:, "delta_zinf"] = (
             df_processed["zinf"].to_numpy()[1:]
             - df_processed["zinf"].to_numpy()[:-1]
         )
-        df_processed.loc[1:, "dZinf"] /= df_processed["zinf"].to_numpy()[:-1]
-        df_processed.at[0, "dZinf"] = np.nan
-
-        conv = uow.export.read_df(cls.CONVERGENCE_FILE)
-        if conv is None:
+        df_processed.loc[1:, "delta_zinf"] /= df_processed["zinf"].to_numpy()[
+            :-1
+        ]
+        df_processed.at[0, "delta_zinf"] = np.nan
+        convergence_file = uow.export.read_df(Variable.CONVERGENCIA.value)
+        if convergence_file is None:
             df_processed["execucao"] = 0
             return df_processed
         else:
-            df_processed["execucao"] = conv["execucao"].max() + 1
-            return pd.concat([conv, df_processed], ignore_index=True)
+            df_processed["execucao"] = convergence_file["execucao"].max() + 1
+            return pd.concat(
+                [convergence_file, df_processed], ignore_index=True
+            )
 
-    # TODO - atualizar idioma para inglês (_resolve_runtime)
     # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - rever se os nomes escolhidos são os mais adequados
-    # (padronizar com o newave, deixar de abreviar)
     # TODO - Modularizar a parte de adicionar "execucao" no dataframe
     # TODO - avaliar obter o dataframe já pós-processado direto do Deck
+    # TODO - retirar tempo total
     @classmethod
-    def _resolve_tempo(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        df = Deck.tempos_por_etapa(uow)
+    def _resolve_runtime(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        df = Deck.execution_time_per_step(uow)
         logger = Log.log()
         if df is None:
             if logger is not None:
                 logger.error("Dados de tempo do decomp.tim não encontrados")
             raise RuntimeError()
-        df = df.rename(columns={"Etapa": "etapa", "Tempo": "tempo"})
+        df = df.rename(columns={"Etapa": "etapa", "Tempo": RUNTIME_COL})
 
-        df["tempo"] = df["tempo"].dt.total_seconds()
+        df[RUNTIME_COL] = df[RUNTIME_COL].dt.total_seconds()
 
-        tempo = uow.export.read_df(cls.RUNTIME_FILE)
-        if tempo is None:
+        runtime_file = uow.export.read_df(Variable.TEMPO_EXECUCAO.value)
+        if runtime_file is None:
             df["execucao"] = 0
             return df
         else:
-            df["execucao"] = tempo["execucao"].max() + 1
-            return pd.concat([tempo, df], ignore_index=True)
+            df["execucao"] = runtime_file["execucao"].max() + 1
+            return pd.concat([runtime_file, df], ignore_index=True)
 
-    # TODO - atualizar idioma para inglês (_resolve_cost)
     # TODO - padronizar a forma de logging com o uso do método interno _log
     # TODO - rever se os nomes escolhidos são os mais adequados
     # (padronizar com o newave, deixar de abreviar)
@@ -221,50 +214,37 @@ class ExecutionSynthetizer:
                     "Bloco de custos da operação do relato não encontrado"
                 )
             raise RuntimeError()
-        estagios = df["estagio"].unique()
+        stages = df["estagio"].unique()
         dfs: List[pd.DataFrame] = []
-        for e in estagios:
-            parcelas = [
-                "GERACAO TERMICA",
-                "DESVIO",
-                "TURB RESERV",
-                "TURB FIO",
-                "VERTIMENTO RESERV",
-                "VERTIMENTO FIO",
-                "INTERCAMBIO",
-            ]
+        costs_columns = [
+            "geracao_termica",
+            "violacao_desvio",
+            "violacao_turbinamento_reservatorio",
+            "violacao_turbinamento_fio",
+            "penalidade_vertimento_reservatorio",
+            "penalidade_vertimento_fio",
+            "penalidade_intercambio",
+        ]
+        for s in stages:
             means = (
-                df.loc[
-                    df["estagio"] == e,
-                    [
-                        "geracao_termica",
-                        "violacao_desvio",
-                        "violacao_turbinamento_reservatorio",
-                        "violacao_turbinamento_fio",
-                        "penalidade_vertimento_reservatorio",
-                        "penalidade_vertimento_fio",
-                        "penalidade_intercambio",
-                    ],
-                ]
-                .to_numpy()
-                .flatten()
+                df.loc[df["estagio"] == s, costs_columns].to_numpy().flatten()
             )
-            dfe = pd.DataFrame(
+            df_stage = pd.DataFrame(
                 data={
-                    "parcela": parcelas,
-                    "mean": means,
-                    "std": [0.0] * len(means),
+                    "parcela": costs_columns,
+                    "valor_esperado": means,
+                    "desvio_padrao": [0.0] * len(means),
                 }
             )
-            dfe["estagio"] = e
-            dfs.append(dfe)
+            df_stage["estagio"] = s
+            dfs.append(df_stage)
         df_completo = pd.concat(dfs, ignore_index=True)
         df_completo = df_completo.astype(
-            {"mean": np.float64, "std": np.float64}
+            {"valor_esperado": np.float64, "desvio_padrao": np.float64}
         )
         df_completo = df_completo.groupby("parcela").sum()
         df_completo = df_completo.reset_index()
-        return df_completo[["parcela", "mean", "std"]]
+        return df_completo[["parcela", "valor_esperado", "desvio_padrao"]]
 
     # TODO - descontinuar sínteses de recursos
     @classmethod
@@ -330,25 +310,22 @@ class ExecutionSynthetizer:
 
     # TODO - avaliar obter como um dataframe direto do Deck
     @classmethod
-    def inviabilidades(cls, uow: AbstractUnitOfWork) -> List[Inviabilidade]:
+    def infeasibilities(cls, uow: AbstractUnitOfWork) -> List[Inviabilidade]:
         logger = Log.log()
         if logger is not None:
             logger.info("Obtendo Inviabilidades")
-        inviabilidades = Deck.inviabilidades(uow)
-        if inviabilidades is None:
+        infeasibilities = Deck.infeasibilities(uow)
+        if infeasibilities is None:
             if logger is not None:
                 logger.warning("Não foram encontradas inviabilidades")
             return []
-        return inviabilidades
+        return infeasibilities
 
-    # TODO - atualizar idioma para inglês (_resolve_infeasibilities)
     # TODO - padronizar a forma de logging com o uso do método interno _log
     # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     # TODO - Modularizar a parte de adicionar "execucao" no dataframe
     @classmethod
-    def _resolve_inviabilidades_completas(
-        cls, uow: AbstractUnitOfWork
-    ) -> pd.DataFrame:
+    def _resolve_infeasibilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         df = pd.concat(
             [
                 cls._resolve_inviabilidades_codigo(uow),
@@ -359,15 +336,17 @@ class ExecutionSynthetizer:
             ],
             ignore_index=True,
         )
-        df = df.astype({"iteracao": int, "cenario": int, "estagio": int})
+        df = df.astype({ITERATION_COL: int, SCENARIO_COL: int, STAGE_COL: int})
         with uow:
-            inviabs = uow.export.read_df(cls.INVIABS_FILE)
-        if inviabs is None:
+            infeasibilities_file = uow.export.read_df(
+                Variable.INVIABILIDADES.value
+            )
+        if infeasibilities_file is None:
             df["execucao"] = 0
             return df
         else:
-            df["execucao"] = inviabs["execucao"].max() + 1
-            return pd.concat([inviabs, df], ignore_index=True)
+            df["execucao"] = infeasibilities_file["execucao"].max() + 1
+            return pd.concat([infeasibilities_file, df], ignore_index=True)
 
     # TODO - descontinuar pois só vai existir uma Inviabilidade
     @classmethod
@@ -375,33 +354,35 @@ class ExecutionSynthetizer:
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
         inviabs_codigo = [
-            i for i in cls.inviabilidades(uow) if type(i) in cls.INVIABS_CODIGO
+            i
+            for i in cls.infeasibilities(uow)
+            if type(i) in cls.INVIABS_CODIGO
         ]
-        tipos: List[str] = []
-        iteracoes: List[int] = []
-        cenarios: List[int] = []
-        estagios: List[int] = []
-        codigos: List[int] = []
-        violacoes: List[float] = []
-        unidades: List[str] = []
+        types: List[str] = []
+        iterations: List[int] = []
+        scenarios: List[int] = []
+        stages: List[int] = []
+        codes: List[int] = []
+        violations: List[float] = []
+        units: List[str] = []
         for i in inviabs_codigo:
-            tipos.append(i.NOME)
-            iteracoes.append(i._iteracao)
-            cenarios.append(i._cenario)
-            estagios.append(i._estagio)
-            codigos.append(i._codigo)
-            violacoes.append(i._violacao)
-            unidades.append(i._unidade)
+            types.append(i.NOME)
+            iterations.append(i._iteracao)
+            scenarios.append(i._cenario)
+            stages.append(i._estagio)
+            codes.append(i._codigo)
+            violations.append(i._violacao)
+            units.append(i._unidade)
 
         return pd.DataFrame(
             data={
-                "tipo": tipos,
-                "iteracao": iteracoes,
-                "cenario": cenarios,
-                "estagio": estagios,
-                "codigo": codigos,
-                "violacao": violacoes,
-                "unidade": unidades,
+                "tipo": types,
+                ITERATION_COL: iterations,
+                SCENARIO_COL: scenarios,
+                STAGE_COL: stages,
+                "codigo": codes,
+                "violacao": violations,
+                UNIT_COL: units,
             }
         )
 
@@ -412,37 +393,37 @@ class ExecutionSynthetizer:
     ) -> pd.DataFrame:
         inviabs_codigo = [
             i
-            for i in cls.inviabilidades(uow)
+            for i in cls.infeasibilities(uow)
             if type(i) in cls.INVIABS_PATAMAR
         ]
-        tipos: List[str] = []
-        iteracoes: List[int] = []
-        cenarios: List[int] = []
-        estagios: List[int] = []
-        codigos: List[int] = []
-        violacoes: List[float] = []
-        unidades: List[str] = []
-        patamares: List[int] = []
+        types: List[str] = []
+        iterations: List[int] = []
+        scenarios: List[int] = []
+        stages: List[int] = []
+        codes: List[int] = []
+        violations: List[float] = []
+        units: List[str] = []
+        blocks: List[int] = []
         for i in inviabs_codigo:
-            tipos.append(i.NOME)
-            iteracoes.append(i._iteracao)
-            cenarios.append(i._cenario)
-            estagios.append(i._estagio)
-            codigos.append(i._codigo)
-            violacoes.append(i._violacao)
-            unidades.append(i._unidade)
-            patamares.append(i._patamar)
+            types.append(i.NOME)
+            iterations.append(i._iteracao)
+            scenarios.append(i._cenario)
+            stages.append(i._estagio)
+            codes.append(i._codigo)
+            violations.append(i._violacao)
+            units.append(i._unidade)
+            blocks.append(i._patamar)
 
         return pd.DataFrame(
             data={
-                "tipo": tipos,
-                "iteracao": iteracoes,
-                "cenario": cenarios,
-                "estagio": estagios,
-                "codigo": codigos,
-                "violacao": violacoes,
-                "unidade": unidades,
-                "patamar": patamares,
+                "tipo": types,
+                ITERATION_COL: iterations,
+                SCENARIO_COL: scenarios,
+                STAGE_COL: stages,
+                "codigo": codes,
+                "violacao": violations,
+                UNIT_COL: units,
+                BLOCK_COL: blocks,
             }
         )
 
@@ -453,7 +434,7 @@ class ExecutionSynthetizer:
     ) -> pd.DataFrame:
         inviabs_codigo = [
             i
-            for i in cls.inviabilidades(uow)
+            for i in cls.infeasibilities(uow)
             if type(i) in cls.INVIABS_PATAMAR_LIMITE
         ]
         tipos: List[str] = []
@@ -479,13 +460,13 @@ class ExecutionSynthetizer:
         return pd.DataFrame(
             data={
                 "tipo": tipos,
-                "iteracao": iteracoes,
-                "cenario": cenarios,
-                "estagio": estagios,
+                ITERATION_COL: iteracoes,
+                SCENARIO_COL: cenarios,
+                STAGE_COL: estagios,
                 "codigo": codigos,
                 "violacao": violacoes,
-                "unidade": unidades,
-                "patamar": patamares,
+                UNIT_COL: unidades,
+                BLOCK_COL: patamares,
                 "limite": limites,
             }
         )
@@ -496,7 +477,9 @@ class ExecutionSynthetizer:
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
         inviabs_codigo = [
-            i for i in cls.inviabilidades(uow) if type(i) in cls.INVIABS_LIMITE
+            i
+            for i in cls.infeasibilities(uow)
+            if type(i) in cls.INVIABS_LIMITE
         ]
         tipos: List[str] = []
         iteracoes: List[int] = []
@@ -519,12 +502,12 @@ class ExecutionSynthetizer:
         return pd.DataFrame(
             data={
                 "tipo": tipos,
-                "iteracao": iteracoes,
-                "cenario": cenarios,
-                "estagio": estagios,
+                ITERATION_COL: iteracoes,
+                SCENARIO_COL: cenarios,
+                STAGE_COL: estagios,
                 "codigo": codigos,
                 "violacao": violacoes,
-                "unidade": unidades,
+                UNIT_COL: unidades,
                 "limite": limites,
             }
         )
@@ -536,7 +519,7 @@ class ExecutionSynthetizer:
     ) -> pd.DataFrame:
         inviabs_codigo = [
             i
-            for i in cls.inviabilidades(uow)
+            for i in cls.infeasibilities(uow)
             if type(i) in cls.INVIABS_SBM_PATAMAR
         ]
         tipos: List[str] = []
@@ -560,13 +543,13 @@ class ExecutionSynthetizer:
         return pd.DataFrame(
             data={
                 "tipo": tipos,
-                "iteracao": iteracoes,
-                "cenario": cenarios,
-                "estagio": estagios,
+                ITERATION_COL: iteracoes,
+                SCENARIO_COL: cenarios,
+                STAGE_COL: estagios,
                 "violacao": violacoes,
-                "unidade": unidades,
-                "submercado": submercados,
-                "patamar": patamares,
+                UNIT_COL: unidades,
+                SUBMARKET_NAME_COL: submercados,
+                BLOCK_COL: patamares,
             }
         )
 
