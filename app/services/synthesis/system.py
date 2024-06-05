@@ -7,11 +7,13 @@ from app.utils.log import Log
 from app.model.system.variable import Variable
 from app.model.system.systemsynthesis import SystemSynthesis
 
-
+# TODO - utilizar valor do internal.constants
 FATOR_HM3_M3S = 1.0 / 2.63
 
 
 class SystemSynthetizer:
+
+    # TODO - remover, não é utilizada
     IDENTIFICATION_COLUMNS = [
         "dataInicio",
         "dataFim",
@@ -24,6 +26,8 @@ class SystemSynthetizer:
         "patamar",
     ]
 
+    # TODO - levar lista de argumentos suportados para o
+    # arquivo da SystemSynthesis
     DEFAULT_SYSTEM_SYNTHESIS_ARGS: List[str] = [
         "EST",
         "PAT",
@@ -31,10 +35,6 @@ class SystemSynthetizer:
         "UTE",
         "UHE",
     ]
-
-    @classmethod
-    def _default_args(cls) -> List[str]:
-        return cls.DEFAULT_SYSTEM_SYNTHESIS_ARGS
 
     @classmethod
     def _get_rule(cls, s: SystemSynthesis) -> Callable:
@@ -47,6 +47,16 @@ class SystemSynthetizer:
         }
         return rules[s]
 
+    # TODO - padronizar o tipo de retorno de _default_args com
+    # _process_variable_arguments
+    @classmethod
+    def _default_args(cls) -> List[str]:
+        return cls.DEFAULT_SYSTEM_SYNTHESIS_ARGS
+
+    # TODO - criar o método interno _log
+
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # Manter o processamento para sinalizar erros.
     @classmethod
     def _process_variable_arguments(
         cls,
@@ -62,6 +72,10 @@ class SystemSynthetizer:
                 return []
         return valid_args
 
+    # TODO - renomear para _filter_valid_variables
+    # Atualizar lógica considerando apenas uma síntese de inviabilidade
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - alterar idioma para inglês
     @classmethod
     def filter_valid_variables(
         cls, variables: List[SystemSynthesis]
@@ -78,6 +92,14 @@ class SystemSynthetizer:
             logger.info(f"Variáveis: {valid_variables}")
         return valid_variables
 
+    # TODO criar método _preprocess_synthesis_variables para juntar
+    # todos os pré-processamentos
+
+    # TODO - criar método _resolve para resolver cada variável de síntese
+
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_EST(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         with uow:
@@ -119,6 +141,9 @@ class SystemSynthetizer:
             }
         )
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_PAT(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         with uow:
@@ -154,6 +179,9 @@ class SystemSynthetizer:
         )
         return df
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_SBM(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         with uow:
@@ -172,6 +200,9 @@ class SystemSynthetizer:
             }
         )
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_UTE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         with uow:
@@ -191,6 +222,9 @@ class SystemSynthetizer:
                 dados["nome"].append(ct.nome_usina)
         return pd.DataFrame(data=dados)
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_UHE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         with uow:
@@ -220,6 +254,13 @@ class SystemSynthetizer:
             dados["volumeInicial"].append(uh.volume_inicial)
         return pd.DataFrame(data=dados)
 
+    # TODO - criar _export_metadata para exportar metadados
+    # TODO - modularizar a parte da síntese de uma variável
+    # em uma função à parte (_synthetize_single_variable)
+
+    # TODO - atualizar forma de logging
+    # TODO - exportar metadados ao final
+    # TODO - padronizar atribuições e chamadas com o do newave
     @classmethod
     def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
         logger = Log.log()

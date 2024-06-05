@@ -9,6 +9,8 @@ from app.services.deck.deck import Deck
 
 
 class ScenarioSynthetizer:
+    # TODO - levar lista de argumentos suportados para o
+    # arquivo da ScenarioSynthesis
     DEFAULT_SCENARIO_SYNTHESIS_ARGS: List[str] = [
         "PROBABILIDADES",
     ]
@@ -20,10 +22,16 @@ class ScenarioSynthetizer:
         }
         return rules[s]
 
+    # TODO - padronizar o tipo de retorno de _default_args com
+    # _process_variable_arguments
     @classmethod
     def _default_args(cls) -> List[str]:
         return cls.DEFAULT_SCENARIO_SYNTHESIS_ARGS
 
+    # TODO - criar o método interno _log
+
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # Manter o processamento para sinalizar erros.
     @classmethod
     def _process_variable_arguments(
         cls,
@@ -39,6 +47,8 @@ class ScenarioSynthetizer:
                 return []
         return valid_args
 
+    # TODO - renomear para _filter_valid_variables
+    # TODO - padronizar a forma de logging com o uso do método interno _log
     @classmethod
     def filter_valid_variables(
         cls, variables: List[ScenarioSynthesis]
@@ -48,6 +58,9 @@ class ScenarioSynthetizer:
             logger.info(f"Variáveis: {variables}")
         return variables
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_probabilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
 
@@ -65,6 +78,13 @@ class ScenarioSynthetizer:
         ].drop_duplicates(ignore_index=True)
         return df_subset
 
+    # TODO - criar _export_metadata para exportar metadados
+    # TODO - modularizar a parte da síntese de uma variável
+    # em uma função à parte (_synthetize_single_variable)
+
+    # TODO - atualizar forma de logging
+    # TODO - exportar metadados ao final
+    # TODO - padronizar atribuições e chamadas com o do newave
     @classmethod
     def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
         if len(variables) == 0:

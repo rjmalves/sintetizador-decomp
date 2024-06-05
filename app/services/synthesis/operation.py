@@ -13,8 +13,13 @@ from app.model.operation.operationsynthesis import OperationSynthesis
 
 
 class OperationSynthetizer:
+
+    # TODO - remover essa constante e passar a usar 
+    # diretamente a classe Deck
     PROBABILITIES_FILE = "PROBABILIDADES"
 
+    # TODO - remover essa constante e passar a usar
+    # diretamente do internal.constants
     IDENTIFICATION_COLUMNS = [
         "dataInicio",
         "dataFim",
@@ -27,6 +32,8 @@ class OperationSynthetizer:
         "patamar",
     ]
 
+    # TODO - levar lista de argumentos suportados para o
+    # arquivo da OperationSynthesis
     DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
         "CMO_SBM_EST",
         "CMO_SBM_PAT",
@@ -107,7 +114,11 @@ class OperationSynthetizer:
         "INT_SBP_PAT",
     ]
 
+    # TODO - remover, não é utilizado
     DECK_FILES: Dict[str, Any] = {}
+
+    # TODO - Adicionar constantes para suportar caching
+    # e exportação de estatísticas
 
     @classmethod
     def _get_rule(
@@ -749,6 +760,8 @@ class OperationSynthetizer:
 
         return _rules[synthesis]
 
+    # TODO - remover esta função, reimplementar a funcionalidade
+    # de uma forma melhor
     @classmethod
     def stub_earmax_sin(
         cls, uow: AbstractUnitOfWork, df: pd.DataFrame
@@ -757,6 +770,14 @@ class OperationSynthetizer:
         df[cols_cenarios] *= 100.0 / Deck.earmax_sin(uow)
         return df.copy()
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - rever se os nomes escolhidos são os mais adequados
+    # (padronizar com o newave, deixar de abreviar)
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - avaliar alterar a lógica, fazendo as contas apenas
+    # para os cenários (Int), com as demais estatísticas sendo calculadas
+    # posteriormente
     @classmethod
     def processa_dec_oper_sist(
         cls,
@@ -817,6 +838,14 @@ class OperationSynthetizer:
         df = df.astype({"submercado": str})
         return df.copy()
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - rever se os nomes escolhidos são os mais adequados
+    # (padronizar com o newave, deixar de abreviar)
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - avaliar alterar a lógica, fazendo as contas apenas
+    # para os cenários (Int), com as demais estatísticas sendo calculadas
+    # posteriormente
     @classmethod
     def processa_dec_oper_ree(
         cls, uow: AbstractUnitOfWork, col: str
@@ -860,6 +889,14 @@ class OperationSynthetizer:
         df = df.astype({"ree": str})
         return df.copy()
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - rever se os nomes escolhidos são os mais adequados
+    # (padronizar com o newave, deixar de abreviar)
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - avaliar alterar a lógica, fazendo as contas apenas
+    # para os cenários (Int), com as demais estatísticas sendo calculadas
+    # posteriormente
     @classmethod
     def processa_dec_oper_usih(
         cls,
@@ -920,6 +957,14 @@ class OperationSynthetizer:
         df = df.astype({"usina": str})
         return df.copy()
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - rever se os nomes escolhidos são os mais adequados
+    # (padronizar com o newave, deixar de abreviar)
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - avaliar alterar a lógica, fazendo as contas apenas
+    # para os cenários (Int), com as demais estatísticas sendo calculadas
+    # posteriormente
     @classmethod
     def processa_dec_oper_usit(
         cls,
@@ -980,6 +1025,14 @@ class OperationSynthetizer:
         df = df.astype({"usina": str})
         return df.copy()
 
+    # TODO - atualizar idioma para inglês
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - rever se os nomes escolhidos são os mais adequados
+    # (padronizar com o newave, deixar de abreviar)
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - avaliar alterar a lógica, fazendo as contas apenas
+    # para os cenários (Int), com as demais estatísticas sendo calculadas
+    # posteriormente
     @classmethod
     def processa_dec_oper_interc(
         cls,
@@ -1051,6 +1104,8 @@ class OperationSynthetizer:
         df = df.astype({"submercadoDe": str, "submercadoPara": str})
         return df.copy()
 
+    # TODO - atualizar idioma para inglês
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
     @classmethod
     def _agrupa_submercados(cls, df: pd.DataFrame) -> pd.DataFrame:
         cols_group = [
@@ -1066,6 +1121,8 @@ class OperationSynthetizer:
         )
         return df_group
 
+    # TODO - atualizar idioma para inglês
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
     @classmethod
     def _agrupa_uhes(
         cls, uow: AbstractUnitOfWork, df: pd.DataFrame, s: SpatialResolution
@@ -1127,6 +1184,10 @@ class OperationSynthetizer:
     #  ---------------  DADOS DA OPERACAO DAS UHE   --------------   #
     # Não existe informação de energia vertida no dec_oper_usih.csv,
     # por isso ainda são extraídas do relato.
+
+    # TODO - atualizar idioma para inglês
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - avaliar extrair diretamente do Deck
     @classmethod
     def _processa_bloco_relatorio_operacao_uhe(
         cls, uow: AbstractUnitOfWork, col: str
@@ -1180,6 +1241,9 @@ class OperationSynthetizer:
 
     #  ---------------  DADOS DA OPERACAO GERAL     --------------   #
 
+    # TODO - atualizar idioma para inglês
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - avaliar extrair diretamente do Deck
     @classmethod
     def _processa_bloco_relatorio_operacao(
         cls, uow: AbstractUnitOfWork, col: str
@@ -1203,6 +1267,9 @@ class OperationSynthetizer:
         df_s = cls._process_df_relato1_relato2(df1, df2, col, uow)
         return df_s
 
+    # TODO - atualizar idioma para inglês
+    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
+    # TODO - avaliar extrair diretamente do Deck
     @classmethod
     def _process_df_relato1_relato2(
         cls,
@@ -1240,6 +1307,8 @@ class OperationSynthetizer:
         ]
         return df_processed
 
+    # TODO - padronizar o tipo de retorno de _default_args com
+    # _process_variable_arguments
     @classmethod
     def _default_args(cls) -> List[str]:
         return cls.DEFAULT_OPERATION_SYNTHESIS_ARGS
@@ -1259,6 +1328,10 @@ class OperationSynthetizer:
                 return []
         return valid_args
 
+    # TODO - renomear para _filter_valid_variables
+    # Atualizar lógica considerando apenas uma síntese de inviabilidade
+    # TODO - padronizar a forma de logging com o uso do método interno _log
+    # TODO - alterar idioma para inglês
     @classmethod
     def filter_valid_variables(
         cls, variables: List[OperationSynthesis]
@@ -1268,6 +1341,9 @@ class OperationSynthetizer:
             logger.info(f"Variáveis: {variables}")
         return variables
 
+    # TODO - alterar idioma para inglês
+    # TODO - unificar cálculo da média com o feito pelo newave
+    # TODO - padronizar a forma de logging com o uso do método interno _log
     @classmethod
     def _processa_media(
         cls, df: pd.DataFrame, probabilities: Optional[pd.DataFrame] = None
@@ -1320,6 +1396,9 @@ class OperationSynthetizer:
             df["mean"] = df[cols_cenarios].mean(axis=1)
         return df
 
+    # TODO - alterar idioma para inglês
+    # TODO - unificar cálculo com o feito pelo newave
+    # TODO - padronizar a forma de logging com o uso do método interno _log
     @classmethod
     def _processa_quantis(
         cls, df: pd.DataFrame, quantiles: List[float]
@@ -1341,6 +1420,7 @@ class OperationSynthetizer:
             df[label] = df[cols_cenarios].quantile(q, axis=1)
         return df
 
+    # TODO - unificar pós-processamentos com o feito pelo newave
     @classmethod
     def _postprocess(
         cls, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
@@ -1362,6 +1442,17 @@ class OperationSynthetizer:
         )
         return df
 
+    # TODO - criar _export_stats para exportar metadados
+    # TODO - criar _add_synthesis_stats para adicionar estatísticas
+    # TODO - criar _export_scenario_synthesis para exportar
+    # cenários de sínteses
+    # TODO - criar _export_metadata para exportar metadados
+    # TODO - modularizar a parte da síntese de uma variável
+    # em uma função à parte (_synthetize_single_variable)
+
+    # TODO - atualizar forma de logging
+    # TODO - exportar metadados ao final
+    # TODO - padronizar atribuições e chamadas com o do newave
     @classmethod
     def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
         logger = Log.log()
