@@ -10,27 +10,14 @@ from app.model.operation.variable import Variable
 from app.model.operation.spatialresolution import SpatialResolution
 from app.model.operation.temporalresolution import TemporalResolution
 from app.model.operation.operationsynthesis import OperationSynthesis
+from app.model.scenarios.variable import Variable as ScenarioVariable
+
+from app.internal.constants import IDENTIFICATION_COLUMNS
 
 
 class OperationSynthetizer:
 
-    # TODO - remover essa constante e passar a usar 
-    # diretamente a classe Deck
-    PROBABILITIES_FILE = "PROBABILIDADES"
-
-    # TODO - remover essa constante e passar a usar
-    # diretamente do internal.constants
-    IDENTIFICATION_COLUMNS = [
-        "dataInicio",
-        "dataFim",
-        "estagio",
-        "submercado",
-        "submercadoDe",
-        "submercadoPara",
-        "ree",
-        "usina",
-        "patamar",
-    ]
+    PROBABILITIES_FILE = ScenarioVariable.PROBABILIDADES.value
 
     # TODO - levar lista de argumentos suportados para o
     # arquivo da OperationSynthesis
@@ -1111,7 +1098,7 @@ class OperationSynthetizer:
         cols_group = [
             c
             for c in df.columns
-            if c in cls.IDENTIFICATION_COLUMNS and c != "submercado"
+            if c in IDENTIFICATION_COLUMNS and c != "submercado"
         ]
         df_group = (
             df.groupby(cols_group)
@@ -1167,7 +1154,7 @@ class OperationSynthetizer:
         cols_group = ["group"] + [
             c
             for c in df.columns
-            if c in cls.IDENTIFICATION_COLUMNS and c != "usina"
+            if c in IDENTIFICATION_COLUMNS and c != "usina"
         ]
         df_group = df.groupby(cols_group).sum().reset_index()
 
@@ -1351,7 +1338,7 @@ class OperationSynthetizer:
         cols_cenarios = [
             col
             for col in df.columns.tolist()
-            if col not in cls.IDENTIFICATION_COLUMNS
+            if col not in IDENTIFICATION_COLUMNS
         ]
         cols_cenarios = [c for c in cols_cenarios if c.isnumeric()]
         estagios = [int(e) for e in df["estagio"].unique()]
@@ -1406,7 +1393,7 @@ class OperationSynthetizer:
         cols_cenarios = [
             col
             for col in df.columns.tolist()
-            if col not in cls.IDENTIFICATION_COLUMNS
+            if col not in IDENTIFICATION_COLUMNS
         ]
         for q in quantiles:
             if q == 0:
@@ -1428,10 +1415,10 @@ class OperationSynthetizer:
         df = cls._processa_quantis(df, [0.05 * i for i in range(21)])
         df = cls._processa_media(df, probabilities)
         cols_not_scenarios = [
-            c for c in df.columns if c in cls.IDENTIFICATION_COLUMNS
+            c for c in df.columns if c in IDENTIFICATION_COLUMNS
         ]
         cols_scenarios = [
-            c for c in df.columns if c not in cls.IDENTIFICATION_COLUMNS
+            c for c in df.columns if c not in IDENTIFICATION_COLUMNS
         ]
         df = pd.melt(
             df,
