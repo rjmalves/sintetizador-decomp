@@ -1,7 +1,7 @@
 import click
 import os
-import sintetizador.domain.commands as commands
-import sintetizador.services.handlers as handlers
+import app.domain.commands as commands
+import app.services.handlers as handlers
 from app.services.unitofwork import factory
 from app.utils.log import Log
 

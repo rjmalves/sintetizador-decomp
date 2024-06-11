@@ -1,1304 +1,390 @@
-from typing import Dict, List, Tuple, Optional, Any, Callable
+from typing import Dict, List, Tuple, Optional, Callable, TypeVar
 import pandas as pd  # type: ignore
-import numpy as np
+import logging
+from logging import INFO, WARNING, ERROR, DEBUG
 from traceback import print_exc
-
+from app.utils.timing import time_and_log
+from app.utils.regex import match_variables_with_wildcards
+from app.utils.operations import calc_statistics, fast_group_df
+from app.services.deck.bounds import OperationVariableBounds
 from app.services.deck.deck import Deck
 from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.log import Log
 from app.model.operation.variable import Variable
 from app.model.operation.spatialresolution import SpatialResolution
-from app.model.operation.temporalresolution import TemporalResolution
-from app.model.operation.operationsynthesis import OperationSynthesis
-from app.model.scenarios.variable import Variable as ScenarioVariable
+from app.model.operation.operationsynthesis import (
+    OperationSynthesis,
+    SUPPORTED_SYNTHESIS,
+    SYNTHESIS_DEPENDENCIES,
+    UNITS,
+)
 
-from app.internal.constants import IDENTIFICATION_COLUMNS
+from app.internal.constants import (
+    IDENTIFICATION_COLUMNS,
+    VARIABLE_COL,
+    STRING_DF_TYPE,
+    OPERATION_SYNTHESIS_METADATA_OUTPUT,
+    OPERATION_SYNTHESIS_STATS_ROOT,
+    OPERATION_SYNTHESIS_SUBDIR,
+    VALUE_COL,
+    EER_CODE_COL,
+    SUBMARKET_CODE_COL,
+    HYDRO_CODE_COL,
+    LOWER_BOUND_COL,
+    UPPER_BOUND_COL,
+)
 
 
 class OperationSynthetizer:
+    T = TypeVar("T")
+    logger: Optional[logging.Logger] = None
 
-    PROBABILITIES_FILE = ScenarioVariable.PROBABILIDADES.value
+    DEFAULT_OPERATION_SYNTHESIS_ARGS = SUPPORTED_SYNTHESIS
 
-    # TODO - levar lista de argumentos suportados para o
-    # arquivo da OperationSynthesis
-    DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
-        "CMO_SBM_EST",
-        "CMO_SBM_PAT",
-        "CTER_SIN_EST",
-        "COP_SIN_EST",
-        "CFU_SIN_EST",
-        "EARMI_REE_EST",
-        "EARMI_SBM_EST",
-        "EARMI_SIN_EST",
-        "EARPI_REE_EST",
-        "EARPI_SBM_EST",
-        "EARPI_SIN_EST",
-        "EARMF_REE_EST",
-        "EARMF_SBM_EST",
-        "EARMF_SIN_EST",
-        "EARPF_REE_EST",
-        "EARPF_SBM_EST",
-        "EARPF_SIN_EST",
-        "GTER_SBM_EST",
-        "GTER_SBM_PAT",
-        "GTER_SIN_EST",
-        "GTER_SIN_PAT",
-        "GHID_UHE_EST",
-        "GHID_UHE_PAT",
-        "GHID_SBM_EST",
-        "GHID_SBM_PAT",
-        "GHID_SIN_EST",
-        "GHID_SIN_PAT",
-        "GEOL_SBM_EST",
-        "GEOL_SBM_PAT",
-        "GEOL_SIN_EST",
-        "GEOL_SIN_PAT",
-        "ENAA_SBM_EST",
-        "ENAA_SIN_EST",
-        "MER_SBM_EST",
-        "MER_SBM_PAT",
-        "MER_SIN_EST",
-        "MER_SIN_PAT",
-        "MERL_SBM_EST",
-        "MERL_SBM_PAT",
-        "MERL_SIN_EST",
-        "MERL_SIN_PAT",
-        "DEF_SBM_EST",
-        "DEF_SBM_PAT",
-        "DEF_SIN_EST",
-        "DEF_SIN_PAT",
-        "VARPI_UHE_EST",
-        "VARPF_UHE_EST",
-        "VARMI_UHE_EST",
-        "VARMF_UHE_EST",
-        "VARMI_REE_EST",
-        "VARMF_REE_EST",
-        "VARMI_SBM_EST",
-        "VARMF_SBM_EST",
-        "VARMI_SIN_EST",
-        "VARMF_SIN_EST",
-        "QINC_UHE_EST",
-        "QAFL_UHE_EST",
-        "QDEF_UHE_EST",
-        "QTUR_UHE_EST",
-        "QVER_UHE_EST",
-        "EVERT_UHE_EST",
-        "EVERNT_UHE_EST",
-        "EVER_UHE_EST",
-        "EVERT_REE_EST",
-        "EVERNT_REE_EST",
-        "EVER_REE_EST",
-        "EVERT_SBM_EST",
-        "EVERNT_SBM_EST",
-        "EVER_SBM_EST",
-        "EVERT_SIN_EST",
-        "EVERNT_SIN_EST",
-        "EVER_SIN_EST",
-        "GTER_UTE_EST",
-        "GTER_UTE_PAT",
-        "CTER_UTE_EST",
-        "INT_SBP_EST",
-        "INT_SBP_PAT",
-    ]
+    # Todas as sínteses que forem dependências de outras sínteses
+    # devem ser armazenadas em cache
+    SYNTHESIS_TO_CACHE: List[OperationSynthesis] = list(
+        set([p for pr in SYNTHESIS_DEPENDENCIES.values() for p in pr])
+    )
 
-    # TODO - remover, não é utilizado
-    DECK_FILES: Dict[str, Any] = {}
+    # Estratégias de cache para reduzir tempo total de síntese
+    CACHED_SYNTHESIS: Dict[OperationSynthesis, pd.DataFrame] = {}
+    ORDERED_SYNTHESIS_ENTITIES: Dict[OperationSynthesis, Dict[str, list]] = {}
 
-    # TODO - Adicionar constantes para suportar caching
-    # e exportação de estatísticas
+    # Estatísticas das sínteses são armazenadas separadamente
+    SYNTHESIS_STATS: Dict[SpatialResolution, List[pd.DataFrame]] = {}
+
+    @classmethod
+    def clear_cache(cls):
+        """
+        Limpa o cache de síntese de operação.
+        """
+        cls.CACHED_SYNTHESIS.clear()
+        cls.ORDERED_SYNTHESIS_ENTITIES.clear()
+        cls.SYNTHESIS_STATS.clear()
+
+    @classmethod
+    def _log(cls, msg: str, level: int = INFO):
+        if cls.logger is not None:
+            cls.logger.log(level, msg)
 
     @classmethod
     def _get_rule(
-        cls, synthesis: Tuple[Variable, SpatialResolution, TemporalResolution]
+        cls, synthesis: Tuple[Variable, SpatialResolution]
     ) -> Callable:
         _rules: Dict[
-            Tuple[Variable, SpatialResolution, TemporalResolution],
+            Tuple[Variable, SpatialResolution],
             Callable,
         ] = {
             (
                 Variable.CUSTO_MARGINAL_OPERACAO,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(uow, "cmo"),
-            (
-                Variable.CUSTO_MARGINAL_OPERACAO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "cmo", Deck.blocks(uow)
-            ),
+            ): lambda uow: cls._resolve_dec_oper_sist(uow, "cmo"),
             (
                 Variable.CUSTO_GERACAO_TERMICA,
                 SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._processa_bloco_relatorio_operacao(
+            ): lambda uow: cls._resolve_operation_report_block(
                 uow, "geracao_termica"
             ),
             (
                 Variable.CUSTO_OPERACAO,
                 SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._processa_bloco_relatorio_operacao(
+            ): lambda uow: cls._resolve_operation_report_block(
                 uow, "custo_presente"
             ),
             (
                 Variable.CUSTO_FUTURO,
                 SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._processa_bloco_relatorio_operacao(
+            ): lambda uow: cls._resolve_operation_report_block(
                 uow, "custo_futuro"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_ree(
-                uow, "earm_inicial_MWmes"
-            ),
+            ): lambda uow: cls._resolve_dec_oper_ree(uow, "earm_inicial_MWmes"),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_ree(
+            ): lambda uow: cls._resolve_dec_oper_ree(
                 uow, "earm_inicial_percentual"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(
+            ): lambda uow: cls._resolve_dec_oper_sist(
                 uow, "earm_inicial_MWmes"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(
+            ): lambda uow: cls._resolve_dec_oper_sist(
                 uow, "earm_inicial_percentual"
             ),
             (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(uow, "earm_inicial_MWmes")
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.stub_earmax_sin(
-                uow,
-                cls._agrupa_submercados(
-                    cls.processa_dec_oper_sist(uow, "earm_inicial_MWmes")
-                ),
-            ),
-            (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_ree(uow, "earm_final_MWmes"),
+            ): lambda uow: cls._resolve_dec_oper_ree(uow, "earm_final_MWmes"),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_ree(
+            ): lambda uow: cls._resolve_dec_oper_ree(
                 uow, "earm_final_percentual"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(uow, "earm_final_MWmes"),
+            ): lambda uow: cls._resolve_dec_oper_sist(uow, "earm_final_MWmes"),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(
+            ): lambda uow: cls._resolve_dec_oper_sist(
                 uow, "earm_final_percentual"
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(uow, "earm_final_MWmes")
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.stub_earmax_sin(
-                uow,
-                cls._agrupa_submercados(
-                    cls.processa_dec_oper_sist(uow, "earm_final_MWmes")
-                ),
             ),
             (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(
+            ): lambda uow: cls._resolve_dec_oper_sist(
                 uow, "geracao_termica_total_MW"
             ),
             (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_sist(
-                uow,
-                "geracao_termica_total_MW",
-                Deck.blocks(uow),
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow,
-                    "geracao_termica_total_MW",
-                )
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow,
-                    "geracao_termica_total_MW",
-                    Deck.blocks(uow),
-                )
-            ),
-            (
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(
+            ): lambda uow: cls._resolve_dec_oper_sist(
                 uow, "geracao_hidro_com_itaipu_MW"
             ),
             (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "geracao_hidro_com_itaipu_MW", Deck.blocks(uow)
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(uow, "geracao_hidro_com_itaipu_MW")
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow,
-                    "geracao_hidro_com_itaipu_MW",
-                    Deck.blocks(uow),
-                ),
-            ),
-            (
                 Variable.GERACAO_EOLICA,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(
+            ): lambda uow: cls._resolve_dec_oper_sist(
                 uow,
                 "geracao_eolica_MW",
-            ),
-            (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_sist(
-                uow,
-                "geracao_eolica_MW",
-                Deck.blocks(uow),
-            ),
-            (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow,
-                    "geracao_eolica_MW",
-                ),
-            ),
-            (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow,
-                    "geracao_eolica_MW",
-                    Deck.blocks(uow),
-                ),
             ),
             (
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_ree(
+            ): lambda uow: cls._resolve_dec_oper_ree(
                 uow,
                 "ena_MWmes",
             ),
             (
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(
+            ): lambda uow: cls._resolve_dec_oper_sist(
                 uow,
                 "ena_MWmes",
             ),
             (
-                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow,
-                    "ena_MWmes",
-                ),
-            ),
-            (
-                Variable.MERCADO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow, "demanda_MW", Deck.blocks(uow)
-                ),
-            ),
-            (
-                Variable.MERCADO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(uow, "demanda_MW"),
-            ),
-            (
                 Variable.MERCADO,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "demanda_MW", Deck.blocks(uow)
-            ),
-            (
-                Variable.MERCADO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(uow, "demanda_MW"),
-            (
-                Variable.MERCADO_LIQUIDO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(
-                    uow, "demanda_liquida_MW", Deck.blocks(uow)
-                )
-            ),
-            (
-                Variable.MERCADO_LIQUIDO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(uow, "demanda_liquida_MW")
-            ),
+            ): lambda uow: cls._resolve_dec_oper_sist(uow, "demanda_MW"),
             (
                 Variable.MERCADO_LIQUIDO,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "demanda_liquida_MW", Deck.blocks(uow)
-            ),
-            (
-                Variable.MERCADO_LIQUIDO,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(
+            ): lambda uow: cls._resolve_dec_oper_sist(
                 uow, "demanda_liquida_MW"
             ),
             (
                 Variable.DEFICIT,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(uow, "deficit_MW", Deck.blocks(uow))
-            ),
-            (
-                Variable.DEFICIT,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_submercados(
-                cls.processa_dec_oper_sist(uow, "deficit_MW")
-            ),
-            (
-                Variable.DEFICIT,
                 SpatialResolution.SUBMERCADO,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_sist(
-                uow, "deficit_MW", Deck.blocks(uow)
-            ),
-            (
-                Variable.DEFICIT,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_sist(uow, "deficit_MW"),
+            ): lambda uow: cls._resolve_dec_oper_sist(uow, "deficit_MW"),
             (
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
+            ): lambda uow: cls._resolve_dec_oper_usih(
                 uow, "volume_util_inicial_percentual"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
+            ): lambda uow: cls._resolve_dec_oper_usih(
                 uow, "volume_util_final_percentual"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
+            ): lambda uow: cls._resolve_dec_oper_usih(
                 uow, "volume_util_inicial_hm3"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
+            ): lambda uow: cls._resolve_dec_oper_usih(
                 uow, "volume_util_final_hm3"
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls.processa_dec_oper_usih(uow, "volume_util_inicial_hm3"),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls.processa_dec_oper_usih(uow, "volume_util_final_hm3"),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls.processa_dec_oper_usih(uow, "volume_util_inicial_hm3"),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls.processa_dec_oper_usih(uow, "volume_util_final_hm3"),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls.processa_dec_oper_usih(uow, "volume_util_inicial_hm3"),
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls.processa_dec_oper_usih(uow, "volume_util_final_hm3"),
-                SpatialResolution.SISTEMA_INTERLIGADO,
             ),
             (
                 Variable.VAZAO_INCREMENTAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
+            ): lambda uow: cls._resolve_dec_oper_usih(
                 uow, "vazao_incremental_m3s"
             ),
             (
                 Variable.VAZAO_AFLUENTE,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
+            ): lambda uow: cls._resolve_dec_oper_usih(
                 uow, "vazao_afluente_m3s"
             ),
             (
                 Variable.VAZAO_DEFLUENTE,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
+            ): lambda uow: cls._resolve_dec_oper_usih(
                 uow, "vazao_defluente_m3s"
             ),
             (
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_usih(
-                uow, "geracao_MW", Deck.blocks(uow)
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(uow, "geracao_MW"),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls.processa_dec_oper_usih(
-                    uow, "geracao_MW", Deck.blocks(uow)
-                ),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls.processa_dec_oper_usih(uow, "geracao_MW"),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
+            ): lambda uow: cls._resolve_dec_oper_usih(uow, "geracao_MW"),
             (
                 Variable.ENERGIA_VERTIDA_TURBINAVEL,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._processa_bloco_relatorio_operacao_uhe(
+            ): lambda uow: cls._resolve_hydro_operation_report_block(
                 uow, "vertimento_turbinavel"
             ),
             (
                 Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._processa_bloco_relatorio_operacao_uhe(
+            ): lambda uow: cls._resolve_hydro_operation_report_block(
                 uow, "vertimento_nao_turbinavel"
-            ),
-            (
-                Variable.ENERGIA_VERTIDA,
-                SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._stub_ever_uhes(uow),
-            (
-                Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._processa_bloco_relatorio_operacao_uhe(
-                    uow, "vertimento_turbinavel"
-                ),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._processa_bloco_relatorio_operacao_uhe(
-                    uow, "vertimento_nao_turbinavel"
-                ),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._stub_ever_uhes(uow),
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._processa_bloco_relatorio_operacao_uhe(
-                    uow, "vertimento_turbinavel"
-                ),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._stub_ever_uhes(uow),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                SpatialResolution.SUBMERCADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._processa_bloco_relatorio_operacao_uhe(
-                    uow, "vertimento_nao_turbinavel"
-                ),
-                SpatialResolution.SUBMERCADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._processa_bloco_relatorio_operacao_uhe(
-                    uow, "vertimento_turbinavel"
-                ),
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._processa_bloco_relatorio_operacao_uhe(
-                    uow, "vertimento_nao_turbinavel"
-                ),
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ),
-            (
-                Variable.ENERGIA_VERTIDA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls._agrupa_uhes(
-                uow,
-                cls._stub_ever_uhes(uow),
-                SpatialResolution.SISTEMA_INTERLIGADO,
             ),
             (
                 Variable.VAZAO_TURBINADA,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
+            ): lambda uow: cls._resolve_dec_oper_usih(
                 uow, "vazao_turbinada_m3s"
             ),
             (
                 Variable.VAZAO_VERTIDA,
                 SpatialResolution.USINA_HIDROELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usih(
-                uow, "vazao_vertida_m3s"
-            ),
+            ): lambda uow: cls._resolve_dec_oper_usih(uow, "vazao_vertida_m3s"),
             (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_usit(
-                uow, "geracao_MW", Deck.blocks(uow)
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.USINA_TERMELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usit(uow, "geracao_MW"),
+            ): lambda uow: cls._resolve_dec_oper_usit(uow, "geracao_MW"),
             (
                 Variable.CUSTO_GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_usit(uow, "custo_geracao"),
+            ): lambda uow: cls._resolve_dec_oper_usit(uow, "custo_geracao"),
             (
                 Variable.INTERCAMBIO,
                 SpatialResolution.PAR_SUBMERCADOS,
-                TemporalResolution.ESTAGIO,
-            ): lambda uow: cls.processa_dec_oper_interc(
+            ): lambda uow: cls._resolve_dec_oper_interc(
                 uow, "intercambio_origem_MW"
             ),
-            (
-                Variable.INTERCAMBIO,
-                SpatialResolution.PAR_SUBMERCADOS,
-                TemporalResolution.PATAMAR,
-            ): lambda uow: cls.processa_dec_oper_interc(
-                uow, "intercambio_origem_MW", Deck.blocks(uow)
-            ),
         }
-
         return _rules[synthesis]
 
-    # TODO - remover esta função, reimplementar a funcionalidade
-    # de uma forma melhor
     @classmethod
-    def stub_earmax_sin(
-        cls, uow: AbstractUnitOfWork, df: pd.DataFrame
-    ) -> pd.DataFrame:
-        cols_cenarios = [c for c in df.columns if str(c).isnumeric()]
-        df[cols_cenarios] *= 100.0 / Deck.earmax_sin(uow)
-        return df.copy()
-
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - rever se os nomes escolhidos são os mais adequados
-    # (padronizar com o newave, deixar de abreviar)
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    # TODO - avaliar alterar a lógica, fazendo as contas apenas
-    # para os cenários (Int), com as demais estatísticas sendo calculadas
-    # posteriormente
-    @classmethod
-    def processa_dec_oper_sist(
+    def _post_resolve_file(
         cls,
-        uow: AbstractUnitOfWork,
+        df: pd.DataFrame,
         col: str,
-        patamares: Optional[List[int]] = None,
-    ):
-        df = Deck.dec_oper_sist(uow)
-        if patamares is None:
-            df = df.loc[df["patamar"].isna()]
-            cols = [
-                "submercado",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "cenario",
-                "valor",
-            ]
-        else:
-            df = df.loc[df["patamar"].isin(patamares)]
-            df = df.astype({"patamar": int})
-            cols = [
-                "submercado",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "patamar",
-                "cenario",
-                "valor",
-            ]
+    ) -> pd.DataFrame:
         if col not in df.columns:
-            logger = Log.log()
-            if logger is not None:
-                logger.warning(f"Coluna {col} não encontrada no arquivo")
+            cls._log(f"Coluna {col} não encontrada no arquivo", WARNING)
             df[col] = 0.0
         df = df.rename(
             columns={
-                "nome_submercado": "submercado",
-                col: "valor",
+                col: VALUE_COL,
             }
         )
-        df = df[cols]
-        df = df.fillna(0.0)
-        df["submercado"] = pd.Categorical(
-            values=df["submercado"],
-            categories=df["submercado"].unique().tolist(),
-            ordered=True,
-        )
-        df.sort_values(["submercado", "estagio", "cenario"], inplace=True)
-        df = df.astype({"cenario": str})
-        df = df.pivot_table(
-            "valor",
-            index=[c for c in cols if c not in ["valor", "cenario"]],
-            columns="cenario",
-            observed=False,
-        ).reset_index()
-        df = df.ffill(axis=1)
-        df = df.astype({"submercado": str})
-        return df.copy()
+        cols = [c for c in df.columns if c in IDENTIFICATION_COLUMNS]
+        df = df[cols + [VALUE_COL]]
+        return df
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - rever se os nomes escolhidos são os mais adequados
-    # (padronizar com o newave, deixar de abreviar)
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    # TODO - avaliar alterar a lógica, fazendo as contas apenas
-    # para os cenários (Int), com as demais estatísticas sendo calculadas
-    # posteriormente
     @classmethod
-    def processa_dec_oper_ree(
+    def _resolve_dec_oper_sist(
+        cls,
+        uow: AbstractUnitOfWork,
+        col: str,
+    ):
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados do dec_oper_sist",
+            logger=cls.logger,
+        ):
+            df = Deck.dec_oper_sist(uow)
+            return cls._post_resolve_file(df, col)
+
+    @classmethod
+    def _resolve_dec_oper_ree(
         cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
-        df = Deck.dec_oper_ree(uow)
-        cols = [
-            "ree",
-            "estagio",
-            "dataInicio",
-            "dataFim",
-            "cenario",
-            "valor",
-        ]
-        if col not in df.columns:
-            logger = Log.log()
-            if logger is not None:
-                logger.warning(f"Coluna {col} não encontrada no arquivo")
-            df[col] = 0.0
-        df = df.rename(
-            columns={
-                "nome_ree": "ree",
-                col: "valor",
-            }
-        )
-        df = df[cols]
-        df = df.fillna(0.0)
-        df["ree"] = pd.Categorical(
-            values=df["ree"],
-            categories=df["ree"].unique().tolist(),
-            ordered=True,
-        )
-        df.sort_values(["ree", "estagio", "cenario"], inplace=True)
-        df = df.astype({"cenario": str})
-        df = df.pivot_table(
-            "valor",
-            index=[c for c in cols if c not in ["valor", "cenario"]],
-            columns="cenario",
-            observed=False,
-        ).reset_index()
-        df = df.ffill(axis=1)
-        df = df.astype({"ree": str})
-        return df.copy()
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados do dec_oper_ree",
+            logger=cls.logger,
+        ):
+            df = Deck.dec_oper_ree(uow)
+            return cls._post_resolve_file(df, col)
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - rever se os nomes escolhidos são os mais adequados
-    # (padronizar com o newave, deixar de abreviar)
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    # TODO - avaliar alterar a lógica, fazendo as contas apenas
-    # para os cenários (Int), com as demais estatísticas sendo calculadas
-    # posteriormente
     @classmethod
-    def processa_dec_oper_usih(
+    def _resolve_dec_oper_usih(
         cls,
         uow: AbstractUnitOfWork,
         col: str,
-        patamares: Optional[List[int]] = None,
     ):
-        df = Deck.dec_oper_usih(uow)
-        if patamares is None:
-            df = df.loc[df["patamar"].isna()]
-            cols = [
-                "usina",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "cenario",
-                "valor",
-            ]
-        else:
-            df = df.loc[df["patamar"].isin(patamares)]
-            df = df.astype({"patamar": int})
-            cols = [
-                "usina",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "patamar",
-                "cenario",
-                "valor",
-            ]
-        if col not in df.columns:
-            logger = Log.log()
-            if logger is not None:
-                logger.warning(f"Coluna {col} não encontrada no arquivo")
-            df[col] = 0.0
-        df = df.rename(
-            columns={
-                "nome_usina": "usina",
-                col: "valor",
-            }
-        )
-        df = df[cols]
-        df = df.fillna(0.0)
-        df["usina"] = pd.Categorical(
-            values=df["usina"],
-            categories=df["usina"].unique().tolist(),
-            ordered=True,
-        )
-        df.sort_values(["usina", "estagio", "cenario"], inplace=True)
-        df = df.astype({"cenario": str})
-        df = df.pivot_table(
-            "valor",
-            index=[c for c in cols if c not in ["valor", "cenario"]],
-            columns="cenario",
-            observed=False,
-        ).reset_index()
-        df = df.ffill(axis=1)
-        df = df.astype({"usina": str})
-        return df.copy()
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados do dec_oper_usih",
+            logger=cls.logger,
+        ):
+            df = Deck.dec_oper_usih(uow)
+            return cls._post_resolve_file(df, col)
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - rever se os nomes escolhidos são os mais adequados
-    # (padronizar com o newave, deixar de abreviar)
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    # TODO - avaliar alterar a lógica, fazendo as contas apenas
-    # para os cenários (Int), com as demais estatísticas sendo calculadas
-    # posteriormente
     @classmethod
-    def processa_dec_oper_usit(
+    def _resolve_dec_oper_usit(
         cls,
         uow: AbstractUnitOfWork,
         col: str,
-        patamares: Optional[List[int]] = None,
     ):
-        df = Deck.dec_oper_usit(uow)
-        if patamares is None:
-            df = df.loc[df["patamar"].isna()]
-            cols = [
-                "usina",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "cenario",
-                "valor",
-            ]
-        else:
-            df = df.loc[df["patamar"].isin(patamares)]
-            df = df.astype({"patamar": int})
-            cols = [
-                "usina",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "patamar",
-                "cenario",
-                "valor",
-            ]
-        if col not in df.columns:
-            logger = Log.log()
-            if logger is not None:
-                logger.warning(f"Coluna {col} não encontrada no arquivo")
-            df[col] = 0.0
-        df = df.rename(
-            columns={
-                "nome_usina": "usina",
-                col: "valor",
-            }
-        )
-        df = df[cols]
-        df = df.fillna(0.0)
-        df["usina"] = pd.Categorical(
-            values=df["usina"],
-            categories=df["usina"].unique().tolist(),
-            ordered=True,
-        )
-        df.sort_values(["usina", "estagio", "cenario"], inplace=True)
-        df = df.astype({"cenario": str})
-        df = df.pivot_table(
-            "valor",
-            index=[c for c in cols if c not in ["valor", "cenario"]],
-            columns="cenario",
-            observed=False,
-        ).reset_index()
-        df = df.ffill(axis=1)
-        df = df.astype({"usina": str})
-        return df.copy()
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados do dec_oper_usit",
+            logger=cls.logger,
+        ):
+            df = Deck.dec_oper_usit(uow)
+            return cls._post_resolve_file(df, col)
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - rever se os nomes escolhidos são os mais adequados
-    # (padronizar com o newave, deixar de abreviar)
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    # TODO - avaliar alterar a lógica, fazendo as contas apenas
-    # para os cenários (Int), com as demais estatísticas sendo calculadas
-    # posteriormente
     @classmethod
-    def processa_dec_oper_interc(
+    def _resolve_dec_oper_interc(
         cls,
         uow: AbstractUnitOfWork,
         col: str,
-        patamares: Optional[List[int]] = None,
     ) -> pd.DataFrame:
-        df = Deck.dec_oper_interc(uow)
-        if patamares is None:
-            df = df.loc[df["patamar"].isna()]
-            cols = [
-                "submercadoDe",
-                "submercadoPara",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "cenario",
-                "valor",
-            ]
-        else:
-            df = df.loc[df["patamar"].isin(patamares)]
-            df = df.astype({"patamar": int})
-            cols = [
-                "submercadoDe",
-                "submercadoPara",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "patamar",
-                "cenario",
-                "valor",
-            ]
-        df = df.rename(
-            columns={
-                "nome_submercado_de": "submercadoDe",
-                "nome_submercado_para": "submercadoPara",
-                col: "valor",
-            }
-        )
-        df = df[cols]
-        df = df.fillna(0.0)
-        df["submercadoDe"] = pd.Categorical(
-            values=df["submercadoDe"],
-            categories=df["submercadoDe"].unique().tolist(),
-            ordered=True,
-        )
-        df["submercadoPara"] = pd.Categorical(
-            values=df["submercadoPara"],
-            categories=df["submercadoPara"].unique().tolist(),
-            ordered=True,
-        )
-        df.sort_values(
-            [
-                "submercadoDe",
-                "submercadoPara",
-                "estagio",
-                "cenario",
-            ],
-            inplace=True,
-        )
-        df = df.astype({"cenario": str})
-        df = df.pivot_table(
-            "valor",
-            index=[c for c in cols if c not in ["valor", "cenario"]],
-            columns="cenario",
-            observed=False,
-        ).reset_index()
-        df = df.ffill(axis=1)
-        df = df.astype({"submercadoDe": str, "submercadoPara": str})
-        return df.copy()
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados do dec_oper_interc",
+            logger=cls.logger,
+        ):
+            df = Deck.dec_oper_interc(uow)
+            return cls._post_resolve_file(df, col)
 
-    # TODO - atualizar idioma para inglês
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
     @classmethod
-    def _agrupa_submercados(cls, df: pd.DataFrame) -> pd.DataFrame:
-        cols_group = [
-            c
-            for c in df.columns
-            if c in IDENTIFICATION_COLUMNS and c != "submercado"
-        ]
-        df_group = (
-            df.groupby(cols_group)
-            .sum()
-            .reset_index()
-            .drop(columns=["submercado"])
-        )
-        return df_group
-
-    # TODO - atualizar idioma para inglês
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    @classmethod
-    def _agrupa_uhes(
-        cls, uow: AbstractUnitOfWork, df: pd.DataFrame, s: SpatialResolution
-    ) -> pd.DataFrame:
-        relato = Deck.relato(uow)
-        uhes_rees = relato.uhes_rees_submercados
-        if uhes_rees is None:
-            logger = Log.log()
-            if logger is not None:
-                logger.error(
-                    "Erro na leitura da relação entre UHEs"
-                    + " e REEs no relato."
-                )
-            raise RuntimeError()
-        df["group"] = df.apply(
-            lambda linha: int(
-                uhes_rees.loc[
-                    uhes_rees["nome_usina"] == linha["usina"], "codigo_ree"
-                ].iloc[0]
-            ),
-            axis=1,
-        )
-
-        if s == SpatialResolution.RESERVATORIO_EQUIVALENTE:
-            df["group"] = df.apply(
-                lambda linha: uhes_rees.loc[
-                    uhes_rees["codigo_ree"] == linha["group"], "nome_ree"
-                ].iloc[0],
-                axis=1,
-            )
-        elif s == SpatialResolution.SUBMERCADO:
-            df["group"] = df.apply(
-                lambda linha: uhes_rees.loc[
-                    uhes_rees["codigo_ree"] == linha["group"],
-                    "nome_submercado",
-                ].iloc[0],
-                axis=1,
-            )
-        elif s == SpatialResolution.SISTEMA_INTERLIGADO:
-            df["group"] = 1
-
-        cols_group = ["group"] + [
-            c
-            for c in df.columns
-            if c in IDENTIFICATION_COLUMNS and c != "usina"
-        ]
-        df_group = df.groupby(cols_group).sum().reset_index()
-
-        group_name = {
-            SpatialResolution.RESERVATORIO_EQUIVALENTE: "ree",
-            SpatialResolution.SUBMERCADO: "submercado",
-        }
-        if s == SpatialResolution.SISTEMA_INTERLIGADO:
-            df_group = df_group.drop(columns=["group"])
-        else:
-            df_group = df_group.rename(columns={"group": group_name[s]})
-        return df_group
-
-    #  ---------------  DADOS DA OPERACAO DAS UHE   --------------   #
-    # Não existe informação de energia vertida no dec_oper_usih.csv,
-    # por isso ainda são extraídas do relato.
-
-    # TODO - atualizar idioma para inglês
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    # TODO - avaliar extrair diretamente do Deck
-    @classmethod
-    def _processa_bloco_relatorio_operacao_uhe(
+    def _resolve_hydro_operation_report_block(
         cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
-        r1 = Deck.relato(uow)
-        r2 = Deck.relato2(uow)
-        logger = Log.log()
-        df1 = r1.relatorio_operacao_uhe
-        if df1 is None:
-            if logger is not None:
-                logger.error(
-                    "Erro na leitura do relatório de"
-                    + " operação das UHE do relato."
-                )
-            raise RuntimeError()
-        df2 = (
-            r2.relatorio_operacao_uhe
-            if r2.relatorio_operacao_uhe is not None
-            else pd.DataFrame(columns=df1.columns)
-        )
-        df1 = df1.loc[~pd.isna(df1["FPCGC"]), :]
-        df2 = df2.loc[~pd.isna(df2["FPCGC"]), :]
-        usinas_relatorio = df1["nome_usina"].unique()
-        df_final = pd.DataFrame()
-        for u in usinas_relatorio:
-            df1_u = df1.loc[df1["nome_usina"] == u, :]
-            df2_u = df2.loc[df2["nome_usina"] == u, :]
-            df_u = cls._process_df_relato1_relato2(df1_u, df2_u, col, uow)
-            cols_df_u = df_u.columns.to_list()
-            df_u["usina"] = u
-            df_final = pd.concat([df_final, df_u], ignore_index=True)
-        df_final = df_final[["usina"] + cols_df_u]
-        return df_final
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados dos relato e relato2",
+            logger=cls.logger,
+        ):
+            return Deck.hydro_operation_report_data(col, uow)
 
     @classmethod
-    def _stub_ever_uhes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        evert = cls._processa_bloco_relatorio_operacao_uhe(
-            uow, "vertimento_turbinavel"
-        )
-        evernt = cls._processa_bloco_relatorio_operacao_uhe(
-            uow, "vertimento_nao_turbinavel"
-        )
-        cols_cenarios = [
-            c
-            for c in evert.columns
-            if c
-            not in ["usina", "estagio", "dataInicio", "dataFim", "patamar"]
-        ]
-        evert[cols_cenarios] += evernt[cols_cenarios]
-        return evert.copy()
-
-    #  ---------------  DADOS DA OPERACAO GERAL     --------------   #
-
-    # TODO - atualizar idioma para inglês
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    # TODO - avaliar extrair diretamente do Deck
-    @classmethod
-    def _processa_bloco_relatorio_operacao(
+    def _resolve_operation_report_block(
         cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
-        r1 = Deck.relato(uow)
-        r2 = Deck.relato2(uow)
-        logger = Log.log()
-        df1 = r1.relatorio_operacao_custos
-        if df1 is None:
-            if logger is not None:
-                logger.error(
-                    "Erro na leitura do relatório de"
-                    + " custos de operação do relato."
-                )
-            raise RuntimeError()
-        df2 = (
-            r2.relatorio_operacao_custos
-            if r2.relatorio_operacao_custos is not None
-            else pd.DataFrame(columns=df1.columns)
-        )
-        df_s = cls._process_df_relato1_relato2(df1, df2, col, uow)
-        return df_s
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados dos relato e relato2",
+            logger=cls.logger,
+        ):
+            return Deck.operation_report_data(col, uow)
 
-    # TODO - atualizar idioma para inglês
-    # TODO - Modularizar pós-processamentos dos dados para padronizar com o newave
-    # TODO - avaliar extrair diretamente do Deck
-    @classmethod
-    def _process_df_relato1_relato2(
-        cls,
-        df1: pd.DataFrame,
-        df2: pd.DataFrame,
-        col: str,
-        uow: AbstractUnitOfWork,
-    ) -> pd.DataFrame:
-        estagios_r1 = df1["estagio"].unique().tolist()
-        estagios_r2 = df2["estagio"].unique().tolist()
-        estagios = list(set(estagios_r1 + estagios_r2))
-        start_dates = [Deck.stages_start_date(uow)[i - 1] for i in estagios]
-        end_dates = [Deck.stages_end_date(uow)[i - 1] for i in estagios]
-        scenarios_r1 = df1["cenario"].unique().tolist()
-        scenarios_r2 = df2["cenario"].unique().tolist()
-        scenarios = list(set(scenarios_r1 + scenarios_r2))
-        cols_scenarios = [str(c) for c in scenarios]
-        empty_table = np.zeros((len(start_dates), len(scenarios)))
-        df_processed = pd.DataFrame(empty_table, columns=cols_scenarios)
-        df_processed["estagio"] = estagios
-        df_processed["dataInicio"] = start_dates
-        df_processed["dataFim"] = end_dates
-        for e in estagios_r1:
-            df_processed.loc[
-                df_processed["estagio"] == e,
-                cols_scenarios,
-            ] = float(df1.loc[df1["estagio"] == e, col].iloc[0])
-        for e in estagios_r2:
-            df_processed.loc[
-                df_processed["estagio"] == e,
-                cols_scenarios,
-            ] = df2.loc[df2["estagio"] == e, col].to_numpy()
-        df_processed = df_processed[
-            ["estagio", "dataInicio", "dataFim"] + cols_scenarios
-        ]
-        return df_processed
-
-    # TODO - padronizar o tipo de retorno de _default_args com
-    # _process_variable_arguments
     @classmethod
     def _default_args(cls) -> List[str]:
         return cls.DEFAULT_OPERATION_SYNTHESIS_ARGS
+
+    @classmethod
+    def _match_wildcards(cls, variables: List[str]) -> List[str]:
+        """
+        Identifica se há variáveis de síntese que são suportadas
+        dentro do padrão de wildcards (`*`) fornecidos.
+        """
+        return match_variables_with_wildcards(
+            variables, cls.DEFAULT_OPERATION_SYNTHESIS_ARGS
+        )
 
     @classmethod
     def _process_variable_arguments(
@@ -1307,160 +393,701 @@ class OperationSynthetizer:
     ) -> List[OperationSynthesis]:
         args_data = [OperationSynthesis.factory(c) for c in args]
         valid_args = [arg for arg in args_data if arg is not None]
-        logger = Log.log()
         for i, a in enumerate(args_data):
             if a is None:
-                if logger is not None:
-                    logger.info(f"Erro no argumento fornecido: {args[i]}")
+                cls._log(f"Erro no argumento fornecido: {args[i]}")
                 return []
         return valid_args
 
-    # TODO - renomear para _filter_valid_variables
-    # Atualizar lógica considerando apenas uma síntese de inviabilidade
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - alterar idioma para inglês
     @classmethod
-    def filter_valid_variables(
-        cls, variables: List[OperationSynthesis]
+    def _filter_valid_variables(
+        cls, variables: List[OperationSynthesis], uow: AbstractUnitOfWork
     ) -> List[OperationSynthesis]:
-        logger = Log.log()
-        if logger is not None:
-            logger.info(f"Variáveis: {variables}")
+        cls._log(f"Variáveis: {variables}")
         return variables
 
-    # TODO - alterar idioma para inglês
-    # TODO - unificar cálculo da média com o feito pelo newave
-    # TODO - padronizar a forma de logging com o uso do método interno _log
     @classmethod
-    def _processa_media(
-        cls, df: pd.DataFrame, probabilities: Optional[pd.DataFrame] = None
-    ) -> pd.DataFrame:
-        cols_cenarios = [
-            col
-            for col in df.columns.tolist()
-            if col not in IDENTIFICATION_COLUMNS
-        ]
-        cols_cenarios = [c for c in cols_cenarios if c.isnumeric()]
-        estagios = [int(e) for e in df["estagio"].unique()]
-        if probabilities is not None:
-            if len(probabilities["cenario"].unique().tolist()) != len(
-                cols_cenarios
-            ):
-                logger = Log.log()
-                if logger is not None:
-                    logger.warning(
-                        "Número de cenários informados nos"
-                        + " relatos difere do número encontrado no"
-                        + " arquivo do dado em questão. Considerados"
-                        + " cenários equiprováveis."
+    def _add_synthesis_dependencies(
+        cls, synthesis: List[OperationSynthesis]
+    ) -> List[OperationSynthesis]:
+        """
+        Adiciona objetos as dependências de síntese para uma lista de objetos
+        de síntese que foram fornecidos.
+        """
+
+        def _add_synthesis_dependencies_recursive(
+            current_synthesis: List[OperationSynthesis],
+            todo_synthesis: OperationSynthesis,
+        ):
+            if todo_synthesis in SYNTHESIS_DEPENDENCIES.keys():
+                for dep in SYNTHESIS_DEPENDENCIES[todo_synthesis]:
+                    _add_synthesis_dependencies_recursive(
+                        current_synthesis, dep
                     )
-                df["mean"] = df[cols_cenarios].mean(axis=1)
-            else:
-                df["mean"] = 0.0
-                for e in estagios:
-                    df_estagio = probabilities.loc[
-                        probabilities["estagio"] == e, :
-                    ]
-                    probabilidades = {
-                        str(int(linha["cenario"])): linha["probabilidade"]
-                        for _, linha in df_estagio.iterrows()
-                    }
-                    probabilidades = {
-                        **probabilidades,
-                        **{
-                            c: 0.0
-                            for c in cols_cenarios
-                            if c not in probabilidades.keys()
-                        },
-                    }
-                    df_cenarios_estagio = df.loc[
-                        df["estagio"] == e, cols_cenarios
-                    ].mul(probabilidades, fill_value=0.0)
-                    df.loc[df["estagio"] == e, "mean"] = (
-                        df_cenarios_estagio.sum(axis=1).astype(np.float64)
-                    )
+            if todo_synthesis not in current_synthesis:
+                current_synthesis.append(todo_synthesis)
+
+        result_synthesis: List[OperationSynthesis] = []
+        for v in synthesis:
+            _add_synthesis_dependencies_recursive(result_synthesis, v)
+        return result_synthesis
+
+    @classmethod
+    def _get_unique_column_values_in_order(
+        cls, df: pd.DataFrame, cols: List[str]
+    ):
+        """
+        Extrai valores únicos na ordem em que aparecem para um
+        conjunto de colunas de um DataFrame.
+        """
+        return {col: df[col].unique().tolist() for col in cols}
+
+    @classmethod
+    def _set_ordered_entities(
+        cls, s: OperationSynthesis, entities: Dict[str, list]
+    ):
+        """
+        Armazena um conjunto de entidades ordenadas para uma síntese.
+        """
+        cls.ORDERED_SYNTHESIS_ENTITIES[s] = entities
+
+    @classmethod
+    def _get_ordered_entities(cls, s: OperationSynthesis) -> Dict[str, list]:
+        """
+        Obtem um conjunto de entidades ordenadas para uma síntese.
+        """
+        return cls.ORDERED_SYNTHESIS_ENTITIES[s]
+
+    @classmethod
+    def _get_from_cache(cls, s: OperationSynthesis) -> pd.DataFrame:
+        """
+        Extrai o resultado de uma síntese da cache caso exista, lançando
+        um erro caso contrário.
+        """
+        if s in cls.CACHED_SYNTHESIS.keys():
+            cls._log(f"Lendo do cache - {str(s)}", DEBUG)
+            res = cls.CACHED_SYNTHESIS.get(s)
+            if res is None:
+                cls._log(f"Erro na leitura do cache - {str(s)}", ERROR)
+                raise RuntimeError()
+            return res.copy()
         else:
-            df["mean"] = df[cols_cenarios].mean(axis=1)
-        return df
+            cls._log(f"Erro na leitura do cache - {str(s)}", ERROR)
+            raise RuntimeError()
 
-    # TODO - alterar idioma para inglês
-    # TODO - unificar cálculo com o feito pelo newave
-    # TODO - padronizar a forma de logging com o uso do método interno _log
     @classmethod
-    def _processa_quantis(
-        cls, df: pd.DataFrame, quantiles: List[float]
+    def __stub_EVER(
+        cls, synthesis: OperationSynthesis, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
-        cols_cenarios = [
-            col
-            for col in df.columns.tolist()
-            if col not in IDENTIFICATION_COLUMNS
-        ]
-        for q in quantiles:
-            if q == 0:
-                label = "min"
-            elif q == 1:
-                label = "max"
-            elif q == 0.5:
-                label = "median"
-            else:
-                label = f"p{int(100 * q)}"
-            df[label] = df[cols_cenarios].quantile(q, axis=1)
-        return df
-
-    # TODO - unificar pós-processamentos com o feito pelo newave
-    @classmethod
-    def _postprocess(
-        cls, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
-    ) -> pd.DataFrame:
-        df = cls._processa_quantis(df, [0.05 * i for i in range(21)])
-        df = cls._processa_media(df, probabilities)
-        cols_not_scenarios = [
-            c for c in df.columns if c in IDENTIFICATION_COLUMNS
-        ]
-        cols_scenarios = [
-            c for c in df.columns if c not in IDENTIFICATION_COLUMNS
-        ]
-        df = pd.melt(
-            df,
-            id_vars=cols_not_scenarios,
-            value_vars=cols_scenarios,
-            var_name="cenario",
-            value_name="valor",
+        """
+        Realiza o cálculo da energia vertida a partir dos valores
+        das energias vertidas turbinável e não-turbinável.
+        """
+        turbineable_synthesis = OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_TURBINAVEL,
+            synthesis.spatial_resolution,
         )
+        non_turbineable_synthesis = OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+            synthesis.spatial_resolution,
+        )
+        turbineable_df = cls._get_from_cache(turbineable_synthesis)
+        spilled_df = cls._get_from_cache(non_turbineable_synthesis)
+
+        spilled_df.loc[:, VALUE_COL] = (
+            turbineable_df[VALUE_COL].to_numpy()
+            + spilled_df[VALUE_COL].to_numpy()
+        )
+        return spilled_df
+
+    @classmethod
+    def _group_hydro_df(
+        cls, df: pd.DataFrame, grouping_column: Optional[str] = None
+    ) -> pd.DataFrame:
+        """
+        Realiza a agregação de variáveis fornecidas a nível de UHE
+        para uma síntese de REEs, SBMs ou para o SIN. A agregação
+        tem como requisito que as variáveis fornecidas sejam em unidades
+        cuja agregação seja possível apenas pela soma.
+        """
+        valid_grouping_columns = [
+            HYDRO_CODE_COL,
+            EER_CODE_COL,
+            SUBMARKET_CODE_COL,
+        ]
+
+        grouping_column_map: Dict[str, List[str]] = {
+            HYDRO_CODE_COL: [
+                HYDRO_CODE_COL,
+                EER_CODE_COL,
+                SUBMARKET_CODE_COL,
+            ],
+            EER_CODE_COL: [
+                EER_CODE_COL,
+                SUBMARKET_CODE_COL,
+            ],
+            SUBMARKET_CODE_COL: [SUBMARKET_CODE_COL],
+        }
+
+        mapped_columns = (
+            grouping_column_map[grouping_column] if grouping_column else []
+        )
+        grouping_columns = mapped_columns + [
+            c
+            for c in df.columns
+            if c in IDENTIFICATION_COLUMNS and c not in valid_grouping_columns
+        ]
+
+        grouped_df = fast_group_df(
+            df,
+            grouping_columns,
+            [VALUE_COL, LOWER_BOUND_COL, UPPER_BOUND_COL],
+            operation="sum",
+        )
+
+        return grouped_df
+
+    @classmethod
+    def _group_submarket_df(
+        cls, df: pd.DataFrame, grouping_column: Optional[str] = None
+    ) -> pd.DataFrame:
+        """
+        Realiza a agregação de variáveis fornecidas a nível de SBM
+        para o SIN. A agregação tem como requisito que as variáveis fornecidas
+        sejam em unidades cuja agregação seja possível apenas pela soma.
+        """
+        valid_grouping_columns = [
+            SUBMARKET_CODE_COL,
+        ]
+
+        grouping_column_map: Dict[str, List[str]] = {
+            SUBMARKET_CODE_COL: [SUBMARKET_CODE_COL],
+        }
+
+        mapped_columns = (
+            grouping_column_map[grouping_column] if grouping_column else []
+        )
+        grouping_columns = mapped_columns + [
+            c
+            for c in df.columns
+            if c in IDENTIFICATION_COLUMNS and c not in valid_grouping_columns
+        ]
+
+        grouped_df = fast_group_df(
+            df,
+            grouping_columns,
+            [VALUE_COL, LOWER_BOUND_COL, UPPER_BOUND_COL],
+            operation="sum",
+        )
+
+        return grouped_df
+
+    @classmethod
+    def __stub_grouping_hydro(
+        cls, synthesis: OperationSynthesis, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        """
+        Realiza o cálculo de uma variável agrupando a partir
+        da extração feita por UHE.
+        """
+        hydro_synthesis = OperationSynthesis(
+            synthesis.variable,
+            SpatialResolution.USINA_HIDROELETRICA,
+        )
+
+        hydro_df = cls._get_from_cache(hydro_synthesis)
+
+        grouping_col_map = {
+            SpatialResolution.RESERVATORIO_EQUIVALENTE: EER_CODE_COL,
+            SpatialResolution.SUBMERCADO: SUBMARKET_CODE_COL,
+            SpatialResolution.SISTEMA_INTERLIGADO: None,
+        }
+
+        return cls._group_hydro_df(
+            hydro_df,
+            grouping_column=grouping_col_map[synthesis.spatial_resolution],
+        )
+
+    @classmethod
+    def __stub_grouping_submarket(
+        cls, synthesis: OperationSynthesis, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        """
+        Realiza o cálculo de uma variável agrupando a partir da extração
+        feita por SBM.
+        """
+        submarket_synthesis = OperationSynthesis(
+            synthesis.variable,
+            SpatialResolution.SUBMERCADO,
+        )
+
+        hydro_df = cls._get_from_cache(submarket_synthesis)
+
+        grouping_col_map = {
+            SpatialResolution.SISTEMA_INTERLIGADO: None,
+        }
+
+        return cls._group_hydro_df(
+            hydro_df,
+            grouping_column=grouping_col_map[synthesis.spatial_resolution],
+        )
+
+    @classmethod
+    def __stub_GHID_REE(
+        cls, synthesis: OperationSynthesis, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        """
+        Realiza o cálculo da geração hidráulica a partir da extração
+        feita por UHE.
+        """
+        hydro_synthesis = OperationSynthesis(
+            Variable.GERACAO_HIDRAULICA,
+            SpatialResolution.USINA_HIDROELETRICA,
+        )
+
+        hydro_df = cls._get_from_cache(hydro_synthesis)
+
+        grouping_col_map = {
+            SpatialResolution.RESERVATORIO_EQUIVALENTE: EER_CODE_COL,
+            SpatialResolution.SUBMERCADO: SUBMARKET_CODE_COL,
+            SpatialResolution.SISTEMA_INTERLIGADO: None,
+        }
+
+        return cls._group_hydro_df(
+            hydro_df,
+            grouping_column=grouping_col_map[synthesis.spatial_resolution],
+        )
+
+    @classmethod
+    def __stub_percent_SIN(
+        cls, synthesis: OperationSynthesis, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        """
+        Realiza o cálculo de uma variável em percentual para o SIN a
+        partir da extração feita por SBM.
+        """
+        earpi = Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL
+        earmi = Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL
+        earpf = Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL
+        earmf = Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL
+
+        variable_map = {
+            earpi: earmi,
+            earpf: earmf,
+        }
+        absolute_submarket_synthesis = OperationSynthesis(
+            variable_map[synthesis.variable],
+            SpatialResolution.SUBMERCADO,
+        )
+        percent_submarket_synthesis = OperationSynthesis(
+            synthesis.variable,
+            SpatialResolution.SUBMERCADO,
+        )
+
+        # Groups absolute values
+        absolute_df = cls._get_from_cache(absolute_submarket_synthesis)
+        result_df = cls._group_submarket_df(
+            absolute_df,
+            grouping_column=None,
+        )
+        # Calculates capacity
+        percent_df = cls._get_from_cache(percent_submarket_synthesis)
+        percent_df[VALUE_COL] = (
+            100
+            * absolute_df[VALUE_COL].to_numpy()
+            / percent_df[VALUE_COL].to_numpy()
+        )
+        capacity_df = cls._group_submarket_df(
+            percent_df,
+            grouping_column=None,
+        )
+        # Calculates percentage
+        result_df[VALUE_COL] = 100 * (
+            result_df[VALUE_COL] / capacity_df[VALUE_COL]
+        )
+        return result_df
+
+    @classmethod
+    def _stub_mappings(  # noqa
+        cls, s: OperationSynthesis
+    ) -> Optional[Callable]:
+        """
+        Obtem a função de resolução de cada síntese que foge ao
+        fluxo de resolução padrão, por meio de um mapeamento de
+        funções `stub` para cada variável e/ou resolução espacial.
+        """
+        f = None
+        if s.variable == Variable.ENERGIA_VERTIDA:
+            f = cls.__stub_EVER
+        elif all(
+            [
+                s.variable
+                in [
+                    Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                    Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                    Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                    Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+                ],
+                s.spatial_resolution != SpatialResolution.USINA_HIDROELETRICA,
+            ]
+        ):
+            f = cls.__stub_grouping_hydro
+        elif all(
+            [
+                s.variable
+                in [
+                    Variable.MERCADO,
+                    Variable.MERCADO_LIQUIDO,
+                    Variable.DEFICIT,
+                    Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+                    Variable.GERACAO_HIDRAULICA,
+                    Variable.GERACAO_TERMICA,
+                    Variable.GERACAO_EOLICA,
+                    Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
+                    Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
+                ],
+                s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
+            ]
+        ):
+            f = cls.__stub_grouping_submarket
+        elif all(
+            [
+                s.variable == Variable.GERACAO_HIDRAULICA,
+                s.spatial_resolution
+                == SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ]
+        ):
+            f = cls.__stub_GHID_REE
+        elif all(
+            [
+                s.variable
+                in [
+                    Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
+                    Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
+                ],
+                s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
+            ]
+        ):
+            f = cls.__stub_percent_SIN
+
+        return f
+
+    @classmethod
+    def _resolve_stub(
+        cls, s: OperationSynthesis, uow: AbstractUnitOfWork
+    ) -> Tuple[pd.DataFrame, bool]:
+        """
+        Realiza a resolução da síntese por meio de uma implementação
+        alternativa ao fluxo natural de resolução (`stub`), caso esta seja
+        uma variável que não possa ser resolvida diretamente a partir
+        da extração de dados do NWLISTOP.
+        """
+        f = cls._stub_mappings(s)
+        if f:
+            df, is_stub = f(s, uow), True
+        else:
+            df, is_stub = pd.DataFrame(), False
+        if is_stub:
+            df = cls._post_resolve(df, s, uow)
+            df = cls._resolve_bounds(s, df, uow)
+        return df, is_stub
+
+    @classmethod
+    def __get_from_cache_if_exists(cls, s: OperationSynthesis) -> pd.DataFrame:
+        """
+        Obtém uma síntese da operação a partir da cache, caso esta
+        exista. Caso contrário, retorna um DataFrame vazio.
+        """
+        if s in cls.CACHED_SYNTHESIS.keys():
+            return cls._get_from_cache(s)
+        else:
+            return pd.DataFrame()
+
+    @classmethod
+    def __store_in_cache_if_needed(
+        cls, s: OperationSynthesis, df: pd.DataFrame
+    ):
+        """
+        Adiciona um DataFrame com os dados de uma síntese à cache
+        caso esta seja uma variável que deva ser armazenada.
+        """
+        if s in cls.SYNTHESIS_TO_CACHE:
+            with time_and_log(
+                message_root="Tempo para armazenamento na cache",
+                logger=cls.logger,
+            ):
+                cls.CACHED_SYNTHESIS[s] = df.copy()
+
+    @classmethod
+    def _resolve_bounds(
+        cls, s: OperationSynthesis, df: pd.DataFrame, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        """
+        Realiza o cálculo dos limites superiores e inferiores para
+        a síntese caso esta seja uma variável limitada.
+        """
+        with time_and_log(
+            message_root="Tempo para calculo dos limites",
+            logger=cls.logger,
+        ):
+            df = OperationVariableBounds.resolve_bounds(
+                s,
+                df,
+                cls._get_ordered_entities(s),
+                uow,
+            )
+
         return df
 
-    # TODO - criar _export_stats para exportar metadados
-    # TODO - criar _add_synthesis_stats para adicionar estatísticas
-    # TODO - criar _export_scenario_synthesis para exportar
-    # cenários de sínteses
-    # TODO - criar _export_metadata para exportar metadados
-    # TODO - modularizar a parte da síntese de uma variável
-    # em uma função à parte (_synthetize_single_variable)
+    @classmethod
+    def _post_resolve(
+        cls,
+        df: pd.DataFrame,
+        s: OperationSynthesis,
+        uow: AbstractUnitOfWork,
+        early_hooks: List[Callable] = [],
+        late_hooks: List[Callable] = [],
+    ) -> pd.DataFrame:
+        """
+        Realiza pós-processamento após a resolução da extração
+        de todos os dados de síntese extraídos do NWLISTOP para uma síntese.
+        """
+        with time_and_log(
+            message_root="Tempo para compactacao dos dados", logger=cls.logger
+        ):
+            spatial_resolution = s.spatial_resolution
 
-    # TODO - atualizar forma de logging
-    # TODO - exportar metadados ao final
-    # TODO - padronizar atribuições e chamadas com o do newave
+            for c in early_hooks:
+                df = c(s, df, uow)
+
+            df = df.sort_values(
+                spatial_resolution.sorting_synthesis_df_columns
+            ).reset_index(drop=True)
+
+            entity_columns_order = cls._get_unique_column_values_in_order(
+                df,
+                spatial_resolution.sorting_synthesis_df_columns,
+            )
+            other_columns_order = cls._get_unique_column_values_in_order(
+                df,
+                spatial_resolution.non_entity_sorting_synthesis_df_columns,
+            )
+            cls._set_ordered_entities(
+                s, {**entity_columns_order, **other_columns_order}
+            )
+
+            for c in late_hooks:
+                df = c(s, df, uow)
+        return df
+
+    @classmethod
+    def _resolve_synthesis(
+        cls, s: OperationSynthesis, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        """
+        Realiza a resolução de uma síntese, opcionalmente adicionando
+        limites superiores e inferiores aos valores de cada linha.
+        """
+        df = cls._get_rule((s.variable, s.spatial_resolution))(uow)
+        if df is not None:
+            df = cls._post_resolve(df, s, uow)
+            df = cls._resolve_bounds(s, df, uow)
+        return df
+
+    @classmethod
+    def _export_metadata(
+        cls,
+        success_synthesis: List[OperationSynthesis],
+        uow: AbstractUnitOfWork,
+    ):
+        """
+        Cria um DataFrame com os metadados das variáveis de síntese
+        e realiza a exportação para um arquivo de metadados.
+        """
+        metadata_df = pd.DataFrame(
+            columns=[
+                "chave",
+                "nome_curto_variavel",
+                "nome_longo_variavel",
+                "nome_curto_agregacao",
+                "nome_longo_agregacao",
+                "unidade",
+                "calculado",
+                "limitado",
+            ]
+        )
+        for s in success_synthesis:
+            metadata_df.loc[metadata_df.shape[0]] = [
+                str(s),
+                s.variable.short_name,
+                s.variable.long_name,
+                s.spatial_resolution.value,
+                s.spatial_resolution.long_name,
+                UNITS[s].value if s in UNITS else "",
+                s in SYNTHESIS_DEPENDENCIES,
+                OperationVariableBounds.is_bounded(s),
+            ]
+        with uow:
+            uow.export.synthetize_df(
+                metadata_df, OPERATION_SYNTHESIS_METADATA_OUTPUT
+            )
+
+    @classmethod
+    def _add_synthesis_stats(cls, s: OperationSynthesis, df: pd.DataFrame):
+        """
+        Adiciona um DataFrame com estatísticas de uma síntese ao
+        DataFrame de estatísticas da agregação espacial em questão.
+        """
+        df[VARIABLE_COL] = s.variable.value
+
+        if s.spatial_resolution not in cls.SYNTHESIS_STATS:
+            cls.SYNTHESIS_STATS[s.spatial_resolution] = [df]
+        else:
+            cls.SYNTHESIS_STATS[s.spatial_resolution].append(df)
+
+    @classmethod
+    def _export_scenario_synthesis(
+        cls, s: OperationSynthesis, df: pd.DataFrame, uow: AbstractUnitOfWork
+    ):
+        """
+        Realiza a exportação dos dados para uma síntese da
+        operação desejada. Opcionalmente, os dados são armazenados
+        em cache para uso futuro e as estatísticas são adicionadas
+        ao DataFrame de estatísticas da agregação espacial em questão.
+        """
+        filename = str(s)
+        with time_and_log(
+            message_root="Tempo para preparacao para exportacao",
+            logger=cls.logger,
+        ):
+            df = df.sort_values(
+                s.spatial_resolution.sorting_synthesis_df_columns
+            ).reset_index(drop=True)
+            probs_df = Deck.expanded_probabilities(uow)
+            stats_df = calc_statistics(df, probs_df)
+            cls._add_synthesis_stats(s, stats_df)
+            cls.__store_in_cache_if_needed(s, df)
+        with time_and_log(
+            message_root="Tempo para exportacao dos dados", logger=cls.logger
+        ):
+            with uow:
+                df = df[s.spatial_resolution.all_synthesis_df_columns]
+                uow.export.synthetize_df(df, filename)
+
+    @classmethod
+    def _export_stats(
+        cls,
+        uow: AbstractUnitOfWork,
+    ):
+        """
+        Realiza a exportação dos dados de estatísticas de síntese
+        da operação. As estatísticas são exportadas para um arquivo
+        único por agregação espacial, de nome
+        `OPERACAO_{agregacao}`.
+        """
+        for res, dfs in cls.SYNTHESIS_STATS.items():
+            with uow:
+                df = pd.concat(dfs, ignore_index=True)
+                df_columns = df.columns.tolist()
+                columns_without_variable = [
+                    c for c in df_columns if c != VARIABLE_COL
+                ]
+                df = df[[VARIABLE_COL] + columns_without_variable]
+                df = df.astype({VARIABLE_COL: STRING_DF_TYPE})
+                df = df.sort_values(
+                    res.sorting_synthesis_df_columns
+                ).reset_index(drop=True)
+                uow.export.synthetize_df(
+                    df, f"{OPERATION_SYNTHESIS_STATS_ROOT}_{res.value}"
+                )
+
+    @classmethod
+    def _preprocess_synthesis_variables(
+        cls, variables: List[str], uow: AbstractUnitOfWork
+    ) -> List[OperationSynthesis]:
+        """
+        Realiza o pré-processamento das variáveis de síntese fornecidas,
+        filtrando as válidas para o caso em questão e adicionando dependências
+        caso a síntese de operação de uma variável dependa de outra.
+        """
+        try:
+            if len(variables) == 0:
+                all_variables = cls._default_args()
+            else:
+                all_variables = cls._match_wildcards(variables)
+            synthesis_variables = cls._process_variable_arguments(all_variables)
+            valid_synthesis = cls._filter_valid_variables(
+                synthesis_variables, uow
+            )
+            synthesis_with_dependencies = cls._add_synthesis_dependencies(
+                valid_synthesis
+            )
+        except Exception as e:
+            print_exc()
+            cls._log(str(e), ERROR)
+            cls._log("Erro no pré-processamento das variáveis", ERROR)
+            synthesis_with_dependencies = []
+        return synthesis_with_dependencies
+
+    @classmethod
+    def _synthetize_single_variable(
+        cls, s: OperationSynthesis, uow: AbstractUnitOfWork
+    ) -> Optional[OperationSynthesis]:
+        """
+        Realiza a síntese de operação para uma variável
+        fornecida.
+        """
+        filename = str(s)
+        with time_and_log(
+            message_root=f"Tempo para sintese de {filename}",
+            logger=cls.logger,
+        ):
+            try:
+                found_synthesis = False
+                cls._log(f"Realizando sintese de {filename}")
+                df = cls.__get_from_cache_if_exists(s)
+                is_stub = cls._stub_mappings(s) is not None
+                if df.empty:
+                    df, is_stub = cls._resolve_stub(s, uow)
+                    if not is_stub:
+                        df = cls._resolve_synthesis(s, uow)
+                if df is not None:
+                    if not df.empty:
+                        found_synthesis = True
+                        cls._export_scenario_synthesis(s, df, uow)
+                        return s
+                if not found_synthesis:
+                    cls._log(
+                        "Nao foram encontrados dados"
+                        + f" para a sintese de {filename}",
+                        WARNING,
+                    )
+                return None
+            except Exception as e:
+                print_exc()
+                cls._log(str(e), ERROR)
+                cls._log(
+                    f"Nao foi possível realizar a sintese de: {filename}",
+                    ERROR,
+                )
+                return None
+
     @classmethod
     def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
-        logger = Log.log()
-        if len(variables) == 0:
-            variables = cls._default_args()
-        synthesis_variables = cls._process_variable_arguments(variables)
-        valid_synthesis = cls.filter_valid_variables(synthesis_variables)
-        for s in valid_synthesis:
-            filename = str(s)
-            if logger is not None:
-                logger.info(f"Realizando síntese de {filename}")
-            try:
-                df = cls._get_rule(
-                    (s.variable, s.spatial_resolution, s.temporal_resolution)
-                )(uow)
-            except Exception:
-                print_exc()
-                continue
-            if df is None:
-                continue
-            with uow:
-                probs = uow.export.read_df(cls.PROBABILITIES_FILE)
-                df = cls._postprocess(df, probs)
-                uow.export.synthetize_df(df, filename)
+        cls.logger = logging.getLogger("main")
+        uow.subdir = OPERATION_SYNTHESIS_SUBDIR
+        with time_and_log(
+            message_root="Tempo para sintese da operacao",
+            logger=cls.logger,
+        ):
+            synthesis_with_dependencies = cls._preprocess_synthesis_variables(
+                variables, uow
+            )
+            success_synthesis: List[OperationSynthesis] = []
+            for s in synthesis_with_dependencies:
+                r = cls._synthetize_single_variable(s, uow)
+                if r:
+                    success_synthesis.append(r)
+
+            cls._export_stats(uow)
+            cls._export_metadata(success_synthesis, uow)

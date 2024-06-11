@@ -16,7 +16,7 @@ setup(
     long_description=long_description,
     install_requires=requirements,
     packages=find_packages(),
-    py_modules=["main", "sintetizador"],
+    py_modules=["main", "app"],
     python_requires=">=3.8",
     classifiers=[
         "Programming Language :: Python :: 3.8",

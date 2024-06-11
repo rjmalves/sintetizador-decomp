@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Dict
 
 
 class Variable(Enum):
@@ -29,8 +30,6 @@ class Variable(Enum):
     VOLUME_ARMAZENADO_PERCENTUAL_INICIAL = "VARPI"
     VOLUME_ARMAZENADO_ABSOLUTO_FINAL = "VARMF"
     VOLUME_ARMAZENADO_PERCENTUAL_FINAL = "VARPF"
-    VOLUME_VERTIDO = "VVER"
-    VOLUME_TURBINADO = "VTUR"
     INTERCAMBIO = "INT"
     MERCADO = "MER"
     MERCADO_LIQUIDO = "MERL"
@@ -45,3 +44,87 @@ class Variable(Enum):
 
     def __repr__(self) -> str:
         return self.value
+
+    @property
+    def short_name(self):
+        SHORT_NAMES: Dict[str, str] = {
+            "CMO": "CMO",
+            "VAGUA": "VAGUA",
+            "CTER": "Custo de GT",
+            "COP": "COPER",
+            "CFU": "CFU",
+            "ENAA": "ENA",
+            "ENAM": "ENA %MLT",
+            "EARMI": "EAR Inicial",
+            "EARPI": "EAR Percentual Inicial",
+            "EARMF": "EAR Final",
+            "EARPF": "EAR Percentual Final",
+            "GHID": "GH",
+            "HMON": "Cota de Montante",
+            "HJUS": "Cota de Jusante",
+            "HLIQ": "Queda Líquida",
+            "GTER": "GT",
+            "GEOL": "GEOL",
+            "EVER": "EVER",
+            "EVERT": "EVER Turbinável",
+            "EVERNT": "EVER Não-Turbinável",
+            "QAFL": "Vazão AFL",
+            "QINC": "Vazão INC",
+            "QDEF": "Vazão DEF",
+            "QTUR": "Vazão TUR",
+            "QVER": "Vazão VER",
+            "QRET": "Vazão RET",
+            "QDES": "Vazão DES",
+            "VENTO": "Vel. Vento",
+            "VARMI": "VAR Inicial",
+            "VARPI": "VAR Percentual Inicial",
+            "VARMF": "VAR Final",
+            "VARPF": "VAR Percentual Final",
+            "INT": "Intercâmbio",
+            "MER": "Mercado",
+            "MERL": "Mercado Líq.",
+            "DEF": "Déficit",
+        }
+        return SHORT_NAMES.get(self.value)
+
+    @property
+    def long_name(self):
+        LONG_NAMES: Dict[str, str] = {
+            "CMO": "Custo Marginal de Operação",
+            "VAGUA": "Valor da Água",
+            "CTER": "Custo de Geração Térmica",
+            "COP": "Custo de Operação",
+            "CFU": "Custo Futuro",
+            "ENAA": "Energia Natural Afluente Absoluta",
+            "ENAM": "Energia Natural Afluente Percentual MLT",
+            "EARMI": "Energia Armazenada Absoluta Inicial",
+            "EARPI": "Energia Armazenada Percentual Inicial",
+            "EARMF": "Energia Armazenada Absoluta Final",
+            "EARPF": "Energia Armazenada Percentual Final",
+            "GHID": "Geração Hidráulica",
+            "HMON": "Cota de Montante",
+            "HJUS": "Cota de Jusante",
+            "HLIQ": "Queda Líquida",
+            "GTER": "Geração Térmica",
+            "GEOL": "Geração Eólica",
+            "EVER": "Energia Vertida",
+            "EVERT": "Energia Vertida Turbinável",
+            "EVERNT": "Energia Vertida Não-Turbinável",
+            "QAFL": "Vazão Afluente",
+            "QINC": "Vazão Incremental",
+            "QDEF": "Vazão Defluente",
+            "QTUR": "Vazão Turbinada",
+            "QVER": "Vazão Vertida",
+            "QRET": "Vazão Retirada",
+            "QDES": "Vazão Desviada",
+            "VENTO": "Velocidade do Vento",
+            "VARMI": "Volume Armazenado Absoluto Inicial",
+            "VARPI": "Volume Armazenado Percentual Inicial",
+            "VARMF": "Volume Armazenado Absoluto Final",
+            "VARPF": "Volume Armazenado Percentual Final",
+            "INT": "Intercâmbio de Energia",
+            "MER": "Mercado de Energia",
+            "MERL": "Mercado de Energia Líquido",
+            "DEF": "Déficit",
+        }
+        return LONG_NAMES.get(self.value)

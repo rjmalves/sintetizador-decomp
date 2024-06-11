@@ -27,6 +27,8 @@ VALUE_COL = "valor"
 LOWER_BOUND_COL = "limite_inferior"
 UPPER_BOUND_COL = "limite_superior"
 VARIABLE_COL = "variavel"
+NODE_COL = "no"
+PROBABILITY_COL = "probabilidade"
 
 GROUPING_TMP_COL = "group"
 SYSTEM_GROUPING_COL = "sin"
@@ -45,6 +47,7 @@ CONFIG_COL = "configuracao"
 
 STATS_OR_SCENARIO_COL = "estatistica_ou_cenario"
 
+IV_SUBMARKET_CODE = 99
 
 IDENTIFICATION_COLUMNS = [
     START_DATE_COL,
