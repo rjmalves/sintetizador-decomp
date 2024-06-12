@@ -1,7 +1,7 @@
 import pathlib
 import shutil
 from app.model.settings import Settings
-import sintetizador.domain.commands as commands
+import app.domain.commands as commands
 from app.services.unitofwork import AbstractUnitOfWork
 from app.services.synthesis.system import SystemSynthetizer
 from app.services.synthesis.execution import ExecutionSynthetizer
