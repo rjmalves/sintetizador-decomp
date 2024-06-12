@@ -40,11 +40,6 @@ class InfeasibilityType(Enum):
         return pattern_map[self]
 
 
-InfeasibilityType.RE.message_pattern
-for tipo in InfeasibilityType.__members__:
-    print(tipo)
-
-
 @dataclass
 class Infeasibility:
     type: str
