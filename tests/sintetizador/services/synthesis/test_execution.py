@@ -66,9 +66,9 @@ def test_sintese_custos(test_settings):
         synthetizer.synthetize(["CUSTOS"], uow)
     m.assert_called_once()
     df = m.mock_calls[0].args[0]
-    assert df.at[1, "parcela"] == "GERACAO TERMICA"
-    assert df.at[1, "mean"] == 498476.99
-    assert df.at[0, "std"] == 0.0
+    assert df.at[1, "parcela"] == "geracao_termica"
+    assert df.at[1, "valor_esperado"] == 498476.99
+    assert df.at[0, "desvio_padrao"] == 0.0
 
 
 def test_sintese_inviabilidades(test_settings):

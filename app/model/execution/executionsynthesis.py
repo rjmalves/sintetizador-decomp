@@ -23,6 +23,4 @@ SUPPORTED_SYNTHESIS: List[str] = [
     "TEMPO",
     "INVIABILIDADES",
     "CUSTOS",
-    "RECURSOS_JOB",
-    "RECURSOS_CLUSTER",
 ]
