@@ -46,12 +46,12 @@ class Infeasibility:
     iteration: int
     stage: int
     scenario: int
-    constraint_code: int | None
     violation: float
     unit: str
-    block: int | None
-    bound: str | None
-    submarket: str | None
+    constraint_code: int | None = None
+    block: int | None = None
+    bound: str | None = None
+    submarket: str | None = None
 
     @classmethod
     def _build_RE(
@@ -75,7 +75,7 @@ class Infeasibility:
         code, block, bound = _process_message(constraint_message)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.RE,
+            type=InfeasibilityType.RE.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -107,7 +107,7 @@ class Infeasibility:
         code, bound = _process_message(constraint_message)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.RHA,
+            type=InfeasibilityType.RHA.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -127,6 +127,7 @@ class Infeasibility:
         constraint_message,
         violation,
         unit,
+        hidr,
     ) -> "Infeasibility":
 
         def _process_message(constraint_message: str) -> tuple:
@@ -138,7 +139,7 @@ class Infeasibility:
         code, block, bound = _process_message(constraint_message)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.RHQ,
+            type=InfeasibilityType.RHQ.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -176,7 +177,7 @@ class Infeasibility:
         code = _process_message(constraint_message, hidr)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.TI,
+            type=InfeasibilityType.TI.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -215,7 +216,7 @@ class Infeasibility:
         code, block = _process_message(constraint_message, hidr)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.VERT,
+            type=InfeasibilityType.VERT.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -246,7 +247,7 @@ class Infeasibility:
         code, bound = _process_message(constraint_message)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.RHV,
+            type=InfeasibilityType.RHV.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -280,7 +281,7 @@ class Infeasibility:
         code, stage, bound = _process_message(constraint_message)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.RHE,
+            type=InfeasibilityType.RHE.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -317,7 +318,7 @@ class Infeasibility:
         code = _process_message(constraint_message, hidr)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.EV,
+            type=InfeasibilityType.EV.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -355,7 +356,7 @@ class Infeasibility:
                     ].index
                 )[0]
             )
-            bound = int(
+            defmin_hidr = int(
                 list(
                     hidr.cadastro.loc[
                         hidr.cadastro["nome_usina"] == name,
@@ -363,12 +364,12 @@ class Infeasibility:
                     ]
                 )[0]
             )
-            return (code, block, bound)
+            return (code, block)
 
-        code, block, bound = _process_message(constraint_message, hidr)
+        code, block = _process_message(constraint_message, hidr)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.DEFMIN,
+            type=InfeasibilityType.DEFMIN.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -376,7 +377,6 @@ class Infeasibility:
             violation=violation,
             unit=unit,
             block=block,
-            bound=bound,
         )
         return infeasibility_data
 
@@ -396,7 +396,7 @@ class Infeasibility:
             block_string = "PATAMAR"
             hydro_string = "USINA"
             block = int(constraint_message.split(block_string)[1])
-            name = constraint_message(hydro_string)[1].split(",")[0].strip()
+            name = constraint_message.split(hydro_string)[1].split(",")[0].strip()
             code = int(
                 list(
                     hidr.cadastro.loc[
@@ -409,7 +409,7 @@ class Infeasibility:
         code, block = _process_message(constraint_message, hidr)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.FP,
+            type=InfeasibilityType.FP.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
@@ -444,10 +444,10 @@ class Infeasibility:
 
             return (submarket, block)
 
-        submarket, block, violation = _process_message(constraint_message)
+        submarket, block = _process_message(constraint_message)
 
         infeasibility_data = Infeasibility(
-            type=InfeasibilityType.DEFICIT,
+            type=InfeasibilityType.DEFICIT.value,
             iteration=iteration,
             stage=stage,
             scenario=scenario,
