@@ -336,7 +336,7 @@ class Deck:
     def _posprocess_infeasibilities_units(
         cls, infeasibility: Infeasibility, uow: AbstractUnitOfWork
     ) -> "Infeasibility":
-        if infeasibility.type is InfeasibilityType.DEFICIT:
+        if infeasibility.type == InfeasibilityType.DEFICIT.value:
             df_blocks = cls.blocks_durations(uow)
             durations = df_blocks.loc[
                 df_blocks[STAGE_COL] == infeasibility.stage, "duracao"
@@ -344,20 +344,20 @@ class Deck:
             fracao = durations[infeasibility.block - 1] / np.sum(durations)
             violation_perc = infeasibility.violation * fracao
 
-            max_stored_energy = cls.stored_energy_upper_bounds
+            max_stored_energy = cls.stored_energy_upper_bounds(uow)
             max_stored_energy_submarket = float(
                 max_stored_energy.loc[
-                    max_stored_energy[SUBMARKET_NAME_COL]
+                    max_stored_energy["nome_submercado"]
                     == infeasibility.submarket,
                     "energia_armazenada_maxima",
-                ]
+                ].iloc[0]
             )
             violation_perc = 100 * (
                 infeasibility.violation * fracao / max_stored_energy_submarket
             )
 
             infeasibility.violation = violation_perc
-            infeasibility.unit = "%\EARmax"
+            infeasibility.unit = "%EARmax"
         return infeasibility
 
     @classmethod
@@ -371,7 +371,7 @@ class Deck:
             infeasibilities_aux = []
             for _, linha in df_infeas.iterrows():
                 infeasibility = Infeasibility.factory(
-                    linha, cls._get_hidr(uow), cls._get_relato(uow)
+                    linha, cls._get_hidr(uow)
                 )
                 infeasibility_posprocess = (
                     cls._posprocess_infeasibilities_units(infeasibility, uow)
