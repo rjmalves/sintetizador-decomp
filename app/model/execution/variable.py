@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Dict
 
 
 class Variable(Enum):
@@ -6,8 +7,6 @@ class Variable(Enum):
     CONVERGENCIA = "CONVERGENCIA"
     TEMPO_EXECUCAO = "TEMPO"
     CUSTOS = "CUSTOS"
-    RECURSOS_JOB = "RECURSOS_JOB"
-    RECURSOS_CLUSTER = "RECURSOS_CLUSTER"
     INVIABILIDADES = "INVIABILIDADES"
     INVIABILIDADES_CODIGO = "INVIABILIDADES_CODIGO"
     INVIABILIDADES_PATAMAR = "INVIABILIDADES_PATAMAR"
@@ -25,5 +24,24 @@ class Variable(Enum):
     def __repr__(self) -> str:
         return self.value
 
-    # TODO - definir short_name e long_name
-    # para uso na composição dos metadados
+    @property
+    def short_name(self):
+        SHORT_NAMES: Dict[str, str] = {
+            "PROGRAMA": "PROGRAMA",
+            "CONVERGENCIA": "CONVERGENCIA",
+            "TEMPO": "TEMPO",
+            "CUSTOS": "CUSTOS",
+            "INVIABILIDADES": "IMVIABILIDADES",
+        }
+        return SHORT_NAMES.get(self.value)
+
+    @property
+    def long_name(self):
+        LONG_NAMES: Dict[str, str] = {
+            "PROGRAMA": "Modelo de Otimização",
+            "CONVERGENCIA": "Convergência do Processo Iterativo",
+            "TEMPO": "Tempo de Execução",
+            "CUSTOS": "Composição de Custos da Solução",
+            "INVIABILIDADES": "Violações das Restrições",
+        }
+        return LONG_NAMES.get(self.value)

@@ -12,9 +12,8 @@ import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
 from typing import Any, Optional, TypeVar, Type, Dict, List
 from datetime import datetime, timedelta
-
 from app.services.unitofwork import AbstractUnitOfWork
-from app.model.execution.inviabilidade import Inviabilidade
+from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
 from app.internal.constants import (
     ITERATION_COL,
     STAGE_COL,
@@ -23,6 +22,9 @@ from app.internal.constants import (
     BLOCK_DURATION_COL,
     START_DATE_COL,
     END_DATE_COL,
+    RUNTIME_COL,
+    UNIT_COL,
+    SUBMARKET_NAME_COL,
     SUBMARKET_CODE_COL,
     EER_CODE_COL,
     HYDRO_CODE_COL,
@@ -32,8 +34,6 @@ from app.internal.constants import (
     IV_SUBMARKET_CODE,
     VALUE_COL,
 )
-
-# from app.internal.constants import STRING_DF_TYPE
 
 
 class Deck:
@@ -186,15 +186,17 @@ class Deck:
         return relato
 
     @classmethod
-    def stored_energy_upper_bounds(cls, uow: AbstractUnitOfWork) -> float:
+    def stored_energy_upper_bounds(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         name = "stored_energy_upper_bounds"
         if name not in cls.DECK_DATA_CACHING:
             df = cls._validate_data(
                 cls.relato(uow).energia_armazenada_maxima_submercado,
                 pd.DataFrame,
-                "energia armazenada máxima do SIN",
+                "energia armazenada máxima por submercado",
             )
-            cls.DECK_DATA_CACHING[name] = df["energia_armazenada_maxima"].sum()
+            cls.DECK_DATA_CACHING[name] = df
         return cls.DECK_DATA_CACHING[name]
 
     @classmethod
@@ -210,11 +212,92 @@ class Deck:
         return relato
 
     @classmethod
+    def costs(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        costs = cls.DECK_DATA_CACHING.get("costs")
+        if costs is None:
+            # TODO - Os custos de segundo mês não estão sendo considerados (relato2)
+            relato = cls.relato(uow)
+            df = relato.relatorio_operacao_custos
+            stages = df["estagio"].unique()
+            dfs: List[pd.DataFrame] = []
+            costs_columns = [
+                "geracao_termica",
+                "violacao_desvio",
+                "violacao_turbinamento_reservatorio",
+                "violacao_turbinamento_fio",
+                "penalidade_vertimento_reservatorio",
+                "penalidade_vertimento_fio",
+                "penalidade_intercambio",
+            ]
+            for s in stages:
+                means = (
+                    df.loc[df["estagio"] == s, costs_columns]
+                    .to_numpy()
+                    .flatten()
+                )
+                df_stage = pd.DataFrame(
+                    data={
+                        "parcela": costs_columns,
+                        "valor_esperado": means,
+                        "desvio_padrao": [0.0] * len(means),
+                    }
+                )
+                df_stage[STAGE_COL] = s
+                dfs.append(df_stage)
+            df_complete = pd.concat(dfs, ignore_index=True)
+            df_complete = df_complete.astype(
+                {"valor_esperado": np.float64, "desvio_padrao": np.float64}
+            )
+            df_complete = df_complete.groupby("parcela").sum()
+            df_complete = df_complete.reset_index()
+
+            costs = cls._validate_data(
+                df_complete,
+                pd.DataFrame,
+                "custos de operação",
+            )
+            cls.DECK_DATA_CACHING["costs"] = costs
+        return costs.copy()
+
+    @classmethod
     def convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         convergence = cls.DECK_DATA_CACHING.get("convergence")
         if convergence is None:
+            df = cls.relato(uow).convergencia
+            df_processed = df.rename(
+                columns={
+                    "iteracao": ITERATION_COL,
+                    "zinf": "zinf",
+                    "zsup": "zsup",
+                    "gap_percentual": "gap",
+                    "tempo": RUNTIME_COL,
+                    "numero_inviabilidades ": "inviabilidades",
+                    "deficit_demanda_MWmed": "deficit",
+                    "inviabilidades_MWmed": "violacao_MWmed",
+                    "inviabilidades_m3s": "violacao_m3s",
+                    "inviabilidades_hm3": "violacao_hm3",
+                }
+            )
+
+            df_processed.drop(
+                columns=["deficit_nivel_seguranca_MWmes"], inplace=True
+            )
+            df_processed.loc[1:, RUNTIME_COL] = (
+                df_processed[RUNTIME_COL].to_numpy()[1:]
+                - df_processed[RUNTIME_COL].to_numpy()[:-1]
+            )
+            df_processed["delta_zinf"] = df_processed["zinf"]
+            df_processed.loc[1:, "delta_zinf"] = (
+                df_processed["zinf"].to_numpy()[1:]
+                - df_processed["zinf"].to_numpy()[:-1]
+            )
+            df_processed.loc[1:, "delta_zinf"] /= df_processed[
+                "zinf"
+            ].to_numpy()[:-1]
+            df_processed.at[0, "delta_zinf"] = np.nan
+
             convergence = cls._validate_data(
-                cls.relato(uow).convergencia,
+                df_processed,
                 pd.DataFrame,
                 "convergência",
             )
@@ -258,43 +341,109 @@ class Deck:
         return infeasibilities_final_simulation
 
     @classmethod
-    def infeasibilities(cls, uow: AbstractUnitOfWork) -> list:
+    def _posprocess_infeasibilities_units(
+        cls, infeasibility: Infeasibility, uow: AbstractUnitOfWork
+    ) -> "Infeasibility":
+        if infeasibility.type == InfeasibilityType.DEFICIT.value:
+            df_blocks = cls.blocks_durations(uow)
+            durations = df_blocks.loc[
+                df_blocks[STAGE_COL] == infeasibility.stage, "duracao"
+            ].to_numpy()
+            fracao = durations[infeasibility.block - 1] / np.sum(durations)
+            violation_perc = infeasibility.violation * fracao
+
+            max_stored_energy = cls.stored_energy_upper_bounds(uow)
+            max_stored_energy_submarket = float(
+                max_stored_energy.loc[
+                    max_stored_energy["nome_submercado"]
+                    == infeasibility.submarket,
+                    "energia_armazenada_maxima",
+                ].iloc[0]
+            )
+            violation_perc = 100 * (
+                infeasibility.violation * fracao / max_stored_energy_submarket
+            )
+
+            infeasibility.violation = violation_perc
+            infeasibility.unit = "%EARmax"
+        return infeasibility
+
+    @classmethod
+    def infeasibilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         infeasibilities = cls.DECK_DATA_CACHING.get("infeasibilities")
         if infeasibilities is None:
             df_iter = cls.infeasibilities_iterations(uow)
             df_fs = cls.infeasibilities_final_simulation(uow)
             df_fs[ITERATION_COL] = -1
             df_infeas = pd.concat([df_iter, df_fs], ignore_index=True)
-            infleasibilities_aux = []
+            infeasibilities_aux = []
             for _, linha in df_infeas.iterrows():
-                infleasibilities_aux.append(
-                    Inviabilidade.factory(
-                        linha, cls._get_hidr(uow), cls._get_relato(uow)
-                    )
+                infeasibility = Infeasibility.factory(linha, cls._get_hidr(uow))
+                infeasibility_posprocess = (
+                    cls._posprocess_infeasibilities_units(infeasibility, uow)
                 )
+                infeasibilities_aux.append(infeasibility_posprocess)
+
+            types: List[str] = []
+            iterations: List[int] = []
+            stages: List[int] = []
+            scenarios: List[int] = []
+            constraint_codes: List[int] = []
+            violations: List[float] = []
+            units: List[str] = []
+            blocks: List[int] = []
+            bounds: List[str] = []
+            submarkets: List[str] = []
+
+            for i in infeasibilities_aux:
+                types.append(i.type)
+                iterations.append(i.iteration)
+                stages.append(i.stage)
+                scenarios.append(i.scenario)
+                constraint_codes.append(i.constraint_code)
+                violations.append(i.violation)
+                units.append(i.unit)
+                blocks.append(i.block)
+                bounds.append(i.bound)
+                submarkets.append(i.submarket)
+
+            df = pd.DataFrame(
+                data={
+                    "tipo": types,
+                    ITERATION_COL: iterations,
+                    SCENARIO_COL: scenarios,
+                    STAGE_COL: stages,
+                    "codigo": constraint_codes,
+                    "violacao": violations,
+                    UNIT_COL: units,
+                    BLOCK_COL: blocks,
+                    "limite": bounds,
+                    SUBMARKET_NAME_COL: submarkets,
+                }
+            )
+
             infeasibilities = cls._validate_data(
-                infleasibilities_aux,
-                list,
+                df,
+                pd.DataFrame,
                 "inviabilidades",
             )
             cls.DECK_DATA_CACHING["infeasibilities"] = infeasibilities
+
         return infeasibilities
 
     @classmethod
-    def execution_time_per_step(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        execution_time_per_step = cls.DECK_DATA_CACHING.get(
-            "execution_time_per_step"
-        )
-        if execution_time_per_step is None:
-            execution_time_per_step = cls._validate_data(
-                cls._get_decomptim(uow).tempos_etapas,
+    def runtimes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        runtimes = cls.DECK_DATA_CACHING.get("runtimes")
+        if runtimes is None:
+            df = cls._get_decomptim(uow).tempos_etapas
+            df = df.rename(columns={"Etapa": "etapa", "Tempo": RUNTIME_COL})
+            runtimes = cls._validate_data(
+                df,
                 pd.DataFrame,
                 "tempos de execução por etapa",
             )
-            cls.DECK_DATA_CACHING["execution_time_per_step"] = (
-                execution_time_per_step
-            )
-        return execution_time_per_step
+            cls.DECK_DATA_CACHING["runtimes"] = runtimes
+        return runtimes
 
     @classmethod
     def probabilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
