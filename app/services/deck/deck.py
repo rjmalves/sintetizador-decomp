@@ -217,7 +217,11 @@ class Deck:
         if costs is None:
             # TODO - Os custos de segundo mês não estão sendo considerados (relato2)
             relato = cls.relato(uow)
-            df = relato.relatorio_operacao_custos
+            df = cls._validate_data(
+                relato.relatorio_operacao_custos,
+                pd.DataFrame,
+                "relatório da operação do relato",
+            )
             stages = df["estagio"].unique()
             dfs: List[pd.DataFrame] = []
             costs_columns = [
@@ -263,7 +267,11 @@ class Deck:
     def convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         convergence = cls.DECK_DATA_CACHING.get("convergence")
         if convergence is None:
-            df = cls.relato(uow).convergencia
+            df = cls._validate_data(
+                cls.relato(uow).convergencia,
+                pd.DataFrame,
+                "relatório de convergência do relato",
+            )
             df_processed = df.rename(
                 columns={
                     "iteracao": ITERATION_COL,
@@ -347,9 +355,12 @@ class Deck:
         if infeasibility.type == InfeasibilityType.DEFICIT.value:
             df_blocks = cls.blocks_durations(uow)
             durations = df_blocks.loc[
-                df_blocks[STAGE_COL] == infeasibility.stage, "duracao"
+                df_blocks[STAGE_COL] == infeasibility.stage, BLOCK_DURATION_COL
             ].to_numpy()
-            fracao = durations[infeasibility.block - 1] / np.sum(durations)
+            block_index = cls._validate_data(
+                infeasibility.block, int, "indice do patamar"
+            )
+            fracao = durations[block_index - 1] / np.sum(durations)
             violation_perc = infeasibility.violation * fracao
 
             max_stored_energy = cls.stored_energy_upper_bounds(uow)
@@ -376,7 +387,7 @@ class Deck:
             df_fs = cls.infeasibilities_final_simulation(uow)
             df_fs[ITERATION_COL] = -1
             df_infeas = pd.concat([df_iter, df_fs], ignore_index=True)
-            infeasibilities_aux = []
+            infeasibilities_aux: list[Infeasibility] = []
             for _, linha in df_infeas.iterrows():
                 infeasibility = Infeasibility.factory(linha, cls._get_hidr(uow))
                 infeasibility_posprocess = (
@@ -384,16 +395,16 @@ class Deck:
                 )
                 infeasibilities_aux.append(infeasibility_posprocess)
 
-            types: List[str] = []
-            iterations: List[int] = []
-            stages: List[int] = []
-            scenarios: List[int] = []
-            constraint_codes: List[int] = []
-            violations: List[float] = []
-            units: List[str] = []
-            blocks: List[int] = []
-            bounds: List[str] = []
-            submarkets: List[str] = []
+            types: list[str] = []
+            iterations: list[int] = []
+            stages: list[int] = []
+            scenarios: list[int] = []
+            constraint_codes: list[int | None] = []
+            violations: list[float] = []
+            units: list[str] = []
+            blocks: list[int | None] = []
+            bounds: list[str | None] = []
+            submarkets: list[str | None] = []
 
             for i in infeasibilities_aux:
                 types.append(i.type)
@@ -435,7 +446,11 @@ class Deck:
     def runtimes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         runtimes = cls.DECK_DATA_CACHING.get("runtimes")
         if runtimes is None:
-            df = cls._get_decomptim(uow).tempos_etapas
+            df = cls._validate_data(
+                cls._get_decomptim(uow).tempos_etapas,
+                pd.DataFrame,
+                "tempos das etapas",
+            )
             df = df.rename(columns={"Etapa": "etapa", "Tempo": RUNTIME_COL})
             runtimes = cls._validate_data(
                 df,
@@ -582,7 +597,7 @@ class Deck:
         return cls.DECK_DATA_CACHING[name]
 
     @classmethod
-    def hydro_eer_submarket_map(cls, uow: AbstractUnitOfWork) -> List[datetime]:
+    def hydro_eer_submarket_map(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         name = "hydro_eer_submarket_map"
         mapping = cls.DECK_DATA_CACHING.get(name)
         if mapping is None:
@@ -642,7 +657,7 @@ class Deck:
     ) -> pd.DataFrame:
         def _add_durations_to_df_internal(
             line: pd.Series, blocks_durations: pd.DataFrame
-        ) -> np.ndarray:
+        ) -> float:
             if pd.isna(line[BLOCK_COL]):
                 return np.nan
             else:

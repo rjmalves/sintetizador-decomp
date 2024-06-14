@@ -20,7 +20,7 @@ class ScenarioSynthetizer:
         rules: Dict[Variable, Callable] = {
             Variable.PROBABILIDADES: cls._resolve_probabilities,
         }
-        return rules[s]
+        return rules[s.variable]
 
     # TODO - padronizar o tipo de retorno de _default_args com
     # _process_variable_arguments
@@ -63,19 +63,16 @@ class ScenarioSynthetizer:
     # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_probabilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-
-        df = Deck.probabilidades(uow)
+        df = Deck.probabilities(uow)
 
         if df is None:
             logger = Log.log()
             if logger is not None:
                 logger.warning("Erro na leitura do arquivo de vazões")
-            return pd.DataFrame(
-                columns=["estagio", "cenario", "probabilidade"]
-            )
-        df_subset = df[
-            ["estagio", "cenario", "probabilidade"]
-        ].drop_duplicates(ignore_index=True)
+            return pd.DataFrame(columns=["estagio", "cenario", "probabilidade"])
+        df_subset = df[["estagio", "cenario", "probabilidade"]].drop_duplicates(
+            ignore_index=True
+        )
         return df_subset
 
     # TODO - criar _export_metadata para exportar metadados
@@ -96,6 +93,6 @@ class ScenarioSynthetizer:
             filename = str(s)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
-            df = cls._get_rule(s.variable)(uow)
+            df = cls._get_rule(s)(uow)
             with uow:
                 uow.export.synthetize_df(df, filename)

@@ -31,11 +31,7 @@ class ExecutionSynthetizer:
 
     @classmethod
     def _default_args(cls) -> List[str]:
-        args = [
-            ExecutionSynthesis.factory(a)
-            for a in cls.DEFAULT_EXECUTION_SYNTHESIS_ARGS
-        ]
-        return [arg for arg in args if arg is not None]
+        return cls.DEFAULT_EXECUTION_SYNTHESIS_ARGS
 
     @classmethod
     def _match_wildcards(cls, variables: List[str]) -> List[str]:
@@ -66,12 +62,10 @@ class ExecutionSynthetizer:
         """
         try:
             if len(variables) == 0:
-                synthesis_variables = cls._default_args()
+                all_variables = cls._default_args()
             else:
                 all_variables = cls._match_wildcards(variables)
-                synthesis_variables = cls._process_variable_arguments(
-                    all_variables
-                )
+            synthesis_variables = cls._process_variable_arguments(all_variables)
         except Exception as e:
             print_exc()
             cls._log(str(e), ERROR)

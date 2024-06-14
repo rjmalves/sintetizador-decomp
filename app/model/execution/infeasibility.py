@@ -20,21 +20,23 @@ class InfeasibilityType(Enum):
 
     @property
     def message_pattern(self) -> str:
+        # TODO - conferir se existe alguma orientação
+        # melhor sobre usar self. em enums
         pattern_map = {
-            self.RE: "RESTRICAO ELETRICA",
-            self.RHA: "RHA",
-            self.TI: "IRRIGACAO",
-            self.VERT: "VERT. PERIODO",
-            self.RHV: "RHV",
-            self.RHQ: "RHQ",
-            self.RHE: "RHE",
-            self.EV: "EVAPORACAO",
-            self.DEFMIN: "DEF. MINIMA",
-            self.FP: "FUNCAO DE PRODUCAO",
-            self.DEFICIT: "DEFICIT",
+            InfeasibilityType.RE.value: "RESTRICAO ELETRICA",
+            InfeasibilityType.RHA.value: "RHA",
+            InfeasibilityType.TI.value: "IRRIGACAO",
+            InfeasibilityType.VERT.value: "VERT. PERIODO",
+            InfeasibilityType.RHV.value: "RHV",
+            InfeasibilityType.RHQ.value: "RHQ",
+            InfeasibilityType.RHE.value: "RHE",
+            InfeasibilityType.EV.value: "EVAPORACAO",
+            InfeasibilityType.DEFMIN.value: "DEF. MINIMA",
+            InfeasibilityType.FP.value: "FUNCAO DE PRODUCAO",
+            InfeasibilityType.DEFICIT.value: "DEFICIT",
         }
 
-        return pattern_map[self]
+        return pattern_map[self.value]
 
 
 @dataclass

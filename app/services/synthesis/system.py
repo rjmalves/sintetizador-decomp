@@ -12,7 +12,6 @@ FATOR_HM3_M3S = 1.0 / 2.63
 
 
 class SystemSynthetizer:
-
     # TODO - remover, não é utilizada
     IDENTIFICATION_COLUMNS = [
         "dataInicio",
@@ -45,7 +44,7 @@ class SystemSynthetizer:
             Variable.UTE: cls._resolve_UTE,
             Variable.UHE: cls._resolve_UHE,
         }
-        return rules[s]
+        return rules[s.variable]
 
     # TODO - padronizar o tipo de retorno de _default_args com
     # _process_variable_arguments
@@ -127,9 +126,7 @@ class SystemSynthetizer:
             duracoes = dp.duracao
             datas.append(
                 datas[-1]
-                + timedelta(
-                    hours=sum(duracoes if duracoes is not None else [])
-                )
+                + timedelta(hours=sum(duracoes if duracoes is not None else []))
             )
         datas_iniciais = datas[:-1]
         datas_finais = datas[1:]
@@ -272,7 +269,7 @@ class SystemSynthetizer:
             filename = str(s)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
-            df = cls._get_rule(s.variable)(uow)
+            df = cls._get_rule(s)(uow)
             if df is not None:
                 with uow:
                     uow.export.synthetize_df(df, filename)
