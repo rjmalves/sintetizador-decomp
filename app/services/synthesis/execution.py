@@ -20,7 +20,6 @@ from app.internal.constants import (
 
 
 class ExecutionSynthetizer:
-
     DEFAULT_EXECUTION_SYNTHESIS_ARGS: List[str] = SUPPORTED_SYNTHESIS
 
     logger: Optional[logging.Logger] = None
@@ -119,18 +118,6 @@ class ExecutionSynthetizer:
         return cls.__append_execution(df, Variable.CONVERGENCIA.value, uow)
 
     @classmethod
-    def _resolve_runtime(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        df = Deck.runtimes(uow)
-        if df is None:
-            cls._log("Dados de tempo do decomp.tim não encontrados", ERROR)
-            raise RuntimeError()
-
-        df[RUNTIME_COL] = df[RUNTIME_COL].dt.total_seconds()
-        df = df.loc[df["etapa"] != "Tempo Total"]
-
-        return cls.__append_execution(df, Variable.TEMPO_EXECUCAO.value, uow)
-
-    @classmethod
     def _resolve_costs(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         df = Deck.costs(uow)
         if df is None:
@@ -219,7 +206,6 @@ class ExecutionSynthetizer:
         with time_and_log(
             message_root="Tempo para sintese da execucao", logger=cls.logger
         ):
-
             synthesis_variables = cls._preprocess_synthesis_variables(
                 variables, uow
             )

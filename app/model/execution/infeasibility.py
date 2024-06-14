@@ -1,9 +1,6 @@
-import numpy as np
 import pandas as pd  # type: ignore
 from typing import Callable
 from idecomp.decomp.hidr import Hidr
-from idecomp.decomp.relato import Relato
-from app.utils.log import Log
 from dataclasses import dataclass
 from enum import Enum
 
@@ -64,7 +61,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str) -> tuple:
             r = InfeasibilityType.RE.message_pattern
             code = int(constraint_message.split(r)[1].split("PATAMAR")[0])
@@ -98,7 +94,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str) -> tuple:
             code = int(constraint_message.split("RHA")[1].split(":")[0])
             bound = constraint_message.split("(")[1].split(")")[0]
@@ -129,7 +124,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str) -> tuple:
             code = int(constraint_message.split("RHQ")[1].split(":")[0])
             block = int(constraint_message.split("PATAMAR")[1].split("(")[0])
@@ -162,7 +156,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str, hidr: Hidr) -> int:
             name = constraint_message.split("IRRIGACAO, USINA")[1].strip()
             code = int(
@@ -198,7 +191,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str, hidr: Hidr) -> tuple:
             block = int(
                 constraint_message.split("USINA")[0].split("PAT. ")[1].strip()
@@ -238,7 +230,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str) -> tuple:
             code = int(constraint_message.split("RHV")[1].split(":")[0])
             bound = constraint_message.split("(")[1].split(")")[0]
@@ -269,7 +260,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str) -> tuple:
             s_rhe = "RESTRICAO RHE - NUMERO"
             s_per = "PERIODO"
@@ -303,7 +293,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str, hidr: Hidr) -> int:
             name = constraint_message.split("EVAPORACAO, USINA")[1].strip()
             code = int(
@@ -339,7 +328,6 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str, hidr: Hidr) -> tuple:
             block_string = "PATAMAR"
             hydro_string = "USINA"
@@ -354,14 +342,6 @@ class Infeasibility:
                     hidr.cadastro.loc[
                         hidr.cadastro["nome_usina"] == name, :
                     ].index
-                )[0]
-            )
-            defmin_hidr = int(
-                list(
-                    hidr.cadastro.loc[
-                        hidr.cadastro["nome_usina"] == name,
-                        "vazao_minima_historica",
-                    ]
                 )[0]
             )
             return (code, block)
@@ -391,12 +371,13 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(constraint_message: str, hidr: Hidr) -> tuple:
             block_string = "PATAMAR"
             hydro_string = "USINA"
             block = int(constraint_message.split(block_string)[1])
-            name = constraint_message.split(hydro_string)[1].split(",")[0].strip()
+            name = (
+                constraint_message.split(hydro_string)[1].split(",")[0].strip()
+            )
             code = int(
                 list(
                     hidr.cadastro.loc[
@@ -431,14 +412,11 @@ class Infeasibility:
         unit,
         hidr,
     ) -> "Infeasibility":
-
         def _process_message(
             constraint_message: str,
         ) -> tuple:
             submarket = (
-                constraint_message.split("SUBSISTEMA ")[1]
-                .split(",")[0]
-                .strip()
+                constraint_message.split("SUBSISTEMA ")[1].split(",")[0].strip()
             )
             block = int(constraint_message.split("PATAMAR")[1].strip())
 
