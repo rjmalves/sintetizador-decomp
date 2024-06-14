@@ -95,6 +95,7 @@ class ExecutionSynthetizer:
         cls, df: pd.DataFrame, variable: str, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
         existing_data = uow.export.read_df(variable)
+        df = df.copy()
         if existing_data is None:
             df.loc[:, "execucao"] = 0
             return df
