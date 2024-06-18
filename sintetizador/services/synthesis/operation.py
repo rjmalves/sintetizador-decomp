@@ -123,6 +123,7 @@ class OperationSynthetizer:
         self.__dec_oper_usit: Optional[pd.DataFrame] = None
         self.__dec_oper_gnl: Optional[pd.DataFrame] = None
         self.__dec_oper_interc: Optional[pd.DataFrame] = None
+        self.__valor_agua: Optional[pd.DataFrame] = None
         self.__rules: Dict[
             Tuple[Variable, SpatialResolution, TemporalResolution],
             pd.DataFrame,
@@ -754,8 +755,8 @@ class OperationSynthetizer:
             self.__dec_oper_sist = df
         return self.__dec_oper_sist
 
-    def get_custos(self) -> pd.DataFrame:
-        if self.__custos is None:
+    def get_valor_agua(self) -> pd.DataFrame:
+        if self.__valor_agua is None:
             with self.uow:
                 arq_custos = self.uow.files.get_custos()
             df = arq_custos.relatorio_variaveis_duais
@@ -1035,7 +1036,7 @@ class OperationSynthetizer:
         )
 
     def processa_valor_agua(self):
-        df = self.get_custos().copy()
+        df = self.get_valor_agua().copy()
         exit(1)
         if patamares is None:
             df = df.loc[df["patamar"].isna()]
