@@ -1031,6 +1031,14 @@ class OperationSynthetizer:
                 "pih": "valor"
             }
         )
+        cols = [
+            "estagio",
+            "cenario",
+            "usina",
+            "dataInicio",
+            "dataFim",
+            "valor",
+        ]
         df = df.fillna(0.0)
         df = df.astype({"cenario": str})
         print(df)
