@@ -131,13 +131,13 @@ def _calc_mean_std(df: pd.DataFrame, probs: pd.DataFrame) -> pd.DataFrame:
     df = _add_probability(df, grouping_columns, probs)
     df_mean = (
         df.groupby(grouping_columns, sort=False)
-        .apply(_weighted_mean)
+        .apply(_weighted_mean, include_groups=False)
         .reset_index()
     )
     df_mean[SCENARIO_COL] = "mean"
     df_std = (
         df.groupby(grouping_columns, sort=False)
-        .apply(_weighted_std)
+        .apply(_weighted_std, include_groups=False)
         .reset_index()
     )
     df_std[SCENARIO_COL] = "std"
