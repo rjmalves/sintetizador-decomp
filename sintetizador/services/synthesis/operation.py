@@ -1039,7 +1039,7 @@ class OperationSynthetizer:
             "dataFim",
             "valor",
         ]
-        df = df.fillna(0.0)
+        
         df = df.astype({"cenario": str})
         print(df)
         df = df[['estagio', 'cenario', 'dataInicio', 'dataFim', 'usina', 'valor']]
@@ -1048,6 +1048,8 @@ class OperationSynthetizer:
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
         ).reset_index()
+        print(df)
+        df = df.fillna(0.0)
         print(df)
         exit(1)
         return df.copy()
