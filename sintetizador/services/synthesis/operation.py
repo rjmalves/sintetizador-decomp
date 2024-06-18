@@ -1032,9 +1032,7 @@ class OperationSynthetizer:
         )
         df = df.fillna(0.0)
         df = df.astype({"cenario": str})
-        print(df)
         df = df[['estagio', 'cenario', 'dataInicio', 'dataFim', 'usina', 'valor']]
-        print(df)
         return df.copy()
 
     def processa_dec_oper_sist(
@@ -1618,6 +1616,8 @@ class OperationSynthetizer:
                 df = self.__rules[
                     (s.variable, s.spatial_resolution, s.temporal_resolution)
                 ]()
+            print("GEROU: ", df)
+            exit(1)
             except Exception:
                 print_exc()
                 continue
