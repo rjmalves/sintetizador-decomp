@@ -1035,7 +1035,7 @@ class OperationSynthetizer:
         df = df.astype({"cenario": str})
         print(df)
         df = df[['estagio', 'cenario', 'dataInicio', 'dataFim', 'usina', 'valor']]
-                df = df.pivot_table(
+        df = df.pivot_table(
             "valor",
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
