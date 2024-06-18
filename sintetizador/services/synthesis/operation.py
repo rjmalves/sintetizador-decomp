@@ -1575,9 +1575,9 @@ class OperationSynthetizer:
             variables = self._default_args()
         synthesis_variables = self._process_variable_arguments(variables)
         valid_synthesis = self.filter_valid_variables(synthesis_variables)
-        print(valid_synthesis)
         for s in valid_synthesis:
             filename = str(s)
+            print(filename)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
             try:
