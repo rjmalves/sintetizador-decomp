@@ -231,6 +231,7 @@ class RawFilesRepository(AbstractFilesRepository):
             self.__read_custos = True
             logger = Log.log()
             try:
+                print(self.extensao)
                 arq_custos = f"custos.{self.extensao}"
                 if logger is not None:
                     logger.info(f"Lendo arquivo {arq_custos}")
