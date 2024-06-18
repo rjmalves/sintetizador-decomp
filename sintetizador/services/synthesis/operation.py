@@ -1616,8 +1616,6 @@ class OperationSynthetizer:
                 df = self.__rules[
                     (s.variable, s.spatial_resolution, s.temporal_resolution)
                 ]()
-                print(df)
-                exit(1)
             except Exception:
                 print_exc()
                 continue
@@ -1625,5 +1623,6 @@ class OperationSynthetizer:
                 continue
             with self.uow:
                 probs = self.uow.export.read_df(self.PROBABILITIES_FILE)
+                print(probs)
                 df = self._postprocess(df, probs)
                 self.uow.export.synthetize_df(df, filename)
