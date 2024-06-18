@@ -33,6 +33,9 @@ from app.internal.constants import (
     EXCHANGE_TARGET_CODE_COL,
     IV_SUBMARKET_CODE,
     VALUE_COL,
+    THERMAL_NAME_COL,
+    HYDRO_NAME_COL,
+    EER_NAME_COL,
 )
 
 
@@ -355,10 +358,12 @@ class Deck:
         if infeasibility.type == InfeasibilityType.DEFICIT.value:
             df_blocks = cls.blocks_durations(uow)
             durations = df_blocks.loc[
-                df_blocks[STAGE_COL] == infeasibility.stage, BLOCK_DURATION_COL
+                (df_blocks[STAGE_COL] == infeasibility.stage)
+                & (df_blocks[BLOCK_COL] > 0),
+                BLOCK_DURATION_COL,
             ].to_numpy()
             block_index = cls._validate_data(
-                infeasibility.block, int, "indice do patamar"
+                infeasibility.block, int, "índice do patamar"
             )
             fracao = durations[block_index - 1] / np.sum(durations)
             violation_perc = infeasibility.violation * fracao
@@ -389,7 +394,9 @@ class Deck:
             df_infeas = pd.concat([df_iter, df_fs], ignore_index=True)
             infeasibilities_aux: list[Infeasibility] = []
             for _, linha in df_infeas.iterrows():
-                infeasibility = Infeasibility.factory(linha, cls._get_hidr(uow))
+                infeasibility = Infeasibility.factory(
+                    linha, cls._get_hidr(uow)
+                )
                 infeasibility_posprocess = (
                     cls._posprocess_infeasibilities_units(infeasibility, uow)
                 )
@@ -482,7 +489,9 @@ class Deck:
             df = cls.probabilities(uow)
             df = cls._expand_scenarios_in_df(df)
             factors_df = (
-                df.groupby(STAGE_COL, as_index=False).sum().set_index(STAGE_COL)
+                df.groupby(STAGE_COL, as_index=False)
+                .sum()
+                .set_index(STAGE_COL)
             )
             df[VALUE_COL] = df.apply(
                 lambda line: line[VALUE_COL]
@@ -517,6 +526,15 @@ class Deck:
 
     @classmethod
     def blocks_durations(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        def __eval_pat0(df_pat: pd.DataFrame) -> pd.DataFrame:
+            df_pat_0 = df_pat.groupby(
+                [START_DATE_COL, STAGE_COL], as_index=False
+            ).sum(numeric_only=True)
+            df_pat_0[BLOCK_COL] = 0
+            df_pat = pd.concat([df_pat, df_pat_0], ignore_index=True)
+            df_pat.sort_values([START_DATE_COL, BLOCK_COL], inplace=True)
+            return df_pat
+
         name = "blocks_durations"
         df = cls.DECK_DATA_CACHING.get(name)
         if df is None:
@@ -529,6 +547,8 @@ class Deck:
                     BLOCK_DURATION_COL,
                 ]
             ].copy()
+            df = cls._add_dates_to_df(df, uow)
+            df = __eval_pat0(df)
             cls.DECK_DATA_CACHING[name] = df
         return df
 
@@ -606,9 +626,60 @@ class Deck:
                 pd.DataFrame,
                 "mapa UHE - REE - SBM",
             )
-            mapping = mapping.set_index(HYDRO_CODE_COL)
+            mapping = mapping.drop("nome_submercado_newave", axis=1)
+            mapping = mapping.rename(
+                columns={
+                    "codigo_usina": HYDRO_CODE_COL,
+                    "nome_usina": HYDRO_NAME_COL,
+                    "codigo_ree": EER_CODE_COL,
+                    "nome_ree": EER_NAME_COL,
+                    "codigo_submercado": SUBMARKET_CODE_COL,
+                    "nome_submercado": SUBMARKET_NAME_COL,
+                }
+            )
             cls.DECK_DATA_CACHING[name] = mapping
         return mapping
+
+    @classmethod
+    def submarkets(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "submarkets"
+        submarkets = cls.DECK_DATA_CACHING.get(name)
+        if submarkets is None:
+            submarkets = cls.hydro_eer_submarket_map(uow)
+            submarkets = (
+                submarkets[[SUBMARKET_CODE_COL, SUBMARKET_NAME_COL]]
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
+            cls.DECK_DATA_CACHING[name] = submarkets
+        return submarkets
+
+    @classmethod
+    def thermals(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "thermals"
+        thermals = cls.DECK_DATA_CACHING.get(name)
+        if thermals is None:
+            dadger_ct = cls.dadger(uow).ct()
+            registers = (
+                dadger_ct if isinstance(dadger_ct, list) else [dadger_ct]
+            )
+            submarkets = cls.submarkets(uow).set_index(SUBMARKET_CODE_COL)
+            data: Dict[str, list] = {
+                THERMAL_CODE_COL: [],
+                THERMAL_NAME_COL: [],
+                SUBMARKET_CODE_COL: [],
+            }
+            for ct in registers:
+                if ct.codigo_usina not in data[THERMAL_CODE_COL]:
+                    data[THERMAL_CODE_COL].append(ct.codigo_usina)
+                    data[THERMAL_NAME_COL].append(ct.nome_usina)
+                    data[SUBMARKET_CODE_COL].append(ct.codigo_submercado)
+            thermals = pd.DataFrame(data=data)
+            thermals[SUBMARKET_NAME_COL] = thermals[SUBMARKET_CODE_COL].apply(
+                lambda c: submarkets.at[c, SUBMARKET_NAME_COL]
+            )
+            cls.DECK_DATA_CACHING[name] = thermals
+        return thermals
 
     @classmethod
     def _add_dates_to_df(
@@ -809,7 +880,9 @@ class Deck:
         num_blocks_with_average = len(cls.blocks(uow)) + 1
         num_tiles = df.shape[0] // (len(hydro_order) * num_blocks_with_average)
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
+        submarket_codes = map_df.loc[
+            hydro_order, SUBMARKET_CODE_COL
+        ].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.tile(
             np.repeat(submarket_codes, num_blocks_with_average), num_tiles
@@ -1038,7 +1111,9 @@ class Deck:
         hydro_order = df[HYDRO_CODE_COL].unique().tolist()
         num_repeats = df.shape[0] // (len(hydro_order))
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
+        submarket_codes = map_df.loc[
+            hydro_order, SUBMARKET_CODE_COL
+        ].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.repeat(submarket_codes, num_repeats)
         df[EER_CODE_COL] = np.repeat(eer_codes, num_repeats)
