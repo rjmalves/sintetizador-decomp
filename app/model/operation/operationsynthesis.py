@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from app.model.operation.variable import Variable
 from app.model.operation.spatialresolution import SpatialResolution
 from app.model.operation.unit import Unit
+from typing import Optional
 
 
 @dataclass
@@ -34,7 +35,7 @@ class OperationSynthesis:
             )
 
     @classmethod
-    def factory(cls, synthesis: str) -> "OperationSynthesis" | None:
+    def factory(cls, synthesis: str) -> Optional["OperationSynthesis"]:
         data = synthesis.split("_")
         if len(data) != 2:
             return None

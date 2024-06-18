@@ -710,7 +710,7 @@ class OperationSynthetizer:
     @classmethod
     def _stub_mappings(  # noqa
         cls, s: OperationSynthesis
-    ) -> Callable:
+    ) -> Callable | None:
         """
         Obtem a função de resolução de cada síntese que foge ao
         fluxo de resolução padrão, por meio de um mapeamento de
