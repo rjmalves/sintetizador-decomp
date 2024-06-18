@@ -1,275 +1,208 @@
-from typing import Callable, Dict, List
+from typing import Callable, Optional
 import pandas as pd  # type: ignore
-from datetime import datetime, timedelta
-
+import logging
+from logging import INFO, ERROR
+from traceback import print_exc
 from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.log import Log
+from app.utils.timing import time_and_log
+from app.utils.regex import match_variables_with_wildcards
 from app.model.system.variable import Variable
-from app.model.system.systemsynthesis import SystemSynthesis
+from app.services.deck.deck import Deck
+from app.model.system.systemsynthesis import (
+    SystemSynthesis,
+    SUPPORTED_SYNTHESIS,
+)
+from app.internal.constants import (
+    SYSTEM_SYNTHESIS_SUBDIR,
+    SYSTEM_SYNTHESIS_METADATA_OUTPUT,
+    STAGE_COL,
+    START_DATE_COL,
+    END_DATE_COL,
+    BLOCK_COL,
+    BLOCK_DURATION_COL,
+    VALUE_COL,
+)
 
 # TODO - utilizar valor do internal.constants
 FATOR_HM3_M3S = 1.0 / 2.63
 
 
 class SystemSynthetizer:
-    # TODO - remover, não é utilizada
-    IDENTIFICATION_COLUMNS = [
-        "dataInicio",
-        "dataFim",
-        "estagio",
-        "submercado",
-        "submercadoDe",
-        "submercadoPara",
-        "ree",
-        "usina",
-        "patamar",
-    ]
 
-    # TODO - levar lista de argumentos suportados para o
-    # arquivo da SystemSynthesis
-    DEFAULT_SYSTEM_SYNTHESIS_ARGS: List[str] = [
-        "EST",
-        "PAT",
-        "SBM",
-        "UTE",
-        "UHE",
-    ]
+    DEFAULT_SYSTEM_SYNTHESIS_ARGS = SUPPORTED_SYNTHESIS
+
+    logger: Optional[logging.Logger] = None
 
     @classmethod
-    def _get_rule(cls, s: SystemSynthesis) -> Callable:
-        rules: Dict[Variable, Callable] = {
+    def _log(cls, msg: str, level: int = INFO):
+        if cls.logger is not None:
+            cls.logger.log(level, msg)
+
+    @classmethod
+    def _default_args(cls) -> list[str]:
+        return cls.DEFAULT_SYSTEM_SYNTHESIS_ARGS
+
+    @classmethod
+    def _match_wildcards(cls, variables: list[str]) -> list[str]:
+        return match_variables_with_wildcards(
+            variables, cls.DEFAULT_SYSTEM_SYNTHESIS_ARGS
+        )
+
+    @classmethod
+    def _process_variable_arguments(
+        cls,
+        args: list[str],
+    ) -> list[SystemSynthesis]:
+        args_data = [SystemSynthesis.factory(c) for c in args]
+        valid_args = [arg for arg in args_data if arg is not None]
+        for i, a in enumerate(valid_args):
+            if a is None:
+                cls._log(f"Erro no argumento fornecido: {args[i]}", ERROR)
+                return []
+        return valid_args
+
+    @classmethod
+    def _preprocess_synthesis_variables(
+        cls, variables: list[str], uow: AbstractUnitOfWork
+    ) -> list[SystemSynthesis]:
+        """
+        Realiza o pré-processamento das variáveis de síntese fornecidas,
+        filtrando as válidas para o caso em questão.
+        """
+        try:
+            if len(variables) == 0:
+                all_variables = cls._default_args()
+            else:
+                all_variables = cls._match_wildcards(variables)
+            synthesis_variables = cls._process_variable_arguments(
+                all_variables
+            )
+        except Exception as e:
+            print_exc()
+            cls._log(str(e), ERROR)
+            cls._log("Erro no pré-processamento das variáveis", ERROR)
+            synthesis_variables = []
+        return synthesis_variables
+
+    @classmethod
+    def _resolve(
+        cls, synthesis: SystemSynthesis, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        RULES: dict[Variable, Callable] = {
             Variable.EST: cls._resolve_EST,
             Variable.PAT: cls._resolve_PAT,
             Variable.SBM: cls._resolve_SBM,
             Variable.UTE: cls._resolve_UTE,
             Variable.UHE: cls._resolve_UHE,
         }
-        return rules[s.variable]
+        return RULES[synthesis.variable](uow)
 
-    # TODO - padronizar o tipo de retorno de _default_args com
-    # _process_variable_arguments
-    @classmethod
-    def _default_args(cls) -> List[str]:
-        return cls.DEFAULT_SYSTEM_SYNTHESIS_ARGS
-
-    # TODO - criar o método interno _log
-
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # Manter o processamento para sinalizar erros.
-    @classmethod
-    def _process_variable_arguments(
-        cls,
-        args: List[str],
-    ) -> List[SystemSynthesis]:
-        args_data = [SystemSynthesis.factory(c) for c in args]
-        valid_args = [arg for arg in args_data if arg is not None]
-        logger = Log.log()
-        for i, a in enumerate(valid_args):
-            if a is None:
-                if logger is not None:
-                    logger.error(f"Erro no argumento fornecido: {args[i]}")
-                return []
-        return valid_args
-
-    # TODO - renomear para _filter_valid_variables
-    # Atualizar lógica considerando apenas uma síntese de inviabilidade
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - alterar idioma para inglês
-    @classmethod
-    def filter_valid_variables(
-        cls, variables: List[SystemSynthesis]
-    ) -> List[SystemSynthesis]:
-        valid_variables: List[SystemSynthesis] = []
-        # TODO - verificar existência de PEE
-        eolica = False
-        logger = Log.log()
-        if logger is not None:
-            logger.info(f"Caso com geração de cenários de eólica: {eolica}")
-        for v in variables:
-            valid_variables.append(v)
-        if logger is not None:
-            logger.info(f"Variáveis: {valid_variables}")
-        return valid_variables
-
-    # TODO criar método _preprocess_synthesis_variables para juntar
-    # todos os pré-processamentos
-
-    # TODO - criar método _resolve para resolver cada variável de síntese
-
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_EST(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            dadger = uow.files.get_dadger()
-        logger = Log.log()
-        registro_dt = dadger.dt
-        if registro_dt is None:
-            if logger is not None:
-                logger.error("Não foi encontrado registro DT")
+        df = Deck.stages_durations(uow)
+        if df is None:
+            cls._log("Dados de estágios não encontrados", ERROR)
             raise RuntimeError()
-        ano, mes, dia = registro_dt.ano, registro_dt.mes, registro_dt.dia
-        if ano is None or mes is None or dia is None:
-            if logger is not None:
-                logger.error("Erro no processamento do registro DT")
-            raise RuntimeError()
-        data_inicial = datetime(year=ano, month=mes, day=dia)
-        dps = dadger.dp(codigo_submercado=1)
-        if dps is None or isinstance(dps, pd.DataFrame):
-            if logger is not None:
-                logger.error("Não foi encontrado registros DP")
-            raise RuntimeError()
-        registros_dp = dps if isinstance(dps, list) else [dps]
-        datas = [data_inicial]
-        for dp in registros_dp:
-            duracoes = dp.duracao
-            datas.append(
-                datas[-1]
-                + timedelta(hours=sum(duracoes if duracoes is not None else []))
-            )
-        datas_iniciais = datas[:-1]
-        datas_finais = datas[1:]
-        return pd.DataFrame(
-            data={
-                "idEstagio": list(range(1, len(datas_iniciais) + 1)),
-                "dataInicio": datas_iniciais,
-                "dataFim": datas_finais,
-            }
-        )
+        return df[[STAGE_COL, START_DATE_COL, END_DATE_COL]]
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_PAT(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            dadger = uow.files.get_dadger()
-        # Assume que sempre existe subsistema de id = 1
-        dps = dadger.dp(codigo_submercado=1)
-        logger = Log.log()
-        if dps is None or isinstance(dps, pd.DataFrame):
-            if logger is not None:
-                logger.error("Não foi encontrado registros DP")
+        df = Deck.blocks_durations(uow)
+        if df is None:
+            cls._log("Dados de duração de patamares não encontrados", ERROR)
             raise RuntimeError()
-        registros_dp = dps if isinstance(dps, list) else [dps]
-        estagios = []
-        pats = []
-        horas = []
-        for dp in registros_dp:
-            n = dp.numero_patamares
-            if n is None:
-                if logger is not None:
-                    logger.info("Erro na leitura do número de patamares")
-                raise RuntimeError()
-            duracoes = dp.duracao
-            if duracoes is None:
-                if logger is not None:
-                    logger.info("Erro na leitura da duração dos patamares")
-                raise RuntimeError()
-            for i in range(n):
-                estagios.append(dp.estagio)
-                pats.append(i + 1)
-                horas.append(duracoes[i])
-        df = pd.DataFrame(
-            data={"idEstagio": estagios, "patamar": pats, "duracao": horas}
-        )
-        return df
+        df = df.rename(columns={BLOCK_DURATION_COL: VALUE_COL})
+        return df[[START_DATE_COL, STAGE_COL, BLOCK_COL, VALUE_COL]]
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_SBM(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            dadger = uow.files.get_dadger()
-        logger = Log.log()
-        sbs = dadger.sb()
-        if isinstance(sbs, pd.DataFrame) or sbs is None:
-            if logger is not None:
-                logger.error("Erro no processamento dos registros SB")
+        df = Deck.submarkets(uow)
+        if df is None:
+            cls._log("Dados de submercados não encontrados", ERROR)
             raise RuntimeError()
-        registros_submercados = sbs if isinstance(sbs, list) else [sbs]
-        return pd.DataFrame(
-            data={
-                "id": [s.codigo_submercado for s in registros_submercados],
-                "nome": [s.nome_submercado for s in registros_submercados],
-            }
-        )
+        return df
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_UTE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            dadger = uow.files.get_dadger()
-        logger = Log.log()
-        cts = dadger.ct()
-        if isinstance(cts, pd.DataFrame) or cts is None:
-            if logger is not None:
-                logger.error("Erro no processamento dos registros CT")
+        df = Deck.thermals(uow)
+        if df is None:
+            cls._log("Dados de usinas térmicas não encontrados", ERROR)
             raise RuntimeError()
-        registros_utes = cts if isinstance(cts, list) else [cts]
-        dados: Dict[str, list] = {"id": [], "idSubmercado": [], "nome": []}
-        for ct in registros_utes:
-            if ct.codigo_usina not in dados["id"]:
-                dados["id"].append(ct.codigo_usina)
-                dados["idSubmercado"].append(ct.codigo_submercado)
-                dados["nome"].append(ct.nome_usina)
-        return pd.DataFrame(data=dados)
+        return df
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_UHE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with uow:
-            dadger = uow.files.get_dadger()
-            hidr = uow.files.get_hidr()
-        logger = Log.log()
-        uhs = dadger.uh()
-        if isinstance(uhs, pd.DataFrame) or uhs is None:
-            if logger is not None:
-                logger.error("Erro no processamento dos registros UH")
+        df = Deck.hydro_eer_submarket_map(uow)
+        if df is None:
+            cls._log("Dados de usinas hidrelétricas não encontrados", ERROR)
             raise RuntimeError()
-        registros_uhes = uhs if isinstance(uhs, list) else [uhs]
-        dados: Dict[str, list] = {
-            "id": [],
-            "idREE": [],
-            "nome": [],
-            "posto": [],
-            "volumeInicial": [],
-        }
-        for uh in registros_uhes:
-            dados["id"].append(uh.codigo_usina)
-            dados["idREE"].append(uh.codigo_ree)
-            dados["nome"].append(
-                hidr.cadastro.at[uh.codigo_usina, "nome_usina"]
-            )
-            dados["posto"].append(hidr.cadastro.at[uh.codigo_usina, "posto"])
-            dados["volumeInicial"].append(uh.volume_inicial)
-        return pd.DataFrame(data=dados)
+        return df
 
-    # TODO - criar _export_metadata para exportar metadados
-    # TODO - modularizar a parte da síntese de uma variável
-    # em uma função à parte (_synthetize_single_variable)
-
-    # TODO - atualizar forma de logging
-    # TODO - exportar metadados ao final
-    # TODO - padronizar atribuições e chamadas com o do newave
     @classmethod
-    def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
-        logger = Log.log()
-        if len(variables) == 0:
-            variables = cls._default_args()
-        synthesis_variables = cls._process_variable_arguments(variables)
-        valid_synthesis = cls.filter_valid_variables(synthesis_variables)
-        for s in valid_synthesis:
-            filename = str(s)
-            if logger is not None:
-                logger.info(f"Realizando síntese de {filename}")
-            df = cls._get_rule(s)(uow)
-            if df is not None:
-                with uow:
-                    uow.export.synthetize_df(df, filename)
+    def _export_metadata(
+        cls,
+        success_synthesis: list[SystemSynthesis],
+        uow: AbstractUnitOfWork,
+    ):
+        metadata_df = pd.DataFrame(
+            columns=[
+                "chave",
+                "nome_curto",
+                "nome_longo",
+            ]
+        )
+        for s in success_synthesis:
+            metadata_df.loc[metadata_df.shape[0]] = [
+                str(s),
+                s.variable.short_name,
+                s.variable.long_name,
+            ]
+        with uow:
+            uow.export.synthetize_df(
+                metadata_df, SYSTEM_SYNTHESIS_METADATA_OUTPUT
+            )
+
+    @classmethod
+    def _synthetize_single_variable(
+        cls, s: SystemSynthesis, uow: AbstractUnitOfWork
+    ) -> Optional[SystemSynthesis]:
+        """
+        Realiza a síntese de sistema para uma variável
+        fornecida.
+        """
+        filename = str(s)
+        with time_and_log(
+            message_root=f"Tempo para sintese de {filename}",
+            logger=cls.logger,
+        ):
+            try:
+                cls._log(f"Realizando síntese de {filename}")
+                df = cls._resolve(s, uow)
+                if df is not None:
+                    with uow:
+                        uow.export.synthetize_df(df, filename)
+                        return s
+                return None
+            except Exception as e:
+                print_exc()
+                cls._log(str(e), ERROR)
+                return None
+
+    @classmethod
+    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork):
+        cls.logger = logging.getLogger("main")
+        uow.subdir = SYSTEM_SYNTHESIS_SUBDIR
+
+        with time_and_log(
+            message_root="Tempo para sintese do sistema", logger=cls.logger
+        ):
+            synthesis_variables = cls._preprocess_synthesis_variables(
+                variables, uow
+            )
+            success_synthesis: list[SystemSynthesis] = []
+            for s in synthesis_variables:
+                r = cls._synthetize_single_variable(s, uow)
+                if r:
+                    success_synthesis.append(r)
+
+            cls._export_metadata(success_synthesis, uow)

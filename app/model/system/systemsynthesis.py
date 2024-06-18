@@ -15,3 +15,12 @@ class SystemSynthesis:
         return cls(
             Variable.factory(synthesis),
         )
+
+
+SUPPORTED_SYNTHESIS: list[str] = [
+    "EST",
+    "PAT",
+    "SBM",
+    "UTE",
+    "UHE",
+]
