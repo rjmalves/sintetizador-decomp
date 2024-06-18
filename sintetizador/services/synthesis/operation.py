@@ -1033,12 +1033,6 @@ class OperationSynthetizer:
         df = df.fillna(0.0)
         df = df.astype({"cenario": str})
         print("1: ",df)
-        df = df.pivot_table(
-            "valor",
-            index=[c for c in cols if c not in ["valor", "cenario"]],
-            columns="cenario",
-        ).reset_index()
-        print("2: ",df)
         df = df.ffill(axis=1)
         print("3: ",df)
         return df.copy()
