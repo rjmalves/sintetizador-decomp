@@ -1585,6 +1585,8 @@ class OperationSynthetizer:
         self, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
         print(df)
+        df.to_csv("teste.csv")
+        print(probabilities)
         df = self._processa_quantis(df, [0.05 * i for i in range(21)])
         df = self._processa_media(df, probabilities)
         cols_not_scenarios = [
