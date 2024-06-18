@@ -1032,9 +1032,9 @@ class OperationSynthetizer:
         )
         df = df.fillna(0.0)
         df = df.astype({"cenario": str})
-        print("1: ",df)
-        df = df.ffill(axis=1)
-        print("3: ",df)
+        print(df)
+        df = df[['estagio', 'cenario', 'dataInicio', 'dataFim', 'usina', 'valor']]
+        print(df)
         return df.copy()
 
     def processa_dec_oper_sist(
