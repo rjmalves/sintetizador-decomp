@@ -234,10 +234,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 arq_custos = f"custos.{self.extensao}"
                 if logger is not None:
                     logger.info(f"Lendo arquivo {arq_custos}")
-                self.__custos = Custos.read(join(self.__tmppath, arq_relato))
+                self.__custos = Custos.read(join(self.__tmppath, arq_custos))
             except Exception as e:
                 if logger is not None:
-                    logger.error(f"Erro na leitura do {arq_relato}: {e}")
+                    logger.error(f"Erro na leitura do {arq_custos}: {e}")
                 raise e
         return self.__custos
 
