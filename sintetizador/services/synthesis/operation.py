@@ -29,6 +29,7 @@ class OperationSynthetizer:
     ]
 
     DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
+        "VAGUA_UHE_EST",
         "CMO_SBM_EST",
         "CMO_SBM_PAT",
         "CTER_SIN_EST",
@@ -126,6 +127,11 @@ class OperationSynthetizer:
             Tuple[Variable, SpatialResolution, TemporalResolution],
             pd.DataFrame,
         ] = {
+            #(
+            #    Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+            #    SpatialResolution.USINA_HIDROELETRICA,
+            #    TemporalResolution.ESTAGIO,
+            #): lambda: self.processa_dec_oper_usih("volume_util_inicial_hm3"),
             (
                 Variable.CUSTO_MARGINAL_OPERACAO,
                 SpatialResolution.SUBMERCADO,
