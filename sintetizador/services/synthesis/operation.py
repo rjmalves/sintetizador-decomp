@@ -29,8 +29,9 @@ class OperationSynthetizer:
     ]
 
     DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
-        "GHID_UHE_EST",
         "VAGUA_UHE_EST",
+        "GHID_UHE_EST",
+        
         "CMO_SBM_EST",
         "CMO_SBM_PAT",
         "CTER_SIN_EST",
@@ -1032,7 +1033,15 @@ class OperationSynthetizer:
         )
         df = df.fillna(0.0)
         df = df.astype({"cenario": str})
+        print(df)
         df = df[['estagio', 'cenario', 'dataInicio', 'dataFim', 'usina', 'valor']]
+                df = df.pivot_table(
+            "valor",
+            index=[c for c in cols if c not in ["valor", "cenario"]],
+            columns="cenario",
+        ).reset_index()
+        print(df)
+        exit(1)
         return df.copy()
 
     def processa_dec_oper_sist(
