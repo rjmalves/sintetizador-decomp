@@ -31,7 +31,6 @@ class OperationSynthetizer:
     DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
         "VAGUA_UHE_EST",
         "GHID_UHE_EST",
-        
         "CMO_SBM_EST",
         "CMO_SBM_PAT",
         "CTER_SIN_EST",
@@ -773,9 +772,7 @@ class OperationSynthetizer:
                 axis=1,
                 result_type="expand",
             )
-            print(df)
             df = df.ffill(axis=1)
-            print("pos fill:", df)
             self.__valor_agua = df
         return self.__valor_agua
 
@@ -1195,7 +1192,6 @@ class OperationSynthetizer:
         ]
         
         df = df.astype({"cenario": str})
-        print(df)
         df = df.fillna(0.0)
         df = df[['estagio', 'cenario', 'dataInicio', 'dataFim', 'usina', 'valor']]
         df = df.pivot_table(
@@ -1203,9 +1199,7 @@ class OperationSynthetizer:
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
         ).reset_index()
-        print(df)
         df = df.ffill(axis=1)
-        print(df)
         return df.copy()
 
     def processa_dec_oper_usit(
@@ -1608,9 +1602,7 @@ class OperationSynthetizer:
     def _postprocess(
         self, df: pd.DataFrame, probabilities: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
-        print(df)
         df.to_csv("teste.csv")
-        print(probabilities)
         df = self._processa_quantis(df, [0.05 * i for i in range(21)])
         df = self._processa_media(df, probabilities)
         cols_not_scenarios = [
@@ -1650,6 +1642,5 @@ class OperationSynthetizer:
                 continue
             with self.uow:
                 probs = self.uow.export.read_df(self.PROBABILITIES_FILE)
-                print(probs)
                 df = self._postprocess(df, probs)
                 self.uow.export.synthetize_df(df, filename)
