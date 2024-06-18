@@ -1577,11 +1577,10 @@ class OperationSynthetizer:
         valid_synthesis = self.filter_valid_variables(synthesis_variables)
         for s in valid_synthesis:
             filename = str(s)
-            print(filename)
-            exit(1)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
             try:
+                print("ENTROU AQUI")
                 df = self.__rules[
                     (s.variable, s.spatial_resolution, s.temporal_resolution)
                 ]()
