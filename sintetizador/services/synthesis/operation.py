@@ -773,6 +773,9 @@ class OperationSynthetizer:
                 axis=1,
                 result_type="expand",
             )
+            print(df)
+            df = df.ffill(axis=1)
+            print("pos fill:", df)
             self.__valor_agua = df
         return self.__valor_agua
 
