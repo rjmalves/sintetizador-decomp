@@ -127,11 +127,11 @@ class OperationSynthetizer:
             Tuple[Variable, SpatialResolution, TemporalResolution],
             pd.DataFrame,
         ] = {
-            #(
-            #    Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-            #    SpatialResolution.USINA_HIDROELETRICA,
-            #    TemporalResolution.ESTAGIO,
-            #): lambda: self.processa_dec_oper_usih("volume_util_inicial_hm3"),
+            (
+                Variable.VALOR_AGUA,
+                SpatialResolution.USINA_HIDROELETRICA,
+                TemporalResolution.ESTAGIO,
+            ): lambda: self.processa_valor_agua(),
             (
                 Variable.CUSTO_MARGINAL_OPERACAO,
                 SpatialResolution.SUBMERCADO,
@@ -754,6 +754,38 @@ class OperationSynthetizer:
             self.__dec_oper_sist = df
         return self.__dec_oper_sist
 
+    def get_custos(self) -> pd.DataFrame:
+        if self.__custos is None:
+            with self.uow:
+                arq_custos = self.uow.files.get_custos()
+            df = arq_custos.relatorio_variaveis_duais
+            if df is None:
+                logger = Log.log()
+                if logger is not None:
+                    logger.error(
+                        "Erro na leitura do arquivo custos.rvx"
+                    )
+                raise RuntimeError()
+            df[["dataInicio", "dataFim"]] = df.apply(
+                lambda linha: self.adiciona_datas_df(linha),
+                axis=1,
+                result_type="expand",
+            )
+            print(df)
+            exit(1)
+            df["geracao_termica_total_MW"] = (
+                df["geracao_termica_MW"] + df["geracao_termica_antecipada_MW"]
+            )
+            df["itaipu_60MW"].fillna(0.0, inplace=True)
+            df["geracao_hidro_com_itaipu_MW"] = (
+                df["geracao_hidroeletrica_MW"] + df["itaipu_60MW"]
+            )
+            df["demanda_liquida_MW"] = (
+                df["demanda_MW"] - df["geracao_pequenas_usinas_MW"]
+            )
+            self.__dec_oper_sist = df
+        return self.__dec_oper_sist
+
     def get_dec_oper_ree(self) -> pd.DataFrame:
         if self.__dec_oper_ree is None:
             with self.uow:
@@ -1001,6 +1033,60 @@ class OperationSynthetizer:
             .to_numpy()
             .flatten()
         )
+
+    def processa_valor_agua(self):
+        df = self.get_custos().copy()
+        exit(1)
+        if patamares is None:
+            df = df.loc[df["patamar"].isna()]
+            cols = [
+                "submercado",
+                "estagio",
+                "dataInicio",
+                "dataFim",
+                "cenario",
+                "valor",
+            ]
+        else:
+            df = df.loc[df["patamar"].isin(patamares)]
+            df = df.astype({"patamar": int})
+            cols = [
+                "submercado",
+                "estagio",
+                "dataInicio",
+                "dataFim",
+                "patamar",
+                "cenario",
+                "valor",
+            ]
+        if col not in df.columns:
+            logger = Log.log()
+            if logger is not None:
+                logger.warning(f"Coluna {col} não encontrada no arquivo")
+            df[col] = 0.0
+        df = df.rename(
+            columns={
+                "nome_submercado": "submercado",
+                col: "valor",
+            }
+        )
+        df = df[cols]
+        df = df.fillna(0.0)
+        df["submercado"] = pd.Categorical(
+            values=df["submercado"],
+            categories=df["submercado"].unique().tolist(),
+            ordered=True,
+        )
+        df.sort_values(["submercado", "estagio", "cenario"], inplace=True)
+        df = df.astype({"cenario": str})
+        df = df.pivot_table(
+            "valor",
+            index=[c for c in cols if c not in ["valor", "cenario"]],
+            columns="cenario",
+        ).reset_index()
+        df = df.ffill(axis=1)
+        df = df.astype({"submercado": str})
+        return df.copy()
 
     def processa_dec_oper_sist(
         self, col: str, patamares: Optional[List[int]] = None
@@ -1580,7 +1666,6 @@ class OperationSynthetizer:
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
             try:
-                print("ENTROU AQUI")
                 df = self.__rules[
                     (s.variable, s.spatial_resolution, s.temporal_resolution)
                 ]()

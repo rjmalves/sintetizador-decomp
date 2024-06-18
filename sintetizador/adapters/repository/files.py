@@ -21,7 +21,7 @@ from idecomp.decomp.dec_oper_ree import DecOperRee
 from idecomp.decomp.dec_oper_sist import DecOperSist
 from idecomp.decomp.dec_oper_interc import DecOperInterc
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
-
+from idecomp.decomp.custos import Custos
 from sintetizador.model.settings import Settings
 from sintetizador.utils.encoding import converte_codificacao
 from sintetizador.utils.log import Log
@@ -42,6 +42,10 @@ class AbstractFilesRepository(ABC):
     @property
     @abstractmethod
     def arquivos(self) -> Arquivos:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_custos(self) -> Custos:
         raise NotImplementedError
 
     @abstractmethod
@@ -140,6 +144,7 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_dec_oper_sist = False
         self.__read_dec_oper_interc = False
         self.__read_dec_eco_discr = False
+        self.__read_custos = False
 
     @property
     def extensao(self) -> str:
@@ -220,6 +225,21 @@ class RawFilesRepository(AbstractFilesRepository):
                     logger.error(f"Erro na leitura do {arq_relato}: {e}")
                 raise e
         return self.__relato
+
+    def get_custos(self) -> Custos:
+        if self.__read_custos is False:
+            self.__read_custos = True
+            logger = Log.log()
+            try:
+                arq_custos = f"custos.{self.extensao}"
+                if logger is not None:
+                    logger.info(f"Lendo arquivo {arq_custos}")
+                self.__custos = Custos.read(join(self.__tmppath, arq_relato))
+            except Exception as e:
+                if logger is not None:
+                    logger.error(f"Erro na leitura do {arq_relato}: {e}")
+                raise e
+        return self.__custos
 
     def get_relato2(self) -> Relato:
         if self.__read_relato2 is False:
