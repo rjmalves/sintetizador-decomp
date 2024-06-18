@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Dict, List, Optional
 from app.internal.constants import (
     HYDRO_CODE_COL,
     THERMAL_CODE_COL,
@@ -37,7 +36,7 @@ class SpatialResolution(Enum):
 
     @property
     def long_name(self):
-        LONG_NAMES: Dict[str, str] = {
+        LONG_NAMES: dict[str, str] = {
             "SIN": "Sistema Interligado",
             "SBM": "Submercado",
             "REE": "Reservatório Equivalente",
@@ -48,8 +47,8 @@ class SpatialResolution(Enum):
         return LONG_NAMES.get(self.value)
 
     @property
-    def entity_df_columns(self) -> List[str]:
-        col_maps: Dict[SpatialResolution, List[str]] = {
+    def entity_df_columns(self) -> list[str]:
+        col_maps: dict[SpatialResolution, list[str]] = {
             SpatialResolution.SISTEMA_INTERLIGADO: [],
             SpatialResolution.SUBMERCADO: [
                 SUBMARKET_CODE_COL,
@@ -75,8 +74,8 @@ class SpatialResolution(Enum):
         return col_maps.get(self, [])
 
     @property
-    def main_entity_synthesis_df_column(self) -> Optional[str]:
-        col_maps: Dict[SpatialResolution, Optional[str]] = {
+    def main_entity_synthesis_df_column(self) -> str | None:
+        col_maps: dict[SpatialResolution, str | None] = {
             SpatialResolution.SISTEMA_INTERLIGADO: None,
             SpatialResolution.SUBMERCADO: SUBMARKET_CODE_COL,
             SpatialResolution.RESERVATORIO_EQUIVALENTE: EER_CODE_COL,
@@ -87,7 +86,7 @@ class SpatialResolution(Enum):
         return col_maps.get(self)
 
     @property
-    def all_synthesis_df_columns(self) -> List[str]:
+    def all_synthesis_df_columns(self) -> list[str]:
         return (
             self.entity_df_columns
             + COLUMNS
@@ -95,14 +94,14 @@ class SpatialResolution(Enum):
         )
 
     @property
-    def entity_synthesis_df_columns(self) -> List[str]:
+    def entity_synthesis_df_columns(self) -> list[str]:
         all_columns = self.all_synthesis_df_columns
         return [
             c for c in all_columns if c not in [BLOCK_DURATION_COL, VALUE_COL]
         ]
 
     @property
-    def sorting_synthesis_df_columns(self) -> List[str]:
+    def sorting_synthesis_df_columns(self) -> list[str]:
         main_column = self.main_entity_synthesis_df_column
         all_columns = [main_column] + COLUMNS if main_column else COLUMNS
         return [
@@ -118,7 +117,7 @@ class SpatialResolution(Enum):
         ]
 
     @property
-    def non_entity_sorting_synthesis_df_columns(self) -> List[str]:
+    def non_entity_sorting_synthesis_df_columns(self) -> list[str]:
         sorting_columns = self.sorting_synthesis_df_columns
         return [
             c

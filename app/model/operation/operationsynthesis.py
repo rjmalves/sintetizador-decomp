@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional, List, Dict
 from app.model.operation.variable import Variable
 from app.model.operation.spatialresolution import SpatialResolution
 from app.model.operation.unit import Unit
@@ -35,7 +34,7 @@ class OperationSynthesis:
             )
 
     @classmethod
-    def factory(cls, synthesis: str) -> Optional["OperationSynthesis"]:
+    def factory(cls, synthesis: str) -> "OperationSynthesis" | None:
         data = synthesis.split("_")
         if len(data) != 2:
             return None
@@ -46,7 +45,7 @@ class OperationSynthesis:
             )
 
 
-SUPPORTED_SYNTHESIS: List[str] = [
+SUPPORTED_SYNTHESIS: list[str] = [
     "CMO_SBM",
     "CTER_SIN",
     "COP_SIN",
@@ -110,7 +109,7 @@ SUPPORTED_SYNTHESIS: List[str] = [
     "INT_SBP",
 ]
 
-SYNTHESIS_DEPENDENCIES: Dict[OperationSynthesis, List[OperationSynthesis]] = {
+SYNTHESIS_DEPENDENCIES: dict[OperationSynthesis, list[OperationSynthesis]] = {
     OperationSynthesis(
         Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
         SpatialResolution.SISTEMA_INTERLIGADO,
@@ -389,7 +388,7 @@ SYNTHESIS_DEPENDENCIES: Dict[OperationSynthesis, List[OperationSynthesis]] = {
     ],
 }
 
-UNITS: Dict[OperationSynthesis, Unit] = {
+UNITS: dict[OperationSynthesis, Unit] = {
     OperationSynthesis(
         Variable.CUSTO_MARGINAL_OPERACAO, SpatialResolution.SUBMERCADO
     ): Unit.RS_MWh,

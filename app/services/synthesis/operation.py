@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Optional, Callable, TypeVar
+from typing import Callable, TypeVar
 import pandas as pd  # type: ignore
 import logging
 from logging import INFO, WARNING, ERROR, DEBUG
@@ -36,22 +36,22 @@ from app.internal.constants import (
 
 class OperationSynthetizer:
     T = TypeVar("T")
-    logger: Optional[logging.Logger] = None
+    logger: logging.Logger | None = None
 
     DEFAULT_OPERATION_SYNTHESIS_ARGS = SUPPORTED_SYNTHESIS
 
     # Todas as sínteses que forem dependências de outras sínteses
     # devem ser armazenadas em cache
-    SYNTHESIS_TO_CACHE: List[OperationSynthesis] = list(
+    SYNTHESIS_TO_CACHE: list[OperationSynthesis] = list(
         set([p for pr in SYNTHESIS_DEPENDENCIES.values() for p in pr])
     )
 
     # Estratégias de cache para reduzir tempo total de síntese
-    CACHED_SYNTHESIS: Dict[OperationSynthesis, pd.DataFrame] = {}
-    ORDERED_SYNTHESIS_ENTITIES: Dict[OperationSynthesis, Dict[str, list]] = {}
+    CACHED_SYNTHESIS: dict[OperationSynthesis, pd.DataFrame] = {}
+    ORDERED_SYNTHESIS_ENTITIES: dict[OperationSynthesis, dict[str, list]] = {}
 
     # Estatísticas das sínteses são armazenadas separadamente
-    SYNTHESIS_STATS: Dict[SpatialResolution, List[pd.DataFrame]] = {}
+    SYNTHESIS_STATS: dict[SpatialResolution, list[pd.DataFrame]] = {}
 
     @classmethod
     def clear_cache(cls):
@@ -68,11 +68,11 @@ class OperationSynthetizer:
             cls.logger.log(level, msg)
 
     @classmethod
-    def _get_rule(
-        cls, synthesis: Tuple[Variable, SpatialResolution]
+    def _resolve(
+        cls, synthesis: tuple[Variable, SpatialResolution]
     ) -> Callable:
-        _rules: Dict[
-            Tuple[Variable, SpatialResolution],
+        _rules: dict[
+            tuple[Variable, SpatialResolution],
             Callable,
         ] = {
             (
@@ -373,11 +373,11 @@ class OperationSynthetizer:
             return Deck.operation_report_data(col, uow)
 
     @classmethod
-    def _default_args(cls) -> List[str]:
+    def _default_args(cls) -> list[str]:
         return cls.DEFAULT_OPERATION_SYNTHESIS_ARGS
 
     @classmethod
-    def _match_wildcards(cls, variables: List[str]) -> List[str]:
+    def _match_wildcards(cls, variables: list[str]) -> list[str]:
         """
         Identifica se há variáveis de síntese que são suportadas
         dentro do padrão de wildcards (`*`) fornecidos.
@@ -389,8 +389,8 @@ class OperationSynthetizer:
     @classmethod
     def _process_variable_arguments(
         cls,
-        args: List[str],
-    ) -> List[OperationSynthesis]:
+        args: list[str],
+    ) -> list[OperationSynthesis]:
         args_data = [OperationSynthesis.factory(c) for c in args]
         valid_args = [arg for arg in args_data if arg is not None]
         for i, a in enumerate(args_data):
@@ -401,22 +401,22 @@ class OperationSynthetizer:
 
     @classmethod
     def _filter_valid_variables(
-        cls, variables: List[OperationSynthesis], uow: AbstractUnitOfWork
-    ) -> List[OperationSynthesis]:
+        cls, variables: list[OperationSynthesis], uow: AbstractUnitOfWork
+    ) -> list[OperationSynthesis]:
         cls._log(f"Variáveis: {variables}")
         return variables
 
     @classmethod
     def _add_synthesis_dependencies(
-        cls, synthesis: List[OperationSynthesis]
-    ) -> List[OperationSynthesis]:
+        cls, synthesis: list[OperationSynthesis]
+    ) -> list[OperationSynthesis]:
         """
         Adiciona objetos as dependências de síntese para uma lista de objetos
         de síntese que foram fornecidos.
         """
 
         def _add_synthesis_dependencies_recursive(
-            current_synthesis: List[OperationSynthesis],
+            current_synthesis: list[OperationSynthesis],
             todo_synthesis: OperationSynthesis,
         ):
             if todo_synthesis in SYNTHESIS_DEPENDENCIES.keys():
@@ -427,14 +427,14 @@ class OperationSynthetizer:
             if todo_synthesis not in current_synthesis:
                 current_synthesis.append(todo_synthesis)
 
-        result_synthesis: List[OperationSynthesis] = []
+        result_synthesis: list[OperationSynthesis] = []
         for v in synthesis:
             _add_synthesis_dependencies_recursive(result_synthesis, v)
         return result_synthesis
 
     @classmethod
     def _get_unique_column_values_in_order(
-        cls, df: pd.DataFrame, cols: List[str]
+        cls, df: pd.DataFrame, cols: list[str]
     ):
         """
         Extrai valores únicos na ordem em que aparecem para um
@@ -444,7 +444,7 @@ class OperationSynthetizer:
 
     @classmethod
     def _set_ordered_entities(
-        cls, s: OperationSynthesis, entities: Dict[str, list]
+        cls, s: OperationSynthesis, entities: dict[str, list]
     ):
         """
         Armazena um conjunto de entidades ordenadas para uma síntese.
@@ -452,7 +452,7 @@ class OperationSynthetizer:
         cls.ORDERED_SYNTHESIS_ENTITIES[s] = entities
 
     @classmethod
-    def _get_ordered_entities(cls, s: OperationSynthesis) -> Dict[str, list]:
+    def _get_ordered_entities(cls, s: OperationSynthesis) -> dict[str, list]:
         """
         Obtem um conjunto de entidades ordenadas para uma síntese.
         """
@@ -502,7 +502,7 @@ class OperationSynthetizer:
 
     @classmethod
     def _group_hydro_df(
-        cls, df: pd.DataFrame, grouping_column: Optional[str] = None
+        cls, df: pd.DataFrame, grouping_column: str | None = None
     ) -> pd.DataFrame:
         """
         Realiza a agregação de variáveis fornecidas a nível de UHE
@@ -516,7 +516,7 @@ class OperationSynthetizer:
             SUBMARKET_CODE_COL,
         ]
 
-        grouping_column_map: Dict[str, List[str]] = {
+        grouping_column_map: dict[str, list[str]] = {
             HYDRO_CODE_COL: [
                 HYDRO_CODE_COL,
                 EER_CODE_COL,
@@ -549,7 +549,7 @@ class OperationSynthetizer:
 
     @classmethod
     def _group_submarket_df(
-        cls, df: pd.DataFrame, grouping_column: Optional[str] = None
+        cls, df: pd.DataFrame, grouping_column: str | None = None
     ) -> pd.DataFrame:
         """
         Realiza a agregação de variáveis fornecidas a nível de SBM
@@ -560,7 +560,7 @@ class OperationSynthetizer:
             SUBMARKET_CODE_COL,
         ]
 
-        grouping_column_map: Dict[str, List[str]] = {
+        grouping_column_map: dict[str, list[str]] = {
             SUBMARKET_CODE_COL: [SUBMARKET_CODE_COL],
         }
 
@@ -710,7 +710,7 @@ class OperationSynthetizer:
     @classmethod
     def _stub_mappings(  # noqa
         cls, s: OperationSynthesis
-    ) -> Optional[Callable]:
+    ) -> Callable:
         """
         Obtem a função de resolução de cada síntese que foge ao
         fluxo de resolução padrão, por meio de um mapeamento de
@@ -775,7 +775,7 @@ class OperationSynthetizer:
     @classmethod
     def _resolve_stub(
         cls, s: OperationSynthesis, uow: AbstractUnitOfWork
-    ) -> Tuple[pd.DataFrame, bool]:
+    ) -> tuple[pd.DataFrame, bool]:
         """
         Realiza a resolução da síntese por meio de uma implementação
         alternativa ao fluxo natural de resolução (`stub`), caso esta seja
@@ -845,8 +845,8 @@ class OperationSynthetizer:
         df: pd.DataFrame,
         s: OperationSynthesis,
         uow: AbstractUnitOfWork,
-        early_hooks: List[Callable] = [],
-        late_hooks: List[Callable] = [],
+        early_hooks: list[Callable] = [],
+        late_hooks: list[Callable] = [],
     ) -> pd.DataFrame:
         """
         Realiza pós-processamento após a resolução da extração
@@ -888,7 +888,7 @@ class OperationSynthetizer:
         Realiza a resolução de uma síntese, opcionalmente adicionando
         limites superiores e inferiores aos valores de cada linha.
         """
-        df = cls._get_rule((s.variable, s.spatial_resolution))(uow)
+        df = cls._resolve((s.variable, s.spatial_resolution))(uow)
         if df is not None:
             df = cls._post_resolve(df, s, uow)
             df = cls._resolve_bounds(s, df, uow)
@@ -897,7 +897,7 @@ class OperationSynthetizer:
     @classmethod
     def _export_metadata(
         cls,
-        success_synthesis: List[OperationSynthesis],
+        success_synthesis: list[OperationSynthesis],
         uow: AbstractUnitOfWork,
     ):
         """
@@ -1003,8 +1003,8 @@ class OperationSynthetizer:
 
     @classmethod
     def _preprocess_synthesis_variables(
-        cls, variables: List[str], uow: AbstractUnitOfWork
-    ) -> List[OperationSynthesis]:
+        cls, variables: list[str], uow: AbstractUnitOfWork
+    ) -> list[OperationSynthesis]:
         """
         Realiza o pré-processamento das variáveis de síntese fornecidas,
         filtrando as válidas para o caso em questão e adicionando dependências
@@ -1032,7 +1032,7 @@ class OperationSynthetizer:
     @classmethod
     def _synthetize_single_variable(
         cls, s: OperationSynthesis, uow: AbstractUnitOfWork
-    ) -> Optional[OperationSynthesis]:
+    ) -> OperationSynthesis | None:
         """
         Realiza a síntese de operação para uma variável
         fornecida.
@@ -1073,7 +1073,7 @@ class OperationSynthetizer:
                 return None
 
     @classmethod
-    def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
+    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork):
         cls.logger = logging.getLogger("main")
         uow.subdir = OPERATION_SYNTHESIS_SUBDIR
         with time_and_log(
@@ -1083,7 +1083,7 @@ class OperationSynthetizer:
             synthesis_with_dependencies = cls._preprocess_synthesis_variables(
                 variables, uow
             )
-            success_synthesis: List[OperationSynthesis] = []
+            success_synthesis: list[OperationSynthesis] = []
             for s in synthesis_with_dependencies:
                 r = cls._synthetize_single_variable(s, uow)
                 if r:
