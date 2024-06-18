@@ -1578,6 +1578,7 @@ class OperationSynthetizer:
         for s in valid_synthesis:
             filename = str(s)
             print(filename)
+            exit(1)
             if logger is not None:
                 logger.info(f"Realizando síntese de {filename}")
             try:
