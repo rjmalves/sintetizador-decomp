@@ -772,20 +772,8 @@ class OperationSynthetizer:
                 axis=1,
                 result_type="expand",
             )
-            print(df)
-            exit(1)
-            df["geracao_termica_total_MW"] = (
-                df["geracao_termica_MW"] + df["geracao_termica_antecipada_MW"]
-            )
-            df["itaipu_60MW"].fillna(0.0, inplace=True)
-            df["geracao_hidro_com_itaipu_MW"] = (
-                df["geracao_hidroeletrica_MW"] + df["itaipu_60MW"]
-            )
-            df["demanda_liquida_MW"] = (
-                df["demanda_MW"] - df["geracao_pequenas_usinas_MW"]
-            )
-            self.__dec_oper_sist = df
-        return self.__dec_oper_sist
+            self.__valor_agua = df
+        return self.__valor_agua
 
     def get_dec_oper_ree(self) -> pd.DataFrame:
         if self.__dec_oper_ree is None:
@@ -1037,56 +1025,22 @@ class OperationSynthetizer:
 
     def processa_valor_agua(self):
         df = self.get_valor_agua().copy()
-        exit(1)
-        if patamares is None:
-            df = df.loc[df["patamar"].isna()]
-            cols = [
-                "submercado",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "cenario",
-                "valor",
-            ]
-        else:
-            df = df.loc[df["patamar"].isin(patamares)]
-            df = df.astype({"patamar": int})
-            cols = [
-                "submercado",
-                "estagio",
-                "dataInicio",
-                "dataFim",
-                "patamar",
-                "cenario",
-                "valor",
-            ]
-        if col not in df.columns:
-            logger = Log.log()
-            if logger is not None:
-                logger.warning(f"Coluna {col} não encontrada no arquivo")
-            df[col] = 0.0
         df = df.rename(
             columns={
-                "nome_submercado": "submercado",
-                col: "valor",
+                "pih": "valor"
             }
         )
-        df = df[cols]
         df = df.fillna(0.0)
-        df["submercado"] = pd.Categorical(
-            values=df["submercado"],
-            categories=df["submercado"].unique().tolist(),
-            ordered=True,
-        )
-        df.sort_values(["submercado", "estagio", "cenario"], inplace=True)
         df = df.astype({"cenario": str})
+        print("1: ",df)
         df = df.pivot_table(
             "valor",
             index=[c for c in cols if c not in ["valor", "cenario"]],
             columns="cenario",
         ).reset_index()
+        print("2: ",df)
         df = df.ffill(axis=1)
-        df = df.astype({"submercado": str})
+        print("3: ",df)
         return df.copy()
 
     def processa_dec_oper_sist(
