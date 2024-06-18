@@ -1616,9 +1616,8 @@ class OperationSynthetizer:
                 df = self.__rules[
                     (s.variable, s.spatial_resolution, s.temporal_resolution)
                 ]()
-
-            print("GEROU: ", df)
-            exit(1)
+                print(df)
+                exit(1)
             except Exception:
                 print_exc()
                 continue
