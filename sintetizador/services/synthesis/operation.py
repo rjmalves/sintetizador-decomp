@@ -1182,7 +1182,7 @@ class OperationSynthetizer:
                 "pih": "valor"
             }
         )
-        df["valor"] = df["valor"]/1000
+        df["valor"] = -df["valor"]/1000
         cols = [
             "estagio",
             "cenario",
