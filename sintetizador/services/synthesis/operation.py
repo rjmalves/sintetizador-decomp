@@ -773,7 +773,6 @@ class OperationSynthetizer:
                 result_type="expand",
             )
             df = df.ffill(axis=1)
-            df["valor"] = df["valor"]/1000
             self.__valor_agua = df
         return self.__valor_agua
 
@@ -1183,6 +1182,7 @@ class OperationSynthetizer:
                 "pih": "valor"
             }
         )
+        df["valor"] = df["valor"]/1000
         cols = [
             "estagio",
             "cenario",
