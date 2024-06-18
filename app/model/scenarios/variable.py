@@ -13,3 +13,17 @@ class Variable(Enum):
 
     def __repr__(self) -> str:
         return self.value
+
+    @property
+    def short_name(self):
+        SHORT_NAMES: dict[str, str] = {
+            "PROBABILIDADES": "Probabilidades",
+        }
+        return SHORT_NAMES.get(self.value)
+
+    @property
+    def long_name(self):
+        LONG_NAMES: dict[str, str] = {
+            "PROBABILIDADES": "Probabilidades dos cenários de vazões",
+        }
+        return LONG_NAMES.get(self.value)

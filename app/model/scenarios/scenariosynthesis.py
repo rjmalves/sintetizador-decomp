@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 from app.model.scenarios.variable import Variable
 
 
@@ -11,7 +10,10 @@ class ScenarioSynthesis:
         return self.variable.value
 
     @classmethod
-    def factory(cls, synthesis: str) -> Optional["ScenarioSynthesis"]:
+    def factory(cls, synthesis: str) -> "ScenarioSynthesis" | None:
         return cls(
             Variable.factory(synthesis),
         )
+
+
+SUPPORTED_SYNTHESIS: list[str] = ["PROBABILIDADES"]

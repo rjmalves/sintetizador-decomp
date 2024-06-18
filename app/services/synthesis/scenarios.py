@@ -1,98 +1,161 @@
-from typing import Callable, Dict, List
+from typing import Callable
 import pandas as pd  # type: ignore
-
+import logging
+from logging import INFO, ERROR
 from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.log import Log
+from app.utils.timing import time_and_log
+from app.utils.regex import match_variables_with_wildcards
 from app.model.scenarios.variable import Variable
-from app.model.scenarios.scenariosynthesis import ScenarioSynthesis
+from app.model.scenarios.scenariosynthesis import (
+    ScenarioSynthesis,
+    SUPPORTED_SYNTHESIS,
+)
+from app.internal.constants import (
+    SCENARIO_SYNTHESIS_SUBDIR,
+    SCENARIO_SYNTHESIS_METADATA_OUTPUT,
+)
+from traceback import print_exc
+
 from app.services.deck.deck import Deck
 
 
 class ScenarioSynthetizer:
-    # TODO - levar lista de argumentos suportados para o
-    # arquivo da ScenarioSynthesis
-    DEFAULT_SCENARIO_SYNTHESIS_ARGS: List[str] = [
-        "PROBABILIDADES",
-    ]
+    DEFAULT_SCENARIO_SYNTHESIS_ARGS: list[str] = SUPPORTED_SYNTHESIS
+
+    logger: logging.Logger | None = None
 
     @classmethod
-    def _get_rule(cls, s: ScenarioSynthesis) -> Callable:
-        rules: Dict[Variable, Callable] = {
-            Variable.PROBABILIDADES: cls._resolve_probabilities,
-        }
-        return rules[s.variable]
+    def _log(cls, msg: str, level: int = INFO):
+        if cls.logger is not None:
+            cls.logger.log(level, msg)
 
-    # TODO - padronizar o tipo de retorno de _default_args com
-    # _process_variable_arguments
     @classmethod
-    def _default_args(cls) -> List[str]:
+    def _default_args(cls) -> list[str]:
         return cls.DEFAULT_SCENARIO_SYNTHESIS_ARGS
 
-    # TODO - criar o método interno _log
+    @classmethod
+    def _match_wildcards(cls, variables: list[str]) -> list[str]:
+        return match_variables_with_wildcards(
+            variables, cls.DEFAULT_SCENARIO_SYNTHESIS_ARGS
+        )
 
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # Manter o processamento para sinalizar erros.
     @classmethod
     def _process_variable_arguments(
         cls,
-        args: List[str],
-    ) -> List[ScenarioSynthesis]:
+        args: list[str],
+    ) -> list[ScenarioSynthesis]:
         args_data = [ScenarioSynthesis.factory(c) for c in args]
         valid_args = [arg for arg in args_data if arg is not None]
-        logger = Log.log()
         for i, a in enumerate(args_data):
             if a is None:
-                if logger is not None:
-                    logger.error(f"Erro no argumento fornecido: {args[i]}")
+                cls._log(f"Erro no argumento fornecido: {args[i]}", ERROR)
                 return []
         return valid_args
 
-    # TODO - renomear para _filter_valid_variables
-    # TODO - padronizar a forma de logging com o uso do método interno _log
     @classmethod
-    def filter_valid_variables(
-        cls, variables: List[ScenarioSynthesis]
-    ) -> List[ScenarioSynthesis]:
-        logger = Log.log()
-        if logger is not None:
-            logger.info(f"Variáveis: {variables}")
-        return variables
+    def _preprocess_synthesis_variables(
+        cls, variables: list[str], uow: AbstractUnitOfWork
+    ) -> list[ScenarioSynthesis]:
+        """
+        Realiza o pré-processamento das variáveis de síntese fornecidas,
+        filtrando as válidas para o caso em questão.
+        """
+        try:
+            if len(variables) == 0:
+                all_variables = cls._default_args()
+            else:
+                all_variables = cls._match_wildcards(variables)
+            synthesis_variables = cls._process_variable_arguments(all_variables)
+        except Exception as e:
+            print_exc()
+            cls._log(str(e), ERROR)
+            cls._log("Erro no pré-processamento das variáveis", ERROR)
+            synthesis_variables = []
+        return synthesis_variables
 
-    # TODO - atualizar idioma para inglês
-    # TODO - padronizar a forma de logging com o uso do método interno _log
-    # TODO - avaliar obter o dataframe já pós-processado direto do Deck
     @classmethod
     def _resolve_probabilities(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         df = Deck.probabilities(uow)
-
         if df is None:
-            logger = Log.log()
-            if logger is not None:
-                logger.warning("Erro na leitura do arquivo de vazões")
-            return pd.DataFrame(columns=["estagio", "cenario", "probabilidade"])
-        df_subset = df[["estagio", "cenario", "probabilidade"]].drop_duplicates(
-            ignore_index=True
-        )
-        return df_subset
+            cls._log("Erro na leitura do arquivo de vazões", ERROR)
+            raise RuntimeError()
+        return df
 
-    # TODO - criar _export_metadata para exportar metadados
-    # TODO - modularizar a parte da síntese de uma variável
-    # em uma função à parte (_synthetize_single_variable)
-
-    # TODO - atualizar forma de logging
-    # TODO - exportar metadados ao final
-    # TODO - padronizar atribuições e chamadas com o do newave
     @classmethod
-    def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
-        if len(variables) == 0:
-            variables = cls._default_args()
-        logger = Log.log()
-        synthesis_variables = cls._process_variable_arguments(variables)
-        valid_synthesis = cls.filter_valid_variables(synthesis_variables)
-        for s in valid_synthesis:
-            filename = str(s)
-            if logger is not None:
-                logger.info(f"Realizando síntese de {filename}")
-            df = cls._get_rule(s)(uow)
-            with uow:
-                uow.export.synthetize_df(df, filename)
+    def _resolve(
+        cls, s: ScenarioSynthesis, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        rules: dict[Variable, Callable] = {
+            Variable.PROBABILIDADES: cls._resolve_probabilities,
+        }
+        return rules[s.variable](uow)
+
+    @classmethod
+    def _export_metadata(
+        cls,
+        success_synthesis: list[ScenarioSynthesis],
+        uow: AbstractUnitOfWork,
+    ):
+        metadata_df = pd.DataFrame(
+            columns=[
+                "chave",
+                "nome_curto",
+                "nome_longo",
+            ]
+        )
+        for s in success_synthesis:
+            metadata_df.loc[metadata_df.shape[0]] = [
+                str(s),
+                s.variable.short_name,
+                s.variable.long_name,
+            ]
+        with uow:
+            uow.export.synthetize_df(
+                metadata_df, SCENARIO_SYNTHESIS_METADATA_OUTPUT
+            )
+
+    @classmethod
+    def _synthetize_single_variable(
+        cls, s: ScenarioSynthesis, uow: AbstractUnitOfWork
+    ) -> ScenarioSynthesis | None:
+        """
+        Realiza a síntese de cenários para uma variável
+        fornecida.
+        """
+        filename = str(s)
+        with time_and_log(
+            message_root=f"Tempo para sintese de {filename}",
+            logger=cls.logger,
+        ):
+            try:
+                cls._log(f"Realizando síntese de {filename}")
+                df = cls._resolve(s, uow)
+                if df is not None:
+                    with uow:
+                        uow.export.synthetize_df(df, filename)
+                        return s
+                return None
+            except Exception as e:
+                print_exc()
+                cls._log(str(e), ERROR)
+                return None
+
+    @classmethod
+    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork):
+        cls.logger = logging.getLogger("main")
+        uow.subdir = SCENARIO_SYNTHESIS_SUBDIR
+
+        with time_and_log(
+            message_root="Tempo para sintese dos cenarios", logger=cls.logger
+        ):
+            synthesis_variables = cls._preprocess_synthesis_variables(
+                variables, uow
+            )
+
+            success_synthesis: list[ScenarioSynthesis] = []
+            for s in synthesis_variables:
+                r = cls._synthetize_single_variable(s, uow)
+                if r:
+                    success_synthesis.append(r)
+
+            cls._export_metadata(success_synthesis, uow)
