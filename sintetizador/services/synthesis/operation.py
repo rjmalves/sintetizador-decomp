@@ -29,6 +29,7 @@ class OperationSynthetizer:
     ]
 
     DEFAULT_OPERATION_SYNTHESIS_ARGS: List[str] = [
+        "GHID_UHE_EST",
         "VAGUA_UHE_EST",
         "CMO_SBM_EST",
         "CMO_SBM_PAT",
@@ -51,7 +52,6 @@ class OperationSynthetizer:
         "GTER_SBM_PAT",
         "GTER_SIN_EST",
         "GTER_SIN_PAT",
-        "GHID_UHE_EST",
         "GHID_UHE_PAT",
         "GHID_SBM_EST",
         "GHID_SBM_PAT",
