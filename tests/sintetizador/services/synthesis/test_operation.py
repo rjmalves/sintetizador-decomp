@@ -3,6 +3,7 @@ from app.services.unitofwork import factory
 from app.services.synthesis.operation import OperationSynthetizer
 from app.model.operation.operationsynthesis import OperationSynthesis, UNITS
 from app.services.deck.bounds import OperationVariableBounds
+from app.services.deck.deck import Deck
 import pandas as pd
 import numpy as np
 from os.path import join
@@ -479,5 +480,914 @@ def test_sintese_gter_sin(test_settings):
     ]
     __compara_sintese_dec_oper(
         df, df_dec_oper, "geracao_termica_MW", estagio=1, cenario=1, patamar=[1]
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_ghid_uhe(test_settings):
+    synthesis_str = "GHID_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_MW",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_ghid_sbm(test_settings):
+    synthesis_str = "GHID_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["itaipu_60MW"] = df_dec_oper["itaipu_60MW"].fillna(0.0)
+    df_dec_oper["geracao_hidroeletrica_MW"] += df_dec_oper["itaipu_60MW"]
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_hidroeletrica_MW",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_ghid_sin(test_settings):
+    synthesis_str = "GHID_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = (
+        DecOperSist.read(join(DECK_TEST_DIR, "dec_oper_sist.csv"))
+        .tabela.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    df_dec_oper["itaipu_60MW"] = df_dec_oper["itaipu_60MW"].fillna(0.0)
+    df_dec_oper["geracao_hidroeletrica_MW"] += df_dec_oper["itaipu_60MW"]
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_hidroeletrica_MW",
+        estagio=1,
+        cenario=1,
+        patamar=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_enaa_sbm(test_settings):
+    synthesis_str = "ENAA_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "ena_MWmes",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_enaa_sin(test_settings):
+    synthesis_str = "ENAA_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "ena_MWmes",
+        estagio=1,
+        cenario=1,
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_mer_sbm(test_settings):
+    synthesis_str = "MER_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "demanda_MW",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_mer_sin(test_settings):
+    synthesis_str = "MER_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "demanda_MW",
+        estagio=1,
+        cenario=1,
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_merl_sbm(test_settings):
+    synthesis_str = "MERL_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper["demanda_MW"] -= df_dec_oper["geracao_pequenas_usinas_MW"]
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "demanda_MW",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_merl_sin(test_settings):
+    synthesis_str = "MERL_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    df_dec_oper["demanda_MW"] -= df_dec_oper["geracao_pequenas_usinas_MW"]
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "demanda_MW",
+        estagio=1,
+        cenario=1,
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_def_sbm(test_settings):
+    synthesis_str = "DEF_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "deficit_MW",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_def_sin(test_settings):
+    synthesis_str = "DEF_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "deficit_MW",
+        estagio=1,
+        cenario=1,
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varpi_uhe(test_settings):
+    synthesis_str = "VARPI_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_inicial_percentual",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varpf_uhe(test_settings):
+    synthesis_str = "VARPF_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_final_percentual",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varmi_uhe(test_settings):
+    synthesis_str = "VARMI_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_inicial_hm3",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varmf_uhe(test_settings):
+    synthesis_str = "VARMF_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_final_hm3",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varmi_ree(test_settings):
+    synthesis_str = "VARMI_REE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_ree"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_ree"]
+    )
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "patamar", "codigo_ree"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_inicial_hm3",
+        estagio=1,
+        cenario=1,
+        codigo_ree=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varmf_ree(test_settings):
+    synthesis_str = "VARMF_REE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_ree"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_ree"]
+    )
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "patamar", "codigo_ree"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_final_hm3",
+        estagio=1,
+        cenario=1,
+        codigo_ree=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varmi_sbm(test_settings):
+    synthesis_str = "VARMI_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_submercado"]
+    )
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(
+            ["estagio", "cenario", "patamar", "codigo_submercado"]
+        )
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_inicial_hm3",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varmf_sbm(test_settings):
+    synthesis_str = "VARMF_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_submercado"]
+    )
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(
+            ["estagio", "cenario", "patamar", "codigo_submercado"]
+        )
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_final_hm3",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varmi_sin(test_settings):
+    synthesis_str = "VARMI_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_inicial_hm3",
+        estagio=1,
+        cenario=1,
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_varmf_sin(test_settings):
+    synthesis_str = "VARMF_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_final_hm3",
+        estagio=1,
+        cenario=1,
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_qinc_uhe(test_settings):
+    synthesis_str = "QINC_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_incremental_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_qafl_uhe(test_settings):
+    synthesis_str = "QAFL_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_afluente_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_qdef_uhe(test_settings):
+    synthesis_str = "QDEF_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_defluente_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_qtur_uhe(test_settings):
+    synthesis_str = "QTUR_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_turbinada_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_qver_uhe(test_settings):
+    synthesis_str = "QVER_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_vertida_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_evert_uhe(test_settings):
+    synthesis_str = "EVERT_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_turbinavel"])
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_evernt_uhe(test_settings):
+    synthesis_str = "EVERNT_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_nao_turbinavel"])
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_nao_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_ever_uhe(test_settings):
+    synthesis_str = "EVER_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_nao_turbinavel"])
+    df_dec_oper["vertimento_turbinavel"] += df_dec_oper[
+        "vertimento_nao_turbinavel"
+    ]
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_evert_ree(test_settings):
+    synthesis_str = "EVERT_REE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_turbinavel"])
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_ree"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_ree"]
+    )
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "codigo_ree"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_ree=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_evernt_ree(test_settings):
+    synthesis_str = "EVERNT_REE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_nao_turbinavel"])
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_ree"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_ree"]
+    )
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "codigo_ree"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_nao_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_ree=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_ever_ree(test_settings):
+    synthesis_str = "EVER_REE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_nao_turbinavel"])
+    df_dec_oper["vertimento_turbinavel"] += df_dec_oper[
+        "vertimento_nao_turbinavel"
+    ]
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_ree"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_ree"]
+    )
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "codigo_ree"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_ree=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_evert_sbm(test_settings):
+    synthesis_str = "EVERT_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_turbinavel"])
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_submercado"]
+    )
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "codigo_submercado"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_evernt_sbm(test_settings):
+    synthesis_str = "EVERNT_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_nao_turbinavel"])
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_submercado"]
+    )
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "codigo_submercado"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_nao_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_ever_sbm(test_settings):
+    synthesis_str = "EVER_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_nao_turbinavel"])
+    df_dec_oper["vertimento_turbinavel"] += df_dec_oper[
+        "vertimento_nao_turbinavel"
+    ]
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_submercado"]
+    )
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario", "codigo_submercado"])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_turbinavel",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_evert_sin(test_settings):
+    synthesis_str = "EVERT_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_turbinavel"])
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario"]).sum().reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_turbinavel",
+        estagio=1,
+        cenario=1,
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_evernt_sin(test_settings):
+    synthesis_str = "EVERNT_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_nao_turbinavel"])
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario"]).sum().reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_nao_turbinavel",
+        estagio=1,
+        cenario=1,
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_ever_sin(test_settings):
+    synthesis_str = "EVER_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_uhe
+    df_dec_oper = df_dec_oper.dropna(subset=["vertimento_nao_turbinavel"])
+    df_dec_oper["vertimento_turbinavel"] += df_dec_oper[
+        "vertimento_nao_turbinavel"
+    ]
+    df_dec_oper = (
+        df_dec_oper.groupby(["estagio", "cenario"]).sum().reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vertimento_turbinavel",
+        estagio=1,
+        cenario=1,
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_gter_ute(test_settings):
+    synthesis_str = "GTER_UTE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsit.read(
+        join(DECK_TEST_DIR, "dec_oper_usit.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_MW",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_cter_ute(test_settings):
+    synthesis_str = "CTER_UTE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsit.read(
+        join(DECK_TEST_DIR, "dec_oper_usit.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "custo_geracao",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_int_sbp(test_settings):
+    synthesis_str = "INT_SBP"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperInterc.read(
+        join(DECK_TEST_DIR, "dec_oper_interc.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "intercambio_origem_MW",
+        estagio=1,
+        cenario=1,
+        codigo_submercado_de=[1],
+        codigo_submercado_para=[3],
+        patamar=[0],
     )
     __valida_metadata(synthesis_str, df_meta, False)

@@ -152,13 +152,6 @@ class OperationSynthetizer:
                 uow, "geracao_hidro_com_itaipu_MW"
             ),
             (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
-                uow,
-                "geracao_eolica_MW",
-            ),
-            (
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
             ): lambda uow: cls._resolve_dec_oper_ree(
@@ -742,7 +735,6 @@ class OperationSynthetizer:
                     Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                     Variable.GERACAO_HIDRAULICA,
                     Variable.GERACAO_TERMICA,
-                    Variable.GERACAO_EOLICA,
                     Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                     Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 ],

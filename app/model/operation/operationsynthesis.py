@@ -68,8 +68,6 @@ SUPPORTED_SYNTHESIS: list[str] = [
     "GHID_UHE",
     "GHID_SBM",
     "GHID_SIN",
-    "GEOL_SBM",
-    "GEOL_SIN",
     "ENAA_SBM",
     "ENAA_SIN",
     "MER_SBM",
@@ -170,15 +168,6 @@ SYNTHESIS_DEPENDENCIES: dict[OperationSynthesis, list[OperationSynthesis]] = {
     ): [
         OperationSynthesis(
             Variable.GERACAO_HIDRAULICA,
-            SpatialResolution.SUBMERCADO,
-        ),
-    ],
-    OperationSynthesis(
-        Variable.GERACAO_EOLICA,
-        SpatialResolution.SISTEMA_INTERLIGADO,
-    ): [
-        OperationSynthesis(
-            Variable.GERACAO_EOLICA,
             SpatialResolution.SUBMERCADO,
         ),
     ],
@@ -654,14 +643,6 @@ UNITS: dict[OperationSynthesis, Unit] = {
     OperationSynthesis(
         Variable.GERACAO_HIDRAULICA,
         SpatialResolution.USINA_HIDROELETRICA,
-    ): Unit.MWmed,
-    OperationSynthesis(
-        Variable.GERACAO_EOLICA,
-        SpatialResolution.SUBMERCADO,
-    ): Unit.MWmed,
-    OperationSynthesis(
-        Variable.GERACAO_EOLICA,
-        SpatialResolution.SISTEMA_INTERLIGADO,
     ): Unit.MWmed,
     OperationSynthesis(
         Variable.INTERCAMBIO,
