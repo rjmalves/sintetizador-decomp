@@ -1027,32 +1027,7 @@ class OperationSynthetizer:
             .flatten()
         )
 
-    def processa_valor_agua(self):
-        df = self.get_valor_agua().copy()
-        df = df.rename(
-            columns={
-                "pih": "valor"
-            }
-        )
-        cols = [
-            "estagio",
-            "cenario",
-            "usina",
-            "dataInicio",
-            "dataFim",
-            "valor",
-        ]
-        
-        df = df.astype({"cenario": str})
-        print(df)
-        df = df[['estagio', 'cenario', 'dataInicio', 'dataFim', 'usina', 'valor']]
-        df = df.pivot_table(
-            "valor",
-            index=[c for c in cols if c not in ["valor", "cenario"]],
-            columns="cenario",
-        ).reset_index()
-        df = df.fillna(0.0)
-        return df.copy()
+
 
     def processa_dec_oper_sist(
         self, col: str, patamares: Optional[List[int]] = None
@@ -1201,6 +1176,36 @@ class OperationSynthetizer:
         ).reset_index()
         df = df.ffill(axis=1)
         df = df.astype({"usina": str})
+        return df.copy()
+
+    def processa_valor_agua(self):
+        df = self.get_valor_agua().copy()
+        df = df.rename(
+            columns={
+                "pih": "valor"
+            }
+        )
+        cols = [
+            "estagio",
+            "cenario",
+            "usina",
+            "dataInicio",
+            "dataFim",
+            "valor",
+        ]
+        
+        df = df.astype({"cenario": str})
+        print(df)
+        df = df.fillna(0.0)
+        df = df[['estagio', 'cenario', 'dataInicio', 'dataFim', 'usina', 'valor']]
+        df = df.pivot_table(
+            "valor",
+            index=[c for c in cols if c not in ["valor", "cenario"]],
+            columns="cenario",
+        ).reset_index()
+        print(df)
+        df = df.ffill(axis=1)
+        print(df)
         return df.copy()
 
     def processa_dec_oper_usit(
