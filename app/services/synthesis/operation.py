@@ -31,6 +31,7 @@ from app.internal.constants import (
     HYDRO_CODE_COL,
     LOWER_BOUND_COL,
     UPPER_BOUND_COL,
+    BLOCK_COL,
 )
 
 
@@ -152,13 +153,6 @@ class OperationSynthetizer:
                 uow, "geracao_hidro_com_itaipu_MW"
             ),
             (
-                Variable.GERACAO_EOLICA,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
-                uow,
-                "geracao_eolica_MW",
-            ),
-            (
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
             ): lambda uow: cls._resolve_dec_oper_ree(
@@ -190,37 +184,37 @@ class OperationSynthetizer:
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_inicial_percentual"
+                uow, "volume_util_inicial_percentual", blocks=[0]
             ),
             (
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_final_percentual"
+                uow, "volume_util_final_percentual", blocks=[0]
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_inicial_hm3"
+                uow, "volume_util_inicial_hm3", blocks=[0]
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_final_hm3"
+                uow, "volume_util_final_hm3", blocks=[0]
             ),
             (
                 Variable.VAZAO_INCREMENTAL,
                 SpatialResolution.USINA_HIDROELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_incremental_m3s"
+                uow, "vazao_incremental_m3s", blocks=[0]
             ),
             (
                 Variable.VAZAO_AFLUENTE,
                 SpatialResolution.USINA_HIDROELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_afluente_m3s"
+                uow, "vazao_afluente_m3s", blocks=[0]
             ),
             (
                 Variable.VAZAO_DEFLUENTE,
@@ -315,16 +309,17 @@ class OperationSynthetizer:
 
     @classmethod
     def _resolve_dec_oper_usih(
-        cls,
-        uow: AbstractUnitOfWork,
-        col: str,
+        cls, uow: AbstractUnitOfWork, col: str, blocks: list[int] | None = None
     ):
         with time_and_log(
             message_root="Tempo para obtenção dos dados do dec_oper_usih",
             logger=cls.logger,
         ):
             df = Deck.dec_oper_usih(uow)
-            return cls._post_resolve_file(df, col)
+            df = cls._post_resolve_file(df, col)
+            if blocks:
+                df = df.loc[df[BLOCK_COL].isin(blocks)].copy()
+            return df
 
     @classmethod
     def _resolve_dec_oper_usit(
@@ -742,7 +737,6 @@ class OperationSynthetizer:
                     Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                     Variable.GERACAO_HIDRAULICA,
                     Variable.GERACAO_TERMICA,
-                    Variable.GERACAO_EOLICA,
                     Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                     Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 ],

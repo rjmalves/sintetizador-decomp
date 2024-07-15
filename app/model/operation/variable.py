@@ -15,7 +15,6 @@ class Variable(Enum):
     ENERGIA_ARMAZENADA_PERCENTUAL_FINAL = "EARPF"
     GERACAO_HIDRAULICA = "GHID"
     GERACAO_TERMICA = "GTER"
-    GERACAO_EOLICA = "GEOL"
     ENERGIA_VERTIDA = "EVER"
     ENERGIA_VERTIDA_TURBINAVEL = "EVERT"
     ENERGIA_VERTIDA_NAO_TURBINAVEL = "EVERNT"
@@ -45,7 +44,7 @@ class Variable(Enum):
         return self.value
 
     @property
-    def short_name(self):
+    def short_name(self) -> str | None:
         SHORT_NAMES: dict[str, str] = {
             "CMO": "CMO",
             "VAGUA": "VAGUA",
@@ -87,7 +86,7 @@ class Variable(Enum):
         return SHORT_NAMES.get(self.value)
 
     @property
-    def long_name(self):
+    def long_name(self) -> str | None:
         LONG_NAMES: dict[str, str] = {
             "CMO": "Custo Marginal de Operação",
             "VAGUA": "Valor da Água",

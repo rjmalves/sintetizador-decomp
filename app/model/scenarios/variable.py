@@ -15,14 +15,14 @@ class Variable(Enum):
         return self.value
 
     @property
-    def short_name(self):
+    def short_name(self) -> str | None:
         SHORT_NAMES: dict[str, str] = {
             "PROBABILIDADES": "Probabilidades",
         }
         return SHORT_NAMES.get(self.value)
 
     @property
-    def long_name(self):
+    def long_name(self) -> str | None:
         LONG_NAMES: dict[str, str] = {
             "PROBABILIDADES": "Probabilidades dos cenários de vazões",
         }

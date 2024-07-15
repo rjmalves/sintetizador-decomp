@@ -35,7 +35,7 @@ class SpatialResolution(Enum):
         return self.value
 
     @property
-    def long_name(self):
+    def long_name(self) -> str | None:
         LONG_NAMES: dict[str, str] = {
             "SIN": "Sistema Interligado",
             "SBM": "Submercado",
