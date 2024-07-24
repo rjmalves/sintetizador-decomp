@@ -256,7 +256,7 @@ class Deck:
                 {"valor_esperado": np.float64, "desvio_padrao": np.float64}
             )
             df_complete = df_complete.groupby("parcela").sum()
-            df_complete = df_complete.reset_index()
+            df_complete = df_complete.reset_index(drop=True)
 
             costs = cls._validate_data(
                 df_complete,
@@ -586,7 +586,7 @@ class Deck:
                 ]
             ].copy()
             cls.DECK_DATA_CACHING[name] = df
-        return df
+        return df.reset_index()
 
     @classmethod
     def stages_start_date(cls, uow: AbstractUnitOfWork) -> List[datetime]:
@@ -637,6 +637,7 @@ class Deck:
                     "nome_submercado": SUBMARKET_NAME_COL,
                 }
             )
+            mapping = mapping.sort_values(by=[HYDRO_CODE_COL]).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = mapping
         return mapping
 
@@ -678,6 +679,9 @@ class Deck:
             thermals[SUBMARKET_NAME_COL] = thermals[SUBMARKET_CODE_COL].apply(
                 lambda c: submarkets.at[c, SUBMARKET_NAME_COL]
             )
+            thermals = thermals.sort_values(by=
+                [THERMAL_CODE_COL]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = thermals
         return thermals
 
