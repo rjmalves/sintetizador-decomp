@@ -1,94 +1,145 @@
 from unittest.mock import patch, MagicMock
 from app.services.unitofwork import factory
 from app.services.synthesis.execution import ExecutionSynthetizer
+from app.model.execution.executionsynthesis import ExecutionSynthesis
 import numpy as np
 from tests.conftest import DECK_TEST_DIR
+import pandas as pd
+from app.internal.constants import (
+    EXECUTION_SYNTHESIS_METADATA_OUTPUT,
+)
+from idecomp.decomp import Relato, Decomptim
+from os.path import join
 
 uow = factory("FS", DECK_TEST_DIR)
 synthetizer = ExecutionSynthetizer()
 
 
-def test_sintese_programa(test_settings):
+def __sintetiza_com_mock(synthesis_str) -> tuple[pd.DataFrame, pd.DataFrame]:
     m = MagicMock(lambda df, filename: df)
     with patch(
-        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
+        "app.adapters.repository.export.TestExportRepository.synthetize_df",
         new=m,
     ):
-        synthetizer.synthetize(["PROGRAMA"], uow)
-    m.assert_called_once()
-    df = m.mock_calls[0].args[0]
+        ExecutionSynthetizer.synthetize([synthesis_str], uow)
+
+    m.assert_called()
+
+    df = __obtem_dados_sintese_mock(synthesis_str, m)
+    df_meta = __obtem_dados_sintese_mock(
+        EXECUTION_SYNTHESIS_METADATA_OUTPUT, m
+    )
+    print(df)
+    print(df_meta)
+    assert df is not None
+    assert df_meta is not None
+    return df, df_meta
+
+
+def __obtem_dados_sintese_mock(
+    chave: str, mock: MagicMock
+) -> pd.DataFrame | None:
+    for c in mock.mock_calls:
+        if c.args[1] == chave:
+            return c.args[0]
+    return None
+
+
+def __valida_metadata(chave: str, df_metadata: pd.DataFrame):
+    s = ExecutionSynthesis.factory(chave)
+    assert s is not None
+    assert str(s) in df_metadata["chave"].tolist()
+    assert s.variable.short_name in df_metadata["nome_curto"].tolist()
+    assert s.variable.long_name in df_metadata["nome_longo"].tolist()
+
+
+def test_sintese_programa(test_settings):
+    synthesis_str = "PROGRAMA"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
     assert df.at[0, "programa"] == "DECOMP"
+    __valida_metadata(synthesis_str, df_meta)
 
 
 def test_sintese_convergencia(test_settings):
-    m = MagicMock(lambda df, filename: df)
-    with patch(
-        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
-        new=m,
-    ):
-        synthetizer.synthetize(["CONVERGENCIA"], uow)
-    m.assert_called_once()
-    df = m.mock_calls[0].args[0]
-    assert df.at[0, "iter"] == 1
-    assert df.at[0, "zinf"] == 219143667.6
-    assert df.at[0, "zsup"] == 219143975.6
-    assert df.at[0, "gap"] == 0.0001405
-    assert df.at[0, "tempo"] == 114
-    assert df.at[0, "deficit"] == 0.0
-    assert df.at[0, "numero_inviabilidades"] == 0.0
-    assert df.at[0, "viol_MWmed"] == 0.0
-    assert df.at[0, "viol_m3s"] == 0.0
-    assert df.at[0, "viol_hm3"] == 0.0
-    assert np.isnan(df.at[0, "dZinf"])
-    assert df.at[0, "execucao"] == 0.0
+    synthesis_str = "CONVERGENCIA"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_relato = Relato.read(join(DECK_TEST_DIR, "relato.rv0")).convergencia
+    iteracao = int(df["iteracao"].max())
+    dados_sintese = df.loc[df["iteracao"] == iteracao].to_numpy()
+    dados_relato = df_relato.loc[df_relato["iteracao"] == iteracao][
+        [
+            "iteracao",
+            "zinf",
+            "zsup",
+            "gap_percentual",
+            "tempo",
+            "deficit_demanda_MWmed",
+            "numero_inviabilidades",
+            "inviabilidades_MWmed",
+            "inviabilidades_m3s",
+            "inviabilidades_hm3",
+        ]
+    ]
+
+    dados_relato["delta_zinf"] = (
+        dados_relato["zinf"].iloc[0]
+        - df_relato.loc[df_relato["iteracao"] == (iteracao - 1)]["zinf"].iloc[
+            0
+        ]
+    ) / dados_relato["zinf"].iloc[0]
+
+    dados_relato["tempo"] = (
+        dados_relato["tempo"].iloc[0]
+        - df_relato.loc[df_relato["iteracao"] == (iteracao - 1)]["tempo"].iloc[
+            0
+        ]
+    )
+
+    dados_relato["execucao"] = 0
+    dados_relato = dados_relato.to_numpy()
+
+    assert np.allclose(dados_sintese, dados_relato, rtol=1e-2)
+    __valida_metadata(synthesis_str, df_meta)
 
 
 def test_sintese_tempo(test_settings):
-    m = MagicMock(lambda df, filename: df)
-    with patch(
-        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
-        new=m,
-    ):
-        synthetizer.synthetize(["TEMPO"], uow)
-    m.assert_called_once()
-    df = m.mock_calls[0].args[0]
-    assert df.at[0, "etapa"] == "Leitura de Dados"
-    assert df.at[0, "tempo"] == 5.0
-    assert df.at[0, "execucao"] == 0.0
+    synthesis_str = "TEMPO"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_tempo = Decomptim.read(join(DECK_TEST_DIR, "decomp.tim")).tempos_etapas
+    dados_sintese = df["tempo"].to_numpy()
+    dados_decomptim = df_tempo["Tempo"].dt.total_seconds()[0:-1].to_numpy()
+
+    assert np.allclose(dados_sintese, dados_decomptim, rtol=1e-2)
+    __valida_metadata(synthesis_str, df_meta)
 
 
 def test_sintese_custos(test_settings):
-    m = MagicMock(lambda df, filename: df)
-    with patch(
-        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
-        new=m,
-    ):
-        synthetizer.synthetize(["CUSTOS"], uow)
-    m.assert_called_once()
-    df = m.mock_calls[0].args[0]
-    assert df.at[1, "parcela"] == "geracao_termica"
-    assert df.at[1, "valor_esperado"] == 498476.99
-    assert df.at[0, "desvio_padrao"] == 0.0
+    synthesis_str = "CUSTOS"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+
+    df_relato = Relato.read(
+        join(DECK_TEST_DIR, "relato.rv0")
+    ).relatorio_operacao_custos
+    dados_sintese = df["valor_esperado"].to_numpy()
+    dados_relato = [float(df_relato[c].sum()) for c in df["parcela"].tolist()]
+
+    assert np.allclose(dados_sintese, dados_relato, rtol=1e-2)
+    __valida_metadata(synthesis_str, df_meta)
 
 
 def test_sintese_inviabilidades(test_settings):
-    m = MagicMock(lambda df, filename: df)
-    with patch(
-        "app.adapters.repository.export.ParquetExportRepository.synthetize_df",
-        new=m,
-    ):
-        synthetizer.synthetize(["INVIABILIDADES"], uow)
-    m.assert_called_once()
-    df = m.mock_calls[0].args[0]
+    synthesis_str = "INVIABILIDADES"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
 
-    assert df.at[0, "tipo"] == "TI"
+    assert df.at[0, "tipo"] == "RE"
     assert df.at[0, "iteracao"] == 2
-    assert df.at[0, "cenario"] == 161
-    assert df.at[0, "estagio"] == 6
-    assert df.at[0, "codigo"] == 71.0
-    assert df.at[0, "violacao"] == 4.35584346
-    assert df.at[0, "unidade"] == "m3/s"
-    assert np.isnan(df.at[0, "patamar"])
-    assert np.isnan(df.at[0, "limite"])
-    assert np.isnan(df.at[0, "submercado"])
+    assert df.at[0, "cenario"] == 1
+    assert df.at[0, "estagio"] == 4
+    assert df.at[0, "codigo"] == 181
+    assert df.at[0, "violacao"] == 3.52589265
+    assert df.at[0, "unidade"] == "MWmed"
+    assert df.at[0, "patamar"] == 1
+    assert df.at[0, "limite"] == "L. INF"
+    assert df.at[0, "submercado"] is None
     assert df.at[0, "execucao"] == 0
+    __valida_metadata(synthesis_str, df_meta)

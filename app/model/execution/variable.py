@@ -31,7 +31,7 @@ class Variable(Enum):
             "CONVERGENCIA": "CONVERGENCIA",
             "TEMPO": "TEMPO",
             "CUSTOS": "CUSTOS",
-            "INVIABILIDADES": "IMVIABILIDADES",
+            "INVIABILIDADES": "INVIABILIDADES",
         }
         return SHORT_NAMES.get(self.value)
 
@@ -41,7 +41,7 @@ class Variable(Enum):
             "PROGRAMA": "Modelo de Otimização",
             "CONVERGENCIA": "Convergência do Processo Iterativo",
             "TEMPO": "Tempo de Execução",
-            "CUSTOS": "Composição de Custos da Solução",
             "INVIABILIDADES": "Violações das Restrições",
+            "CUSTOS": "Composição de Custos da Solução",
         }
         return LONG_NAMES.get(self.value)

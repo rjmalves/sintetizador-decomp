@@ -1,0 +1,140 @@
+   CEPEL: DECOMP - Coordenacao da Operacao a Curto Prazo - v31.21 - Dez/2023(L)                   18/06/2024                                          
+                                                                                                                                                      
+   PMO - MAIO/24 - JUNHO/24 - REV 0 - FCF COM CVAR - 12 REE - VALOR ESPERADO       - PLANEJAMENTO:27/04/2024                                          
+                                                                                                                                                      
+   RELATORIO DE VIOLACOES DAS RESTRICOES OPERATIVAS POR ITERACAO, ESTAGIO E CENARIO:                                                                  
+   X---------X--------------X--------X--------X---------------------------------------------------X----------------------X                            
+    ITERACAO  FWD(1)/BWD(0)  ESTAGIO  CENARIO      RESTRICAO VIOLADA                                     VIOLACAO                                     
+   X---------X--------------X--------X--------X---------------------------------------------------X----------------------X                            
+       2           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                3.52589265 MWmed                             
+       2           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)                3.52589265 MWmed                             
+       2           1           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                1.34565321 MWmed                             
+       2           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                3.52589265 MWmed                             
+       2           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                2.92906804 MWmed                             
+       2           1           6          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                5.83733265 MWmed                             
+       2           1           6          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)               12.29800325 MWmed                             
+       2           1           6          1    RESTRICAO ELETRICA   63 PATAMAR 3 (L. INF)                2.90304223 MWmed                             
+       2           1           6          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)               12.29800325 MWmed                             
+       2           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             8.54266640 m3/s                              
+       2           1           6          2    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                7.12353820 MWmed                             
+       2           1           6          2    IRRIGACAO, USINA GUARAPIRANGA                             6.54266640 m3/s                              
+       2           1           6          2    IRRIGACAO, USINA RETIRO BAIXO                             2.80000000 m3/s                              
+       2           1           6          2    RHQ 104: VAZAO DEFLUENTE (L. INF), PATAMAR 2              0.63275941 m3/s                              
+       2           1           6          2    RHQ 104: VAZAO DEFLUENTE (L. INF), PATAMAR 3             11.62856560 m3/s                              
+       2           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                2.92906804 MWmed                             
+       2           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                3.52589265 MWmed                             
+       2           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)                3.52589265 MWmed                             
+       2           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                4.22208261 MWmed                             
+       2           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                3.52589265 MWmed                             
+       2           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 1 (L. INF)                2.81251038 MWmed                             
+       2           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                2.81251038 MWmed                             
+       2           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                5.92335761 MWmed                             
+       2           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                4.80501195 MWmed                             
+       3           1           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.18537215 MWmed                             
+       3           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                0.31755061 MWmed                             
+       3           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)                0.31755061 MWmed                             
+       3           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                0.31755061 MWmed                             
+       3           1           6          1    RESTRICAO ELETRICA   63 PATAMAR 3 (L. INF)                1.48854613 MWmed                             
+       3           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             4.92895650 m3/s                              
+       3           1           6          2    IRRIGACAO, USINA GUARAPIRANGA                             2.92895650 m3/s                              
+       3           1           6          2    IRRIGACAO, USINA RETIRO BAIXO                             2.80000000 m3/s                              
+       3           1           6          2    RHQ 104: VAZAO DEFLUENTE (L. INF), PATAMAR 3             11.44869256 m3/s                              
+       3           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                0.31755061 MWmed                             
+       3           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)                0.31755061 MWmed                             
+       3           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                0.31755061 MWmed                             
+       4           1           6          2    IRRIGACAO, USINA RETIRO BAIXO                             2.80000000 m3/s                              
+       4           1           6          2    RHQ 104: VAZAO DEFLUENTE (L. INF), PATAMAR 3             11.64690482 m3/s                              
+       4           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 1 (L. INF)                7.04864112 MWmed                             
+       4           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                7.04864112 MWmed                             
+       4           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                7.04864112 MWmed                             
+       4           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                3.56992926 MWmed                             
+       4           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                7.09678942 MWmed                             
+       4           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                1.87901952 MWmed                             
+       4           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                7.14643265 MWmed                             
+       4           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 1 (L. INF)                2.46956877 MWmed                             
+       4           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                2.46956877 MWmed                             
+       4           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                4.57032128 MWmed                             
+       5           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 1 (L. INF)                3.15205557 MWmed                             
+       5           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                6.76712473 MWmed                             
+       5           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                6.76712473 MWmed                             
+       5           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             1.51206590 m3/s                              
+       5           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 1 (L. INF)                3.15205557 MWmed                             
+       5           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                6.76712473 MWmed                             
+       5           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                6.76712473 MWmed                             
+       5           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 1 (L. INF)                1.82173481 MWmed                             
+       5           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                6.76562136 MWmed                             
+       5           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                6.76562136 MWmed                             
+       5           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                6.52481997 MWmed                             
+       5           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                6.80924298 MWmed                             
+       5           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 1 (L. INF)                2.98050787 MWmed                             
+       5           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 2 (L. INF)                3.45927585 MWmed                             
+       5           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                6.89521359 MWmed                             
+       6           1           6          1    RESTRICAO ELETRICA   63 PATAMAR 3 (L. INF)                2.90304223 MWmed                             
+       6           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             0.01283633 m3/s                              
+       7           1           6          1    RESTRICAO ELETRICA   63 PATAMAR 3 (L. INF)                1.48854613 MWmed                             
+       8           1           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00111555 MWmed                             
+       8           1           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00107725 MWmed                             
+       8           1           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00025874 MWmed                             
+       8           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.01740553 MWmed                             
+       8           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             0.01356390 m3/s                              
+       8           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.01740553 MWmed                             
+       8           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.02172461 MWmed                             
+       8           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.01892409 MWmed                             
+       8           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.01518503 MWmed                             
+       9           1           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00042443 MWmed                             
+       9           1           6          1    RESTRICAO ELETRICA   63 PATAMAR 3 (L. INF)                0.22276641 MWmed                             
+       9           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00004000 MWmed                             
+       9           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00062468 MWmed                             
+      10           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00012253 MWmed                             
+      11           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             0.00357849 m3/s                              
+      12           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                0.03225772 MWmed                             
+      12           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)                0.03225772 MWmed                             
+      12           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                0.03225772 MWmed                             
+      12           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.05643763 MWmed                             
+      12           1           6          2    IRRIGACAO, USINA RETIRO BAIXO                             0.00004656 m3/s                              
+      12           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.05985104 MWmed                             
+      12           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                0.03225772 MWmed                             
+      12           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)                0.03225772 MWmed                             
+      12           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.07668224 MWmed                             
+      12           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                0.03225772 MWmed                             
+      12           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.14097688 MWmed                             
+      12           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.12550465 MWmed                             
+      13           1           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.07333746 MWmed                             
+      13           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.01403285 MWmed                             
+      13           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.07821390 MWmed                             
+      13           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.07259962 MWmed                             
+      14           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                0.00156717 MWmed                             
+      14           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)                0.00156717 MWmed                             
+      14           1           4          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                0.00156717 MWmed                             
+      14           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             0.00104703 m3/s                              
+      14           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 1 (L. INF)                0.00156717 MWmed                             
+      14           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 2 (L. INF)                0.00156717 MWmed                             
+      14           0           4          1    RESTRICAO ELETRICA  181 PATAMAR 3 (L. INF)                0.00156717 MWmed                             
+      15           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             0.00035432 m3/s                              
+      17           1           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00041400 MWmed                             
+      17           1           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00074540 MWmed                             
+      17           1           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00673161 MWmed                             
+      17           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.02278012 MWmed                             
+      17           1           6          2    IRRIGACAO, USINA RETIRO BAIXO                             0.00001576 m3/s                              
+      17           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.02324756 MWmed                             
+      17           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.03312738 MWmed                             
+      17           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.03339096 MWmed                             
+      17           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.03385152 MWmed                             
+      21           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             0.00201865 m3/s                              
+      22           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             0.00007585 m3/s                              
+      24           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00270948 MWmed                             
+      24           1           6          2    IRRIGACAO, USINA RETIRO BAIXO                             0.00003815 m3/s                              
+      24           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00293006 MWmed                             
+      24           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00342861 MWmed                             
+      24           0           3          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00358762 MWmed                             
+      24           0           2          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.00329725 MWmed                             
+      26           1           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.02257900 MWmed                             
+      26           1           6          2    IRRIGACAO, USINA RETIRO BAIXO                             0.00034907 m3/s                              
+      26           0           5          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.02554487 MWmed                             
+      26           0           4          1    RESTRICAO ELETRICA   60 PATAMAR 3 (L. INF)                0.03183029 MWmed                             
+      31           1           6          1    IRRIGACAO, USINA GUARAPIRANGA                             0.00033574 m3/s                              
+                                                                                                                                                      
+   SIMULACAO FINAL:                                                                                                                                   
+   X--------X--------X----------------------------------------------------------------------------X----------------------X                            
+    ESTAGIO  CENARIO         RESTRICAO VIOLADA                                                           VIOLACAO                                     
+   X--------X--------X----------------------------------------------------------------------------X----------------------X                            
