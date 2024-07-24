@@ -586,7 +586,7 @@ class Deck:
                 ]
             ].copy()
             cls.DECK_DATA_CACHING[name] = df
-        return df
+        return df.reset_index()
 
     @classmethod
     def stages_start_date(cls, uow: AbstractUnitOfWork) -> List[datetime]:
