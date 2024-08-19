@@ -120,7 +120,9 @@ def __sintetiza_com_mock(synthesis_str) -> tuple[pd.DataFrame, pd.DataFrame]:
         OperationSynthetizer.clear_cache()
     m.assert_called()
     df = __obtem_dados_sintese_mock(synthesis_str, m)
-    df_meta = __obtem_dados_sintese_mock(OPERATION_SYNTHESIS_METADATA_OUTPUT, m)
+    df_meta = __obtem_dados_sintese_mock(
+        OPERATION_SYNTHESIS_METADATA_OUTPUT, m
+    )
     assert df is not None
     assert df_meta is not None
     return df, df_meta
@@ -135,7 +137,9 @@ def __sintetiza_com_mock_wildcard(synthesis_str) -> pd.DataFrame:
         OperationSynthetizer.synthetize([synthesis_str], uow)
         OperationSynthetizer.clear_cache()
     m.assert_called()
-    df_meta = __obtem_dados_sintese_mock(OPERATION_SYNTHESIS_METADATA_OUTPUT, m)
+    df_meta = __obtem_dados_sintese_mock(
+        OPERATION_SYNTHESIS_METADATA_OUTPUT, m
+    )
     assert df_meta is not None
     return df_meta
 
@@ -479,7 +483,12 @@ def test_sintese_gter_sin(test_settings):
         "geracao_termica_antecipada_MW"
     ]
     __compara_sintese_dec_oper(
-        df, df_dec_oper, "geracao_termica_MW", estagio=1, cenario=1, patamar=[1]
+        df,
+        df_dec_oper,
+        "geracao_termica_MW",
+        estagio=1,
+        cenario=1,
+        patamar=[1],
     )
     __valida_metadata(synthesis_str, df_meta, False)
 
@@ -537,6 +546,52 @@ def test_sintese_ghid_sin(test_settings):
         df,
         df_dec_oper,
         "geracao_hidroeletrica_MW",
+        estagio=1,
+        cenario=1,
+        patamar=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_guns_sbm(test_settings):
+    synthesis_str = "GUNS_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["geracao_nao_simuladas_MW"] = (
+        df_dec_oper["geracao_pequenas_usinas_MW"]
+        + df_dec_oper["geracao_eolica_MW"]
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_nao_simuladas_MW",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[1],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
+
+
+def test_sintese_guns_sin(test_settings):
+    synthesis_str = "GUNS_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = (
+        DecOperSist.read(join(DECK_TEST_DIR, "dec_oper_sist.csv"))
+        .tabela.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    df_dec_oper["geracao_nao_simuladas_MW"] = (
+        df_dec_oper["geracao_pequenas_usinas_MW"]
+        + df_dec_oper["geracao_eolica_MW"]
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_nao_simuladas_MW",
         estagio=1,
         cenario=1,
         patamar=[1],
