@@ -115,7 +115,6 @@ def test_synthesis_ute(test_settings):
 def test_synthesis_uhe(test_settings):
     synthesis_str = "UHE"
     df, df_meta = __synthetize_with_mock(synthesis_str)
-    print(df)
     assert df.at[1, HYDRO_CODE_COL] == 1
     assert df.at[1, HYDRO_NAME_COL] == "CAMARGOS"
     assert df.at[1, EER_CODE_COL] == 10
