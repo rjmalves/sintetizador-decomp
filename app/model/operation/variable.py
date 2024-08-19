@@ -14,6 +14,9 @@ class Variable(Enum):
     ENERGIA_ARMAZENADA_ABSOLUTA_FINAL = "EARMF"
     ENERGIA_ARMAZENADA_PERCENTUAL_FINAL = "EARPF"
     GERACAO_HIDRAULICA = "GHID"
+    GERACAO_USINAS_NAO_SIMULADAS = "GUNS"
+    GERACAO_USINAS_NAO_SIMULADAS_DISPONIVEL = "GUNSD"
+    CORTE_GERACAO_USINAS_NAO_SIMULADAS = "CUNS"
     GERACAO_TERMICA = "GTER"
     ENERGIA_VERTIDA = "EVER"
     ENERGIA_VERTIDA_TURBINAVEL = "EVERT"
@@ -58,6 +61,7 @@ class Variable(Enum):
             "EARMF": "EAR Final",
             "EARPF": "EAR Percentual Final",
             "GHID": "GH",
+            "GUNS": "Geração Não Simuladas",
             "HMON": "Cota de Montante",
             "HJUS": "Cota de Jusante",
             "HLIQ": "Queda Líquida",
@@ -100,6 +104,7 @@ class Variable(Enum):
             "EARMF": "Energia Armazenada Absoluta Final",
             "EARPF": "Energia Armazenada Percentual Final",
             "GHID": "Geração Hidráulica",
+            "GUNS": "Geração de Usinas Não Simuladas",
             "HMON": "Cota de Montante",
             "HJUS": "Cota de Jusante",
             "HLIQ": "Queda Líquida",

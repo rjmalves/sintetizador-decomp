@@ -101,7 +101,9 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_dec_oper_ree(uow, "earm_inicial_MWmes"),
+            ): lambda uow: cls._resolve_dec_oper_ree(
+                uow, "earm_inicial_MWmes"
+            ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
@@ -151,6 +153,12 @@ class OperationSynthetizer:
                 SpatialResolution.SUBMERCADO,
             ): lambda uow: cls._resolve_dec_oper_sist(
                 uow, "geracao_hidro_com_itaipu_MW"
+            ),
+            (
+                Variable.GERACAO_USINAS_NAO_SIMULADAS,
+                SpatialResolution.SUBMERCADO,
+            ): lambda uow: cls._resolve_dec_oper_sist(
+                uow, "geracao_nao_simuladas_MW"
             ),
             (
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
@@ -247,7 +255,9 @@ class OperationSynthetizer:
             (
                 Variable.VAZAO_VERTIDA,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(uow, "vazao_vertida_m3s"),
+            ): lambda uow: cls._resolve_dec_oper_usih(
+                uow, "vazao_vertida_m3s"
+            ),
             (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
@@ -703,9 +713,7 @@ class OperationSynthetizer:
         return result_df
 
     @classmethod
-    def _stub_mappings(  # noqa
-        cls, s: OperationSynthesis
-    ) -> Callable | None:
+    def _stub_mappings(cls, s: OperationSynthesis) -> Callable | None:  # noqa
         """
         Obtem a função de resolução de cada síntese que foge ao
         fluxo de resolução padrão, por meio de um mapeamento de
@@ -737,6 +745,7 @@ class OperationSynthetizer:
                     Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                     Variable.GERACAO_HIDRAULICA,
                     Variable.GERACAO_TERMICA,
+                    Variable.GERACAO_USINAS_NAO_SIMULADAS,
                     Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                     Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 ],
@@ -844,7 +853,7 @@ class OperationSynthetizer:
     ) -> pd.DataFrame:
         """
         Realiza pós-processamento após a resolução da extração
-        de todos os dados de síntese extraídos do NWLISTOP para uma síntese.
+        de todos os dados de uma síntese.
         """
         with time_and_log(
             message_root="Tempo para compactacao dos dados", logger=cls.logger
@@ -1009,7 +1018,9 @@ class OperationSynthetizer:
                 all_variables = cls._default_args()
             else:
                 all_variables = cls._match_wildcards(variables)
-            synthesis_variables = cls._process_variable_arguments(all_variables)
+            synthesis_variables = cls._process_variable_arguments(
+                all_variables
+            )
             valid_synthesis = cls._filter_valid_variables(
                 synthesis_variables, uow
             )
