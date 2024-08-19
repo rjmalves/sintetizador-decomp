@@ -115,10 +115,11 @@ def test_synthesis_ute(test_settings):
 def test_synthesis_uhe(test_settings):
     synthesis_str = "UHE"
     df, df_meta = __synthetize_with_mock(synthesis_str)
-    assert df.at[0, HYDRO_CODE_COL] == 1
-    assert df.at[0, HYDRO_NAME_COL] == "CAMARGOS"
-    assert df.at[0, EER_CODE_COL] == 10
-    assert df.at[0, EER_NAME_COL] == "PARANA"
-    assert df.at[0, SUBMARKET_CODE_COL] == 1
-    assert df.at[0, SUBMARKET_NAME_COL] == "SE"
+    print(df)
+    assert df.at[1, HYDRO_CODE_COL] == 1
+    assert df.at[1, HYDRO_NAME_COL] == "CAMARGOS"
+    assert df.at[1, EER_CODE_COL] == 10
+    assert df.at[1, EER_NAME_COL] == "PARANA"
+    assert df.at[1, SUBMARKET_CODE_COL] == 1
+    assert df.at[1, SUBMARKET_NAME_COL] == "SE"
     __validate_metadata(synthesis_str, df_meta)
