@@ -640,6 +640,7 @@ class Deck:
             mapping = mapping.sort_values(by=[HYDRO_CODE_COL]).reset_index(
                 drop=True
             )
+            mapping = mapping.set_index(HYDRO_CODE_COL, drop=False)
             cls.DECK_DATA_CACHING[name] = mapping
         return mapping
 
@@ -843,6 +844,9 @@ class Deck:
             )
             df["demanda_liquida_MW"] = (
                 df["demanda_MW"] - df["geracao_pequenas_usinas_MW"]
+            )
+            df["geracao_nao_simuladas_MW"] = (
+                df["geracao_pequenas_usinas_MW"] + df["geracao_eolica_MW"]
             )
             df = cls._expand_scenarios_in_df(df)
             df = df.sort_values(
