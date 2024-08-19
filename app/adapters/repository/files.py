@@ -391,7 +391,7 @@ class RawFilesRepository(AbstractFilesRepository):
                 if logger is not None:
                     logger.error(f"Erro na leitura do dec_oper_gnl.csv: {e}")
                 raise e
-        return self.__dec_oper_usit
+        return self.__dec_oper_gnl
 
     def get_dec_oper_ree(self) -> DecOperRee:
         if self.__read_dec_oper_ree is False:

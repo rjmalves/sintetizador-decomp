@@ -1,0 +1,216 @@
+
+   CEPEL: DECOMP - Coordenacao da Operacao a Curto Prazo - v31.21 - Dez/2023(L)              
+    18/06/2024  15:01   PAG.   2
+
+
+   PROGRAMA LICENCIADO PARA OPERADOR NACIONAL DO SISTEMA ELETRICO ONS                                                                                                             
+
+   PMO - MAIO/24 - JUNHO/24 - REV 0 - FCF COM CVAR - 12 REE - VALOR ESPERADO       - PLANEJAMENTO:27/04/2024
+
+   Relatorio  dos  Dados  de  Usinas  Termicas GNL
+   X---X----------X------X-------X-------X-------X-------X-------X-------X-------X-------X-------X-------X                                                                             
+    Num   Usina    Subsis Estagio GTmin_1 GTmax_1 Custo_1 GTmin_2 GTmax_2 Custo_2 GTmin_3 GTmax_3 Custo_3                                                                              
+                                  (MWmed) (MWmed) ($/MWh) (MWmed) (MWmed) ($/MWh) (MWmed) (MWmed) ($/MWh)                                                                              
+   X---X----------X------X-------X-------X-------X-------X-------X-------X-------X-------X-------X-------X                                                                             
+     86 SANTA CRUZ    SE     1       0.00  500.00  107.56    0.00  500.00  107.56    0.00  500.00  107.56
+                             2       0.00  500.00  107.56    0.00  500.00  107.56    0.00  500.00  107.56
+                             3       0.00  500.00  107.56    0.00  500.00  107.56    0.00  500.00  107.56
+                             4       0.00  500.00  107.56    0.00  500.00  107.56    0.00  500.00  107.56
+                             5       0.00  500.00  107.56    0.00  500.00  107.56    0.00  500.00  107.56
+                             6       0.00  500.00  107.56    0.00  500.00  107.56    0.00  500.00  107.56
+                             7       0.00  500.00  107.56    0.00  500.00  107.56    0.00  500.00  107.56
+                             8       0.00  500.00  107.56    0.00  500.00  107.56    0.00  500.00  107.56
+     15 LUIZORMELO    SE     1       0.00  204.00  153.55    0.00  204.00  153.55    0.00  204.00  153.55
+                             2       0.00  204.00  153.55    0.00  204.00  153.55    0.00  204.00  153.55
+                             3       0.00  204.00  153.55    0.00  204.00  153.55    0.00  204.00  153.55
+                             4       0.00  204.00  153.55    0.00  204.00  153.55    0.00  204.00  153.55
+                             5       0.00  204.00  153.55    0.00  204.00  153.55    0.00  204.00  153.55
+                             6       0.00  204.00  153.55    0.00  204.00  153.55    0.00  204.00  153.55
+                             7       0.00  204.00  153.55    0.00  204.00  153.55    0.00  204.00  153.55
+                             8       0.00  204.00  153.55    0.00  204.00  153.55    0.00  204.00  153.55
+    224 PSERGIPE I    NE     1       0.00 1593.00  358.26    0.00 1593.00  358.26    0.00 1593.00  358.26
+                             2       0.00 1593.00  358.26    0.00 1593.00  358.26    0.00 1593.00  358.26
+                             3       0.00 1593.00  358.26    0.00 1593.00  358.26    0.00 1593.00  358.26
+                             4       0.00 1593.00  358.26    0.00 1593.00  358.26    0.00 1593.00  358.26
+                             5       0.00 1593.00  358.26    0.00 1593.00  358.26    0.00 1593.00  358.26
+                             6       0.00 1593.00  358.26    0.00 1593.00  358.26    0.00 1593.00  358.26
+                             7       0.00 1593.00  358.26    0.00 1593.00  358.26    0.00 1593.00  358.26
+                             8       0.00 1593.00  358.26    0.00 1593.00  358.26    0.00 1593.00  358.26
+   X---X----------X------X-------X-------X-------X-------X-------X-------X-------X-------X-------X-------X                                                                             
+ 
+   Numero de intervalos de tempo definidos em cada mes (registros GS):
+   X-----X------------X
+     Mes   intervalos
+   X-----X------------X
+      1       5
+      2       4
+      3       5
+   X-----X------------X
+ 
+   Lags de antecipacao de despacho para cada usina GNL (registros NL):
+   X---X-----------X-----X
+    Num   Usina      Lag  
+   X---X-----------X-----X
+    86   SANTA CRUZ   2
+    15   LUIZORMELO   2
+   224   PSERGIPE I   2
+   X---X-----------X-----X
+ 
+   Relatorio dos comandos das usinas GNL com possiveis ajustes devido a registros TG
+   X---X-----------X---X------X-----------X----------X----------X----------X
+                                             pat 1      pat 2      pat 3
+    Num   Usina     Lag Subsis   Semana    (MWmed)    (MWmed)    (MWmed)   
+   X---X-----------X---X------X-----------X----------X----------X----------X
+    86  SANTA CRUZ   2    SE    27/04/2024        0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE    04/05/2024        0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE    11/05/2024        0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE    18/05/2024        0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE    25/05/2024        0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE    01/06/2024        0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE    08/06/2024        0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE    15/06/2024        0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE    22/06/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    27/04/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    04/05/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    11/05/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    18/05/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    25/05/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    01/06/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    08/06/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    15/06/2024        0.00       0.00       0.00
+    15  LUIZORMELO   2    SE    22/06/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    27/04/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    04/05/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    11/05/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    18/05/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    25/05/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    01/06/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    08/06/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    15/06/2024        0.00       0.00       0.00
+   224  PSERGIPE I   2    NE    22/06/2024        0.00       0.00       0.00
+ 
+   Relatorio dos comandos das usinas GNL com possiveis ajustes devido a Restricoes Eletricas Especiais
+   X---X-----------X---X------X---------X----------X----------X----------X
+                                             pat 1      pat 2      pat 3
+    Num   Usina     Lag Subsis  Periodo   (MWmed)    (MWmed)    (MWmed)   
+   X---X-----------X---X------X---------X----------X----------X----------X
+    86  SANTA CRUZ   2    SE        1         0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE        2         0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE        3         0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE        4         0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE        5         0.00       0.00       0.00
+    86  SANTA CRUZ   2    SE        6         0.00       0.00       0.00
+    15  LUIZORMELO   2    SE        1         0.00       0.00       0.00
+    15  LUIZORMELO   2    SE        2         0.00       0.00       0.00
+    15  LUIZORMELO   2    SE        3         0.00       0.00       0.00
+    15  LUIZORMELO   2    SE        4         0.00       0.00       0.00
+    15  LUIZORMELO   2    SE        5         0.00       0.00       0.00
+    15  LUIZORMELO   2    SE        6         0.00       0.00       0.00
+   224  PSERGIPE I   2    NE        1         0.00       0.00       0.00
+   224  PSERGIPE I   2    NE        2         0.00       0.00       0.00
+   224  PSERGIPE I   2    NE        3         0.00       0.00       0.00
+   224  PSERGIPE I   2    NE        4         0.00       0.00       0.00
+   224  PSERGIPE I   2    NE        5         0.00       0.00       0.00
+   224  PSERGIPE I   2    NE        6         0.00       0.00       0.00
+
+   RELATORIO  DA  OPERACAO  TERMICA E CONTRATOS
+
+   MAIO      / SEMANA 1 - ESTAGIO  1 /  CENARIO   1 - PROB ACUMUL: 1.000000 PROB SUBPROB: 1.000000
+
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X------------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    Inic semana
+                     meses  Semana   (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)  (dd/mm/aaaa)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X------------X
+    SE  SANTA CRUZ     2    Sem 10     0.00  27.10      0.00  51.46      0.00  67.54         0.0  29/06/2024
+    SE  SANTA CRUZ     2    Sem 11     0.00  27.10      0.00  51.46      0.00  67.54         0.0  06/07/2024
+    SE  SANTA CRUZ     2    Sem 12     0.00  27.10      0.00  51.46      0.00  67.54         0.0  13/07/2024
+    SE  SANTA CRUZ     2    Sem 13     0.00  27.10      0.00  51.46      0.00  67.54         0.0  20/07/2024
+    SE  SANTA CRUZ     2    Sem 14     0.00  27.10      0.00  51.46      0.00  67.54         0.0  27/07/2024
+    SE  SANTA CRUZ     2    MENSAL     0.00 135.51      0.00 257.28      0.00 337.71         0.0
+  
+* Geracao definida em revisoes anteriores
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X------------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    Inic semana
+                     meses  Semana   (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)  (dd/mm/aaaa)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X------------X
+    SE  LUIZORMELO     2    Sem 10     0.00  27.10      0.00  51.46      0.00  67.54         0.0  29/06/2024
+    SE  LUIZORMELO     2    Sem 11     0.00  27.10      0.00  51.46      0.00  67.54         0.0  06/07/2024
+    SE  LUIZORMELO     2    Sem 12     0.00  27.10      0.00  51.46      0.00  67.54         0.0  13/07/2024
+    SE  LUIZORMELO     2    Sem 13     0.00  27.10      0.00  51.46      0.00  67.54         0.0  20/07/2024
+    SE  LUIZORMELO     2    Sem 14     0.00  27.10      0.00  51.46      0.00  67.54         0.0  27/07/2024
+    SE  LUIZORMELO     2    MENSAL     0.00 135.51      0.00 257.28      0.00 337.71         0.0
+  
+* Geracao definida em revisoes anteriores
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X------------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    Inic semana
+                     meses  Semana   (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)  (dd/mm/aaaa)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X------------X
+    NE  PSERGIPE I     2    Sem 10     0.00  27.10      0.00  51.46      0.00  67.54         0.0  29/06/2024
+    NE  PSERGIPE I     2    Sem 11     0.00  27.10      0.00  51.46      0.00  67.54         0.0  06/07/2024
+    NE  PSERGIPE I     2    Sem 12     0.00  27.10      0.00  51.46      0.00  67.54         0.0  13/07/2024
+    NE  PSERGIPE I     2    Sem 13     0.00  27.10      0.00  51.46      0.00  67.54         0.0  20/07/2024
+    NE  PSERGIPE I     2    Sem 14     0.00  27.10      0.00  51.46      0.00  67.54         0.0  27/07/2024
+    NE  PSERGIPE I     2    MENSAL     0.00 135.51      0.00 257.28      0.00 337.71         0.0
+  
+* Geracao definida em revisoes anteriores
+
+   RELATORIO  DA  OPERACAO  TERMICA E CONTRATOS
+
+   JUNHO                - ESTAGIO  6 /  CENARIO   1 - PROB ACUMUL: 0.500000 PROB SUBPROB: 0.500000
+
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    
+                     meses  Periodo  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    SE  SANTA CRUZ     2    Mes  4     0.00 129.59      0.00 251.37      0.00 349.54         0.0
+  
+* Geracao definida em revisoes anteriores
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    
+                     meses  Periodo  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    SE  LUIZORMELO     2    Mes  4     0.00 129.59      0.00 251.37      0.00 349.54         0.0
+  
+* Geracao definida em revisoes anteriores
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    
+                     meses  Periodo  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    NE  PSERGIPE I     2    Mes  4     0.00 129.59      0.00 251.37      0.00 349.54         0.0
+  
+* Geracao definida em revisoes anteriores
+
+   RELATORIO  DA  OPERACAO  TERMICA E CONTRATOS
+
+   JUNHO                - ESTAGIO  6 /  CENARIO   2 - PROB ACUMUL: 0.500000 PROB SUBPROB: 0.500000
+
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    
+                     meses  Periodo  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    SE  SANTA CRUZ     2    Mes  4     0.00 129.59      0.00 251.37      0.00 349.54         0.0
+  
+* Geracao definida em revisoes anteriores
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    
+                     meses  Periodo  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    SE  LUIZORMELO     2    Mes  4     0.00 129.59      0.00 251.37      0.00 349.54         0.0
+  
+* Geracao definida em revisoes anteriores
+              Sinalizacao de Despacho antecipado em k meses    
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    Sis    Usina     Lag(k)               pat_1            pat_2            pat_3        Custo    
+                     meses  Periodo  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (MWmed)  Dur(h)  (1000 $)
+   X---X-----------X-------X-------X--------X-------X--------X-------X--------X-------X----------X
+    NE  PSERGIPE I     2    Mes  4     0.00 129.59      0.00 251.37      0.00 349.54         0.0
+  
+* Geracao definida em revisoes anteriores
