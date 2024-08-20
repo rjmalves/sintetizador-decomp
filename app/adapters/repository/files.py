@@ -340,7 +340,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 self.__dec_oper_usih = DecOperUsih.read(
                     join(self.__tmppath, "dec_oper_usih.csv")
                 )
-                if self.__dec_oper_usih.versao <= "31.0.2":
+                version = self.__dec_oper_usih.versao
+                if version is None:
+                    raise FileNotFoundError()
+                if version <= "31.0.2":
                     DecOperUsih.set_version("31.0.2")
                     self.__dec_oper_usih = DecOperUsih.read(
                         join(self.__tmppath, "dec_oper_usih.csv")
@@ -361,7 +364,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 self.__dec_oper_usit = DecOperUsit.read(
                     join(self.__tmppath, "dec_oper_usit.csv")
                 )
-                if self.__dec_oper_usit.versao <= "31.0.2":
+                version = self.__dec_oper_usit.versao
+                if version is None:
+                    raise FileNotFoundError()
+                if version <= "31.0.2":
                     DecOperUsit.set_version("31.0.2")
                     self.__dec_oper_usit = DecOperUsit.read(
                         join(self.__tmppath, "dec_oper_usit.csv")
@@ -382,7 +388,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 self.__dec_oper_gnl = DecOperGnl.read(
                     join(self.__tmppath, "dec_oper_gnl.csv")
                 )
-                if self.__dec_oper_gnl.versao <= "31.0.2":
+                version = self.__dec_oper_gnl.versao
+                if version is None:
+                    raise FileNotFoundError()
+                if version <= "31.0.2":
                     DecOperGnl.set_version("31.0.2")
                     self.__dec_oper_gnl = DecOperGnl.read(
                         join(self.__tmppath, "dec_oper_gnl.csv")
@@ -403,7 +412,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 self.__dec_oper_ree = DecOperRee.read(
                     join(self.__tmppath, "dec_oper_ree.csv")
                 )
-                if self.__dec_oper_ree.versao <= "31.0.2":
+                version = self.__dec_oper_ree.versao
+                if version is None:
+                    raise FileNotFoundError()
+                if version <= "31.0.2":
                     DecOperRee.set_version("31.0.2")
                     self.__dec_oper_ree = DecOperRee.read(
                         join(self.__tmppath, "dec_oper_ree.csv")
@@ -424,7 +436,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 self.__dec_oper_sist = DecOperSist.read(
                     join(self.__tmppath, "dec_oper_sist.csv")
                 )
-                if self.__dec_oper_sist.versao <= "31.0.2":
+                version = self.__dec_oper_sist.versao
+                if version is None:
+                    raise FileNotFoundError()
+                if version <= "31.0.2":
                     DecOperSist.set_version("31.0.2")
                     self.__dec_oper_sist = DecOperSist.read(
                         join(self.__tmppath, "dec_oper_sist.csv")
@@ -445,7 +460,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 self.__dec_oper_interc = DecOperInterc.read(
                     join(self.__tmppath, "dec_oper_interc.csv")
                 )
-                if self.__dec_oper_interc.versao <= "31.0.2":
+                version = self.__dec_oper_interc.versao
+                if version is None:
+                    raise FileNotFoundError()
+                if version <= "31.0.2":
                     DecOperInterc.set_version("31.0.2")
                     self.__dec_oper_interc = DecOperInterc.read(
                         join(self.__tmppath, "dec_oper_interc.csv")
@@ -468,7 +486,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 self.__dec_eco_discr = DecEcoDiscr.read(
                     join(self.__tmppath, "dec_eco_discr.csv")
                 )
-                if self.__dec_eco_discr.versao <= "31.0.2":
+                version = self.__dec_eco_discr.versao
+                if version is None:
+                    raise FileNotFoundError()
+                if version <= "31.0.2":
                     DecEcoDiscr.set_version("31.0.2")
                     self.__dec_eco_discr = DecEcoDiscr.read(
                         join(self.__tmppath, "dec_eco_discr.csv")
