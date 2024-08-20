@@ -1,14 +1,15 @@
-click
-pyarrow
-idecomp>=1.3.0
-pylama
-mypy
+# dependencies
+-r requirements.txt
+# test dependencies
 pytest
 pytest-cov
-sphinx
-sphinx-gallery
+# code quality dependencies
+ruff
+mypy
+# docs dependencies
 sphinx-rtd-theme
-plotly
-nb2plots
+sphinx-gallery
+sphinx
 numpydoc
-black
+plotly
+matplotlib
