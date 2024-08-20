@@ -9,5 +9,5 @@ def test_fs_uow(test_settings):
     with uow:
         dadger = uow.files.get_dadger()
         assert dadger is not None
-        with patch("pandas.DataFrame.to_parquet"):
-            uow.export.synthetize_df(pd.DataFrame(), "CMO_SBM_EST")
+        with patch("pyarrow.parquet.write_table"):
+            uow.export.synthetize_df(pd.DataFrame(), "CMO_SBM")

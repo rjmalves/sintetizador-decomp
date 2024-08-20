@@ -51,6 +51,7 @@ class AbstractUnitOfWork(ABC):
 
 class FSUnitOfWork(AbstractUnitOfWork):
     def __init__(self, directory: str):
+        super().__init__()
         self._current_path = Path(curdir).resolve()
         self._path = Path(directory).resolve()
         self._files = None
