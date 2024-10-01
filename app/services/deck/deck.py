@@ -1172,24 +1172,82 @@ class Deck:
         return df
 
     @classmethod
+    def _hydro_operative_constraints_id(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        name = "hydro_operative_constraints_id"
+        hydro_operative_constraints_id = cls.DECK_DATA_CACHING.get(name)
+        if hydro_operative_constraints_id is None:
+            cls.DECK_DATA_CACHING[name] = cls._validate_data(
+                cls.dadger(uow).hq(df=True),
+                pd.DataFrame,
+                "registros HQ do dadger",
+            )
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def _hydro_operative_constraints_bounds(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        name = "hydro_operative_constraints_bounds"
+        hydro_operative_constraints_bounds = cls.DECK_DATA_CACHING.get(name)
+        if hydro_operative_constraints_bounds is None:
+            cls.DECK_DATA_CACHING[name] = cls._validate_data(
+                cls.dadger(uow).lq(df=True),
+                pd.DataFrame,
+                "registros LQ do dadger",
+            )
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def _hydro_operative_constraints_coefficients(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        name = "hydro_operative_constraints_coefficients"
+        hydro_operative_constraints_coefficients = cls.DECK_DATA_CACHING.get(
+            name
+        )
+        if hydro_operative_constraints_coefficients is None:
+            cls.DECK_DATA_CACHING[name] = cls._validate_data(
+                cls.dadger(uow).cq(df=True),
+                pd.DataFrame,
+                "registros CQ do dadger",
+            )
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def __initialize_df_hydro_bounds(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        hydros = cls.hydro_eer_submarket_map(uow)[HYDRO_CODE_COL].unique()
+        stages = cls.blocks_durations(uow)[STAGE_COL].unique()
+        blocks = cls.blocks_durations(uow)[BLOCK_COL].unique()
+        num_hydros = len(hydros)
+        num_stages = len(stages)
+        num_blocks = len(blocks)
+
+        df = pd.DataFrame(
+            {
+                HYDRO_CODE_COL: np.tile(
+                    np.repeat(hydros.tolist(), num_blocks), num_stages
+                ),
+                STAGE_COL: np.repeat(stages.tolist(), num_blocks * num_hydros),
+                BLOCK_COL: np.tile(blocks.tolist(), num_hydros * num_stages),
+            }
+        )
+
+        return df.copy()
+
+    @classmethod
     def __get_hydro_flow_operative_constraints(
         cls, uow: AbstractUnitOfWork, type: str
     ) -> pd.DataFrame:
-        df_hq = cls._validate_data(
-            cls.dadger(uow).hq(df=True),
-            pd.DataFrame,
-            "registros HQ do dadger",
-        )
-        df_lq = cls._validate_data(
-            cls.dadger(uow).lq(df=True),
-            pd.DataFrame,
-            "registros LQ do dadger",
-        )
-        df_cq = cls._validate_data(
-            cls.dadger(uow).cq(df=True),
-            pd.DataFrame,
-            "registros CQ do dadger",
-        )
+        df_hq = cls._hydro_operative_constraints_id(uow)
+        df_lq = cls._hydro_operative_constraints_bounds(uow)
+        df_cq = cls._hydro_operative_constraints_coefficients(uow)
 
         df_type = df_cq.loc[df_cq["tipo"] == type].copy()
         df_type["estagio_inicial"] = df_type.apply(
@@ -1252,4 +1310,5 @@ class Deck:
             cls.DECK_DATA_CACHING[name] = (
                 cls.__get_hydro_flow_operative_constraints(uow, "QVER")
             )
+
         return cls.DECK_DATA_CACHING[name]
