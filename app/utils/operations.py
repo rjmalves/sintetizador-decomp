@@ -8,6 +8,8 @@ from app.internal.constants import (
     PROBABILITY_COL,
     QUANTILES_FOR_STATISTICS,
     OPERATION_SYNTHESIS_COMMON_COLUMNS,
+    LOWER_BOUND_COL,
+    UPPER_BOUND_COL,
 )
 from typing import Dict, Callable, List
 
@@ -128,6 +130,7 @@ def _calc_mean_std(df: pd.DataFrame, probs: pd.DataFrame) -> pd.DataFrame:
 
     value_columns = [SCENARIO_COL, VALUE_COL, PROBABILITY_COL]
     grouping_columns = [c for c in df.columns if c not in value_columns]
+
     df = _add_probability(df, grouping_columns, probs)
     df_mean = (
         df.groupby(grouping_columns, sort=False)

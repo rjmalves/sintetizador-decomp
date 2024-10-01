@@ -90,7 +90,6 @@ class SpatialResolution(Enum):
         return (
             self.entity_df_columns
             + COLUMNS
-            + [LOWER_BOUND_COL, UPPER_BOUND_COL]
         )
 
     @property
@@ -113,6 +112,8 @@ class SpatialResolution(Enum):
                 END_DATE_COL,
                 BLOCK_DURATION_COL,
                 VALUE_COL,
+                UPPER_BOUND_COL,
+                LOWER_BOUND_COL
             ]
         ]
 
