@@ -1099,6 +1099,7 @@ def test_sintese_qver_uhe(test_settings):
         codigo_usina=[1],
         patamar=[0],
     )
+    __valida_limites(df)
     __valida_metadata(synthesis_str, df_meta, False)
 
 

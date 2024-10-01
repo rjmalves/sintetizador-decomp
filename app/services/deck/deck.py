@@ -36,6 +36,8 @@ from app.internal.constants import (
     THERMAL_NAME_COL,
     HYDRO_NAME_COL,
     EER_NAME_COL,
+    LOWER_BOUND_COL,
+    UPPER_BOUND_COL,
 )
 
 
@@ -607,6 +609,15 @@ class Deck:
         return dates
 
     @classmethod
+    def num_stages(cls, uow: AbstractUnitOfWork) -> int:
+        name = "num_stages"
+        stages = cls.DECK_DATA_CACHING.get(name)
+        if stages is None:
+            stages = len(cls.stages_start_date(uow))
+            cls.DECK_DATA_CACHING[name] = stages
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
     def blocks(cls, uow: AbstractUnitOfWork) -> List[int]:
         name = "blocks"
         if name not in cls.DECK_DATA_CACHING:
@@ -1159,3 +1170,86 @@ class Deck:
         df = pd.concat(dfs, ignore_index=True)
         df = cls._add_eer_sbm_to_expanded_df(df, uow)
         return df
+
+    @classmethod
+    def __get_hydro_flow_operative_constraints(
+        cls, uow: AbstractUnitOfWork, type: str
+    ) -> pd.DataFrame:
+        df_hq = cls._validate_data(
+            cls.dadger(uow).hq(df=True),
+            pd.DataFrame,
+            "registros HQ do dadger",
+        )
+        df_lq = cls._validate_data(
+            cls.dadger(uow).lq(df=True),
+            pd.DataFrame,
+            "registros LQ do dadger",
+        )
+        df_cq = cls._validate_data(
+            cls.dadger(uow).cq(df=True),
+            pd.DataFrame,
+            "registros CQ do dadger",
+        )
+
+        df_type = df_cq.loc[df_cq["tipo"] == type].copy()
+        df_type["estagio_inicial"] = df_type.apply(
+            lambda line: df_hq.loc[
+                df_hq["codigo_restricao"] == line["codigo_restricao"],
+                "estagio_inicial",
+            ].iloc[0],
+            axis=1,
+        )
+        df_type["estagio_final"] = df_type.apply(
+            lambda line: df_hq.loc[
+                df_hq["codigo_restricao"] == line["codigo_restricao"],
+                "estagio_final",
+            ].iloc[0],
+            axis=1,
+        )
+        constraints_ids = df_type["codigo_restricao"].tolist()
+        df_constraints_bounds = df_lq.loc[
+            df_lq["codigo_restricao"].isin(constraints_ids)
+        ]
+        constraint_data = []
+        for idx, row in df_type.iterrows():
+            id = row["codigo_restricao"]
+            hydro_code = row["codigo_usina"]
+            multiplier = row["coeficiente"]
+            initial_stage = row["estagio_inicial"]
+            final_stage = row["estagio_final"]
+            for stage in np.arange(initial_stage, final_stage + 1, 1):
+                for block in cls.blocks(uow):
+                    lower_bound = float(
+                        df_constraints_bounds.loc[
+                            df_constraints_bounds["codigo_restricao"] == id,
+                            f"limite_inferior_{str(int(block))}",
+                        ].iloc[0]
+                    )
+                    upper_bound = float(
+                        df_constraints_bounds.loc[
+                            df_constraints_bounds["codigo_restricao"] == id,
+                            f"limite_superior_{str(int(block))}",
+                        ].iloc[0]
+                    )
+                    data = {
+                        HYDRO_CODE_COL: hydro_code,
+                        STAGE_COL: stage,
+                        BLOCK_COL: int(block),
+                        LOWER_BOUND_COL: lower_bound / multiplier,
+                        UPPER_BOUND_COL: upper_bound / multiplier,
+                    }
+                    constraint_data.append(data)
+        # TODO criar dados para o patamar 0
+        return pd.DataFrame(constraint_data)
+
+    @classmethod
+    def hydro_spilled_flow_bounds(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        name = "hydro_spilled_flow_bounds"
+        hydro_spilled_flow_bounds = cls.DECK_DATA_CACHING.get(name)
+        if hydro_spilled_flow_bounds is None:
+            cls.DECK_DATA_CACHING[name] = (
+                cls.__get_hydro_flow_operative_constraints(uow, "QVER")
+            )
+        return cls.DECK_DATA_CACHING[name]

@@ -783,7 +783,7 @@ class OperationSynthetizer:
         Realiza a resolução da síntese por meio de uma implementação
         alternativa ao fluxo natural de resolução (`stub`), caso esta seja
         uma variável que não possa ser resolvida diretamente a partir
-        da extração de dados do NWLISTOP.
+        da extração de dados do DECOMP.
         """
         f = cls._stub_mappings(s)
         if f:
