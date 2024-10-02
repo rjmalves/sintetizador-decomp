@@ -1,24 +1,25 @@
-import pandas as pd  # type: ignore
+from typing import Callable, Dict, TypeVar
+
 import numpy as np
-from typing import Dict, Callable, TypeVar
-from app.model.operation.operationsynthesis import OperationSynthesis
-from app.services.unitofwork import AbstractUnitOfWork
+import pandas as pd  # type: ignore
+
 from app.internal.constants import (
-    UPPER_BOUND_COL,
-    LOWER_BOUND_COL,
-    VALUE_COL,
-    STAGE_COL,
-    SCENARIO_COL,
-    HYDRO_CODE_COL,
     BLOCK_COL,
+    HYDRO_CODE_COL,
+    LOWER_BOUND_COL,
     LOWER_BOUND_UNIT_COL,
+    SCENARIO_COL,
+    STAGE_COL,
+    UPPER_BOUND_COL,
     UPPER_BOUND_UNIT_COL,
+    VALUE_COL,
 )
 from app.model.operation.operationsynthesis import OperationSynthesis
 from app.model.operation.spatialresolution import SpatialResolution
+from app.model.operation.unit import Unit
 from app.model.operation.variable import Variable
 from app.services.deck.deck import Deck
-from app.model.operation.unit import Unit
+from app.services.unitofwork import AbstractUnitOfWork
 
 
 class OperationVariableBounds:
@@ -86,7 +87,7 @@ class OperationVariableBounds:
             spill_limits = Deck.hydro_operation_report_data(
                 "considera_soleira_vertedouro", uow
             )
-            df_spill_limits = spill_limits.loc[spill_limits["valor"] == True]
+            df_spill_limits = spill_limits.loc[spill_limits["valor"]]
             for idx, row in df_spill_limits.iterrows():
                 stage = row[STAGE_COL]
                 scenario = row[SCENARIO_COL]
@@ -106,6 +107,8 @@ class OperationVariableBounds:
         df[VALUE_COL] = np.round(df[VALUE_COL], 2)
         df[LOWER_BOUND_COL] = 0.00
         df[UPPER_BOUND_COL] = float("inf")
+
+        df_new = Deck.hydro_spilled_flow_bounds(uow)
 
         # TODO - hydro spilled flow bounds não retorna valor para pat 0
         # Sobrescreve com restrições operativas
