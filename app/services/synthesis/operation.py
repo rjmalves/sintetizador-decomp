@@ -1,38 +1,39 @@
-from typing import Callable, TypeVar
-import pandas as pd  # type: ignore
 import logging
-from logging import INFO, WARNING, ERROR, DEBUG
+from logging import DEBUG, ERROR, INFO, WARNING
 from traceback import print_exc
-from app.utils.timing import time_and_log
-from app.utils.regex import match_variables_with_wildcards
-from app.utils.operations import calc_statistics, fast_group_df
-from app.services.deck.bounds import OperationVariableBounds
-from app.services.deck.deck import Deck
-from app.services.unitofwork import AbstractUnitOfWork
-from app.model.operation.variable import Variable
-from app.model.operation.spatialresolution import SpatialResolution
-from app.model.operation.operationsynthesis import (
-    OperationSynthesis,
-    SUPPORTED_SYNTHESIS,
-    SYNTHESIS_DEPENDENCIES,
-    UNITS,
-)
+from typing import Callable, TypeVar
+
+import pandas as pd  # type: ignore
 
 from app.internal.constants import (
+    BLOCK_COL,
+    EER_CODE_COL,
+    HYDRO_CODE_COL,
     IDENTIFICATION_COLUMNS,
-    VARIABLE_COL,
-    STRING_DF_TYPE,
+    LOWER_BOUND_COL,
     OPERATION_SYNTHESIS_METADATA_OUTPUT,
     OPERATION_SYNTHESIS_STATS_ROOT,
     OPERATION_SYNTHESIS_SUBDIR,
-    VALUE_COL,
-    EER_CODE_COL,
+    STRING_DF_TYPE,
     SUBMARKET_CODE_COL,
-    HYDRO_CODE_COL,
-    LOWER_BOUND_COL,
     UPPER_BOUND_COL,
-    BLOCK_COL,
+    VALUE_COL,
+    VARIABLE_COL,
 )
+from app.model.operation.operationsynthesis import (
+    SUPPORTED_SYNTHESIS,
+    SYNTHESIS_DEPENDENCIES,
+    UNITS,
+    OperationSynthesis,
+)
+from app.model.operation.spatialresolution import SpatialResolution
+from app.model.operation.variable import Variable
+from app.services.deck.bounds import OperationVariableBounds
+from app.services.deck.deck import Deck
+from app.services.unitofwork import AbstractUnitOfWork
+from app.utils.operations import calc_statistics, fast_group_df
+from app.utils.regex import match_variables_with_wildcards
+from app.utils.timing import time_and_log
 
 
 class OperationSynthetizer:
@@ -101,9 +102,7 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_dec_oper_ree(
-                uow, "earm_inicial_MWmes"
-            ),
+            ): lambda uow: cls._resolve_dec_oper_ree(uow, "earm_inicial_MWmes"),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
@@ -255,9 +254,7 @@ class OperationSynthetizer:
             (
                 Variable.VAZAO_VERTIDA,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_vertida_m3s"
-            ),
+            ): lambda uow: cls._resolve_dec_oper_usih(uow, "vazao_vertida_m3s"),
             (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
@@ -326,6 +323,7 @@ class OperationSynthetizer:
             logger=cls.logger,
         ):
             df = Deck.dec_oper_usih(uow)
+
             df = cls._post_resolve_file(df, col)
             if blocks:
                 df = df.loc[df[BLOCK_COL].isin(blocks)].copy()
@@ -722,55 +720,46 @@ class OperationSynthetizer:
         f = None
         if s.variable == Variable.ENERGIA_VERTIDA:
             f = cls.__stub_EVER
-        elif all(
-            [
-                s.variable
-                in [
-                    Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                    Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                    Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                    Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                ],
-                s.spatial_resolution != SpatialResolution.USINA_HIDROELETRICA,
-            ]
-        ):
+        elif all([
+            s.variable
+            in [
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+            ],
+            s.spatial_resolution != SpatialResolution.USINA_HIDROELETRICA,
+        ]):
             f = cls.__stub_grouping_hydro
-        elif all(
-            [
-                s.variable
-                in [
-                    Variable.MERCADO,
-                    Variable.MERCADO_LIQUIDO,
-                    Variable.DEFICIT,
-                    Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
-                    Variable.GERACAO_HIDRAULICA,
-                    Variable.GERACAO_TERMICA,
-                    Variable.GERACAO_USINAS_NAO_SIMULADAS,
-                    Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
-                    Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
-                ],
-                s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
-            ]
-        ):
+        elif all([
+            s.variable
+            in [
+                Variable.MERCADO,
+                Variable.MERCADO_LIQUIDO,
+                Variable.DEFICIT,
+                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+                Variable.GERACAO_HIDRAULICA,
+                Variable.GERACAO_TERMICA,
+                Variable.GERACAO_USINAS_NAO_SIMULADAS,
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
+            ],
+            s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
+        ]):
             f = cls.__stub_grouping_submarket
-        elif all(
-            [
-                s.variable == Variable.GERACAO_HIDRAULICA,
-                s.spatial_resolution
-                == SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ]
-        ):
+        elif all([
+            s.variable == Variable.GERACAO_HIDRAULICA,
+            s.spatial_resolution == SpatialResolution.RESERVATORIO_EQUIVALENTE,
+        ]):
             f = cls.__stub_GHID_REE
-        elif all(
-            [
-                s.variable
-                in [
-                    Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
-                    Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
-                ],
-                s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
-            ]
-        ):
+        elif all([
+            s.variable
+            in [
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
+            ],
+            s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
+        ]):
             f = cls.__stub_percent_SIN
 
         return f
@@ -1018,9 +1007,7 @@ class OperationSynthetizer:
                 all_variables = cls._default_args()
             else:
                 all_variables = cls._match_wildcards(variables)
-            synthesis_variables = cls._process_variable_arguments(
-                all_variables
-            )
+            synthesis_variables = cls._process_variable_arguments(all_variables)
             valid_synthesis = cls._filter_valid_variables(
                 synthesis_variables, uow
             )

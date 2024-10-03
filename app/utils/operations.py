@@ -1,17 +1,17 @@
-import pandas as pd  # type: ignore
+from typing import Callable, Dict, List
+
 import numpy as np  # type: ignore
+import pandas as pd  # type: ignore
+
 from app.internal.constants import (
-    PANDAS_GROUPING_ENGINE,
-    SCENARIO_COL,
-    VALUE_COL,
     BLOCK_COL,
+    OPERATION_SYNTHESIS_COMMON_COLUMNS,
+    PANDAS_GROUPING_ENGINE,
     PROBABILITY_COL,
     QUANTILES_FOR_STATISTICS,
-    OPERATION_SYNTHESIS_COMMON_COLUMNS,
-    LOWER_BOUND_COL,
-    UPPER_BOUND_COL,
+    SCENARIO_COL,
+    VALUE_COL,
 )
-from typing import Dict, Callable, List
 
 
 def fast_group_df(

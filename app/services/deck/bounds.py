@@ -7,16 +7,12 @@ from app.internal.constants import (
     BLOCK_COL,
     HYDRO_CODE_COL,
     LOWER_BOUND_COL,
-    LOWER_BOUND_UNIT_COL,
-    SCENARIO_COL,
     STAGE_COL,
     UPPER_BOUND_COL,
-    UPPER_BOUND_UNIT_COL,
     VALUE_COL,
 )
 from app.model.operation.operationsynthesis import OperationSynthesis
 from app.model.operation.spatialresolution import SpatialResolution
-from app.model.operation.unit import Unit
 from app.model.operation.variable import Variable
 from app.services.deck.deck import Deck
 from app.services.unitofwork import AbstractUnitOfWork
@@ -42,6 +38,24 @@ class OperationVariableBounds:
             Variable.VAZAO_DEFLUENTE,
             SpatialResolution.USINA_HIDROELETRICA,
         ): lambda df, uow, _: OperationVariableBounds._outflow_bounds(df, uow),
+        OperationSynthesis(
+            Variable.VAZAO_TURBINADA,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._turbined_flow_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.VAZAO_AFLUENTE,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.VAZAO_INCREMENTAL,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
     }
 
     @classmethod
@@ -83,12 +97,37 @@ class OperationVariableBounds:
         return df
 
     @classmethod
-    def is_bounded(cls, s: OperationSynthesis) -> bool:
+    def _turbined_flow_bounds(
+        cls, df: pd.DataFrame, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         """
-        Verifica se uma determinada síntese possui limites implementados
-        para adição ao DataFrame.
+        Adiciona ao DataFrame da síntese os limites inferior e superior
+        para a variávei de Vazão Turbinada (QTUR) para cada UHE.
         """
-        return s in cls.MAPPINGS
+
+        df[VALUE_COL] = np.round(df[VALUE_COL], 2)
+        df_bounds = Deck.hydro_turbined_flow_bounds(uow)
+        df = pd.merge(
+            df,
+            df_bounds,
+            how="left",
+            on=[HYDRO_CODE_COL, STAGE_COL, BLOCK_COL],
+        )
+        return df
+
+    @classmethod
+    def _lower_bounded_bounds(
+        cls, df: pd.DataFrame, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        """
+        Adiciona ao DataFrame da síntese os limites inferior zero e superior
+        infinito.
+        """
+        df[VALUE_COL] = np.round(df[VALUE_COL], 2)
+        df[LOWER_BOUND_COL] = 0.0
+        df[UPPER_BOUND_COL] = float("inf")
+
+        return df
 
     @classmethod
     def _unbounded(cls, df: pd.DataFrame) -> pd.DataFrame:
@@ -98,6 +137,14 @@ class OperationVariableBounds:
         df[LOWER_BOUND_COL] = -float("inf")
         df[UPPER_BOUND_COL] = float("inf")
         return df
+
+    @classmethod
+    def is_bounded(cls, s: OperationSynthesis) -> bool:
+        """
+        Verifica se uma determinada síntese possui limites implementados
+        para adição ao DataFrame.
+        """
+        return s in cls.MAPPINGS
 
     @classmethod
     def resolve_bounds(
