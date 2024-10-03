@@ -9,6 +9,9 @@ import numpy as np
 from os.path import join
 from app.internal.constants import (
     OPERATION_SYNTHESIS_METADATA_OUTPUT,
+    VALUE_COL,
+    UPPER_BOUND_COL,
+    LOWER_BOUND_COL,
 )
 from tests.conftest import DECK_TEST_DIR
 from idecomp.decomp import (
@@ -72,18 +75,18 @@ def __valida_limites(
     if upper:
         try:
             assert (
-                df["valor"] <= (df["limite_superior"] + tol)
+                df[VALUE_COL] <= (df[UPPER_BOUND_COL] + tol)
             ).sum() == num_amostras
         except AssertionError:
-            print(df.loc[df["valor"] > (df["limite_superior"] + tol)])
+            print("\n", df.loc[df[VALUE_COL] > (df[UPPER_BOUND_COL] + tol)])
             raise
     if lower:
         try:
             assert (
-                df["valor"] >= (df["limite_inferior"] - tol)
+                df[VALUE_COL] >= (df[LOWER_BOUND_COL] - tol)
             ).sum() == num_amostras
         except AssertionError:
-            print(df.loc[df["valor"] < (df["limite_inferior"] - tol)])
+            print("\n", df.loc[df[VALUE_COL] < (df[LOWER_BOUND_COL] - tol)])
             raise
 
 
@@ -1045,23 +1048,24 @@ def __obtem_dados_sintese_mock(
 #     __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_qdef_uhe(test_settings):
-#     synthesis_str = "QDEF_UHE"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsih.read(
-#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
-#     ).tabela
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "vazao_defluente_m3s",
-#         estagio=1,
-#         cenario=1,
-#         codigo_usina=[1],
-#         patamar=[0],
-#     )
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_qdef_uhe(test_settings):
+    synthesis_str = "QDEF_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_defluente_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
 # def test_sintese_qtur_uhe(test_settings):

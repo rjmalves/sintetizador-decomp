@@ -256,10 +256,12 @@ class Deck:
                 df_stage[STAGE_COL] = s
                 dfs.append(df_stage)
             df_complete = pd.concat(dfs, ignore_index=True)
-            df_complete = df_complete.astype({
-                "valor_esperado": np.float64,
-                "desvio_padrao": np.float64,
-            })
+            df_complete = df_complete.astype(
+                {
+                    "valor_esperado": np.float64,
+                    "desvio_padrao": np.float64,
+                }
+            )
             df_complete = df_complete.groupby("parcela").sum()
             df_complete = df_complete.reset_index()
 
@@ -399,7 +401,9 @@ class Deck:
             df_infeas = pd.concat([df_iter, df_fs], ignore_index=True)
             infeasibilities_aux: list[Infeasibility] = []
             for _, linha in df_infeas.iterrows():
-                infeasibility = Infeasibility.factory(linha, cls._get_hidr(uow))
+                infeasibility = Infeasibility.factory(
+                    linha, cls._get_hidr(uow)
+                )
                 infeasibility_posprocess = (
                     cls._posprocess_infeasibilities_units(infeasibility, uow)
                 )
@@ -492,7 +496,9 @@ class Deck:
             df = cls.probabilities(uow)
             df = cls._expand_scenarios_in_df(df)
             factors_df = (
-                df.groupby(STAGE_COL, as_index=False).sum().set_index(STAGE_COL)
+                df.groupby(STAGE_COL, as_index=False)
+                .sum()
+                .set_index(STAGE_COL)
             )
             df[VALUE_COL] = df.apply(
                 lambda line: line[VALUE_COL]
@@ -549,7 +555,7 @@ class Deck:
                 ]
             ].copy()
             df = cls._add_dates_to_df(df, uow)
-            df = __eval_pat0(df)
+            df = __eval_pat0(df).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df
 
@@ -859,12 +865,14 @@ class Deck:
                 df["geracao_pequenas_usinas_MW"] + df["geracao_eolica_MW"]
             )
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                SUBMARKET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    SUBMARKET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -888,12 +896,14 @@ class Deck:
             df = cls._add_dates_to_df(df, uow)
             df = cls._add_stages_durations_to_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                EER_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    EER_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -906,7 +916,9 @@ class Deck:
         num_blocks_with_average = len(cls.blocks(uow)) + 1
         num_tiles = df.shape[0] // (len(hydro_order) * num_blocks_with_average)
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
+        submarket_codes = map_df.loc[
+            hydro_order, SUBMARKET_CODE_COL
+        ].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.tile(
             np.repeat(submarket_codes, num_blocks_with_average), num_tiles
@@ -938,12 +950,14 @@ class Deck:
             df = df.rename(columns={"duracao": BLOCK_DURATION_COL})
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                HYDRO_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    HYDRO_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -996,12 +1010,14 @@ class Deck:
             df = df.rename(columns={"duracao": BLOCK_DURATION_COL})
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                THERMAL_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    THERMAL_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1056,13 +1072,15 @@ class Deck:
             df = cls._add_block_durations_to_df(df, uow)
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                EXCHANGE_SOURCE_CODE_COL,
-                EXCHANGE_TARGET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    EXCHANGE_SOURCE_CODE_COL,
+                    EXCHANGE_TARGET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1139,7 +1157,9 @@ class Deck:
         hydro_order = df[HYDRO_CODE_COL].unique().tolist()
         num_repeats = df.shape[0] // (len(hydro_order))
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
+        submarket_codes = map_df.loc[
+            hydro_order, SUBMARKET_CODE_COL
+        ].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.repeat(submarket_codes, num_repeats)
         df[EER_CODE_COL] = np.repeat(eer_codes, num_repeats)
@@ -1177,7 +1197,7 @@ class Deck:
         return df
 
     @classmethod
-    def _hydro_operative_constraints_id(
+    def __hydro_operative_constraints_id(
         cls,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
@@ -1192,7 +1212,7 @@ class Deck:
         return cls.DECK_DATA_CACHING[name]
 
     @classmethod
-    def _hydro_operative_constraints_bounds(
+    def __hydro_operative_constraints_bounds(
         cls,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
@@ -1207,7 +1227,7 @@ class Deck:
         return cls.DECK_DATA_CACHING[name]
 
     @classmethod
-    def _hydro_operative_constraints_coefficients(
+    def __hydro_operative_constraints_coefficients(
         cls,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
@@ -1227,32 +1247,34 @@ class Deck:
     def __initialize_df_hydro_bounds(
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
+        df_blocks = cls.blocks_durations(uow)
+        # Não adiciona patamar 0 (média)
+        df_blocks = df_blocks.loc[df_blocks[BLOCK_COL] != 0]
         hydros = cls.hydro_eer_submarket_map(uow)[HYDRO_CODE_COL].unique()
-        stages = cls.blocks_durations(uow)[STAGE_COL].unique()
-        blocks = cls.blocks_durations(uow)[BLOCK_COL].unique()
+        stages = df_blocks[STAGE_COL].unique()
+        blocks = df_blocks[BLOCK_COL].unique()
         num_hydros = len(hydros)
         num_stages = len(stages)
         num_blocks = len(blocks)
 
-        df = pd.DataFrame({
-            HYDRO_CODE_COL: np.tile(
-                np.repeat(hydros.tolist(), num_blocks), num_stages
-            ),
-            STAGE_COL: np.repeat(stages.tolist(), num_blocks * num_hydros),
-            BLOCK_COL: np.tile(blocks.tolist(), num_hydros * num_stages),
-        })
-        print("DEBUG\n", df)
-        # TODO pensar o que fazer com o patamar 0
-
+        df = pd.DataFrame(
+            {
+                HYDRO_CODE_COL: np.tile(
+                    np.repeat(hydros.tolist(), num_blocks), num_stages
+                ),
+                STAGE_COL: np.repeat(stages.tolist(), num_blocks * num_hydros),
+                BLOCK_COL: np.tile(blocks.tolist(), num_hydros * num_stages),
+            }
+        )
         return df.copy()
 
     @classmethod
-    def __get_hydro_flow_operative_constraints(
+    def _get_hydro_flow_operative_constraints(
         cls, uow: AbstractUnitOfWork, type: str
     ) -> pd.DataFrame:
-        df_hq = cls._hydro_operative_constraints_id(uow)
-        df_lq = cls._hydro_operative_constraints_bounds(uow)
-        df_cq = cls._hydro_operative_constraints_coefficients(uow)
+        df_hq = cls.__hydro_operative_constraints_id(uow)
+        df_lq = cls.__hydro_operative_constraints_bounds(uow)
+        df_cq = cls.__hydro_operative_constraints_coefficients(uow)
 
         df_type = df_cq.loc[df_cq["tipo"] == type].copy()
         df_type["estagio_inicial"] = df_type.apply(
@@ -1302,12 +1324,17 @@ class Deck:
                         UPPER_BOUND_COL: upper_bound / multiplier,
                     }
                     constraint_data.append(data)
-        # TODO criar dados para o patamar 0
+
         return pd.DataFrame(constraint_data)
 
     @classmethod
-    def hydro_spilled_flow_bounds(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        def __overwrite_with_operative_constraints(uow, df, df_constraints):
+    def hydro_spilled_flow_bounds(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        def __overwrite_with_operative_constraints(
+            df: pd.DataFrame,
+            df_constraints: pd.DataFrame,
+        ):
             for idx, row in df_constraints.iterrows():
                 stage = row[STAGE_COL]
                 hydro_code = row[HYDRO_CODE_COL]
@@ -1340,8 +1367,65 @@ class Deck:
                 )
             return df
 
-        def __eval_block_0(cls, uow):
-            return
+        # TODO: comportamento não é conforme o esperado pois o resultado de soleira
+        # impresso no relato não é o que foi considerado no PL efetivamente, e sim
+        # um cálculo pós-processamento com resultados da operação
+        # # Substitui cota abaixo da soleira de vertedouro com o limite superior 0
+        # def __overwrite_with_spill_operation_status_bound(uow, df):
+        #     spill_limits = Deck.hydro_operation_report_data(
+        #         "considera_soleira_vertedouro", uow
+        #     )
+        #     df_spill_limits = spill_limits.loc[spill_limits["valor"]]
+        #     for idx, row in df_spill_limits.iterrows():
+        #         stage = row[STAGE_COL]
+        #         scenario = row[SCENARIO_COL]
+        #         hydro_code = row[HYDRO_CODE_COL]
+
+        #         condition = (
+        #             (df[HYDRO_CODE_COL] == hydro_code)
+        #             & (df[STAGE_COL] == stage)
+        #             & (df[SCENARIO_COL] == scenario)
+        #         )
+        #         df[UPPER_BOUND_COL] = np.where(
+        #             condition, 0, df[UPPER_BOUND_COL]
+        #         )
+        #     return df
+
+        def __eval_block_0(uow: AbstractUnitOfWork, df: pd.DataFrame):
+            df_pat = df.copy()
+            # Adiciona duracao dos patamares e calcula media ponderada dos
+            # limites pela duracao
+            df_blocks = cls.blocks_durations(uow)
+            df[BLOCK_DURATION_COL] = df.apply(
+                lambda line: df_blocks.loc[
+                    (df_blocks[STAGE_COL] == line[STAGE_COL])
+                    & (df_blocks[BLOCK_COL] == line[BLOCK_COL]),
+                    BLOCK_DURATION_COL,
+                ].iloc[0],
+                axis=1,
+            )
+            df[LOWER_BOUND_COL] = df[LOWER_BOUND_COL] * df[BLOCK_DURATION_COL]
+            df[UPPER_BOUND_COL] = df[UPPER_BOUND_COL] * df[BLOCK_DURATION_COL]
+            df_pat0 = df.groupby([STAGE_COL, HYDRO_CODE_COL], as_index=False)[
+                [
+                    BLOCK_DURATION_COL,
+                    LOWER_BOUND_COL,
+                    UPPER_BOUND_COL,
+                ]
+            ].sum()
+            df_pat0[LOWER_BOUND_COL] = (
+                df_pat0[LOWER_BOUND_COL] / df_pat0[BLOCK_DURATION_COL]
+            )
+            df_pat0[UPPER_BOUND_COL] = (
+                df_pat0[UPPER_BOUND_COL] / df_pat0[BLOCK_DURATION_COL]
+            )
+            df_pat0[BLOCK_COL] = 0
+            # Obtem data frame final com dados por patamar e patamar 0 (media)
+            df = pd.concat([df_pat, df_pat0], ignore_index=True, join="inner")
+            df.sort_values(
+                [HYDRO_CODE_COL, STAGE_COL, BLOCK_COL], inplace=True
+            )
+            return df.reset_index(drop=True)
 
         name = "hydro_spilled_flow_bounds"
         hydro_spilled_flow_bounds = cls.DECK_DATA_CACHING.get(name)
@@ -1351,12 +1435,107 @@ class Deck:
             df[LOWER_BOUND_COL] = 0.00
             df[UPPER_BOUND_COL] = float("inf")
 
-            df_constraints = cls.__get_hydro_flow_operative_constraints(
+            # Obtem restricoes operativas de QVER
+            df_constraints = cls._get_hydro_flow_operative_constraints(
                 uow, "QVER"
             )
-            df = __overwrite_with_operative_constraints(uow, df, df_constraints)
-            # df = __eval_block_0(uow)  # TODO
+            # Sobrescreve com restricoes operativas
+            df = __overwrite_with_operative_constraints(df, df_constraints)
+            # Adiciona patamar 0
+            df = __eval_block_0(uow, df)
 
             cls.DECK_DATA_CACHING[name] = df
 
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def hydro_outflow_bounds(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        def __overwrite_with_operative_constraints(
+            df: pd.DataFrame,
+            df_constraints: pd.DataFrame,
+        ):
+            for idx, row in df_constraints.iterrows():
+                stage = row[STAGE_COL]
+                hydro_code = row[HYDRO_CODE_COL]
+                block = row[BLOCK_COL]
+                upper_bound = row[UPPER_BOUND_COL]
+                lower_bound = row[LOWER_BOUND_COL]
+
+                condition = (
+                    (df[HYDRO_CODE_COL] == hydro_code)
+                    & (df[STAGE_COL] == stage)
+                    & (df[BLOCK_COL] == block)
+                )
+                df[LOWER_BOUND_COL] = np.where(
+                    condition,
+                    (
+                        np.round(lower_bound, 2)
+                        if ~np.isnan(lower_bound)
+                        else 0.00
+                    ),
+                    df[LOWER_BOUND_COL],
+                )
+                df[UPPER_BOUND_COL] = np.where(
+                    condition,
+                    (
+                        np.round(upper_bound, 2)
+                        if ~np.isnan(upper_bound)
+                        else float("inf")
+                    ),
+                    df[UPPER_BOUND_COL],
+                )
+            return df
+
+        def __eval_block_0(uow: AbstractUnitOfWork, df: pd.DataFrame):
+            df_pat = df.copy()
+            # Adiciona duracao dos patamares e calcula media ponderada dos
+            # limites pela duracao
+            df_blocks = cls.blocks_durations(uow)
+            df[BLOCK_DURATION_COL] = df.apply(
+                lambda line: df_blocks.loc[
+                    (df_blocks[STAGE_COL] == line[STAGE_COL])
+                    & (df_blocks[BLOCK_COL] == line[BLOCK_COL]),
+                    BLOCK_DURATION_COL,
+                ].iloc[0],
+                axis=1,
+            )
+            df[LOWER_BOUND_COL] = df[LOWER_BOUND_COL] * df[BLOCK_DURATION_COL]
+            df[UPPER_BOUND_COL] = df[UPPER_BOUND_COL] * df[BLOCK_DURATION_COL]
+            df_pat0 = df.groupby([STAGE_COL, HYDRO_CODE_COL], as_index=False)[
+                [
+                    BLOCK_DURATION_COL,
+                    LOWER_BOUND_COL,
+                    UPPER_BOUND_COL,
+                ]
+            ].sum()
+            df_pat0[LOWER_BOUND_COL] = (
+                df_pat0[LOWER_BOUND_COL] / df_pat0[BLOCK_DURATION_COL]
+            )
+            df_pat0[UPPER_BOUND_COL] = (
+                df_pat0[UPPER_BOUND_COL] / df_pat0[BLOCK_DURATION_COL]
+            )
+            df_pat0[BLOCK_COL] = 0
+            # Obtem data frame final com dados por patamar e patamar 0 (media)
+            df = pd.concat([df_pat, df_pat0], ignore_index=True, join="inner")
+            df.sort_values(
+                [HYDRO_CODE_COL, STAGE_COL, BLOCK_COL], inplace=True
+            )
+            return df.reset_index(drop=True)
+
+        name = "hydro_outflow_bounds"
+        hydro_outflow_bounds = cls.DECK_DATA_CACHING.get(name)
+        if hydro_outflow_bounds is None:
+            # Inicializa valores (liminf=0 e limsup=inf)
+            df = cls.__initialize_df_hydro_bounds(uow)
+            df[LOWER_BOUND_COL] = 0.00
+            df[UPPER_BOUND_COL] = float("inf")
+            # Obtem restricoes operativas de QVER
+            df_constraints = cls._get_hydro_flow_operative_constraints(
+                uow, "QDEF"
+            )
+            # Sobrescreve com restricoes operativas
+            df = __overwrite_with_operative_constraints(df, df_constraints)
+            # Adiciona patamar 0
+            df = __eval_block_0(uow, df)
+            cls.DECK_DATA_CACHING[name] = df
         return cls.DECK_DATA_CACHING[name]
