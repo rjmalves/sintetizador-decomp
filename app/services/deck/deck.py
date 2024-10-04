@@ -13,6 +13,7 @@ from idecomp.decomp.dec_oper_sist import DecOperSist
 from idecomp.decomp.dec_oper_usih import DecOperUsih
 from idecomp.decomp.dec_oper_usit import DecOperUsit
 from idecomp.decomp.modelos.dadger import DT
+from idecomp.decomp.avl_turb_max import AvlTurbMax
 
 from app.internal.constants import (
     BLOCK_COL,
@@ -133,6 +134,12 @@ class Deck:
         with uow:
             dec = uow.files.get_dec_oper_interc()
             return dec
+
+    @classmethod
+    def _get_avl_turb_max(cls, uow: AbstractUnitOfWork) -> AvlTurbMax:
+        with uow:
+            avl = uow.files.get_avl_turb_max()
+            return avl
 
     @classmethod
     def _validate_data(cls, data, type: Type[T], msg: str = "dados") -> T:
@@ -257,10 +264,12 @@ class Deck:
                 df_stage[STAGE_COL] = s
                 dfs.append(df_stage)
             df_complete = pd.concat(dfs, ignore_index=True)
-            df_complete = df_complete.astype({
-                "valor_esperado": np.float64,
-                "desvio_padrao": np.float64,
-            })
+            df_complete = df_complete.astype(
+                {
+                    "valor_esperado": np.float64,
+                    "desvio_padrao": np.float64,
+                }
+            )
             df_complete = df_complete.groupby("parcela").sum()
             df_complete = df_complete.reset_index()
 
@@ -400,7 +409,9 @@ class Deck:
             df_infeas = pd.concat([df_iter, df_fs], ignore_index=True)
             infeasibilities_aux: list[Infeasibility] = []
             for _, linha in df_infeas.iterrows():
-                infeasibility = Infeasibility.factory(linha, cls._get_hidr(uow))
+                infeasibility = Infeasibility.factory(
+                    linha, cls._get_hidr(uow)
+                )
                 infeasibility_posprocess = (
                     cls._posprocess_infeasibilities_units(infeasibility, uow)
                 )
@@ -493,7 +504,9 @@ class Deck:
             df = cls.probabilities(uow)
             df = cls._expand_scenarios_in_df(df)
             factors_df = (
-                df.groupby(STAGE_COL, as_index=False).sum().set_index(STAGE_COL)
+                df.groupby(STAGE_COL, as_index=False)
+                .sum()
+                .set_index(STAGE_COL)
             )
             df[VALUE_COL] = df.apply(
                 lambda line: line[VALUE_COL]
@@ -860,12 +873,14 @@ class Deck:
                 df["geracao_pequenas_usinas_MW"] + df["geracao_eolica_MW"]
             )
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                SUBMARKET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    SUBMARKET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -889,12 +904,14 @@ class Deck:
             df = cls._add_dates_to_df(df, uow)
             df = cls._add_stages_durations_to_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                EER_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    EER_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -907,7 +924,9 @@ class Deck:
         num_blocks_with_average = len(cls.blocks(uow)) + 1
         num_tiles = df.shape[0] // (len(hydro_order) * num_blocks_with_average)
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
+        submarket_codes = map_df.loc[
+            hydro_order, SUBMARKET_CODE_COL
+        ].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.tile(
             np.repeat(submarket_codes, num_blocks_with_average), num_tiles
@@ -939,12 +958,14 @@ class Deck:
             df = df.rename(columns={"duracao": BLOCK_DURATION_COL})
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                HYDRO_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    HYDRO_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -997,12 +1018,14 @@ class Deck:
             df = df.rename(columns={"duracao": BLOCK_DURATION_COL})
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                THERMAL_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    THERMAL_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1057,13 +1080,35 @@ class Deck:
             df = cls._add_block_durations_to_df(df, uow)
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                EXCHANGE_SOURCE_CODE_COL,
-                EXCHANGE_TARGET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    EXCHANGE_SOURCE_CODE_COL,
+                    EXCHANGE_TARGET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
+    def avl_turb_max(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "avl_turb_max"
+        df = cls.DECK_DATA_CACHING.get(name)
+        if df is None:
+            df = cls._validate_data(
+                cls._get_avl_turb_max(uow).tabela,
+                pd.DataFrame,
+                name,
+            )
+            df = df.loc[~(df[STAGE_COL].isna())]
+            df = df.sort_values(
+                [
+                    HYDRO_CODE_COL,
+                    STAGE_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1140,7 +1185,9 @@ class Deck:
         hydro_order = df[HYDRO_CODE_COL].unique().tolist()
         num_repeats = df.shape[0] // (len(hydro_order))
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
+        submarket_codes = map_df.loc[
+            hydro_order, SUBMARKET_CODE_COL
+        ].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.repeat(submarket_codes, num_repeats)
         df[EER_CODE_COL] = np.repeat(eer_codes, num_repeats)
@@ -1191,13 +1238,15 @@ class Deck:
         num_stages = len(stages)
         num_blocks = len(blocks)
 
-        df = pd.DataFrame({
-            HYDRO_CODE_COL: np.tile(
-                np.repeat(hydros.tolist(), num_blocks), num_stages
-            ),
-            STAGE_COL: np.repeat(stages.tolist(), num_blocks * num_hydros),
-            BLOCK_COL: np.tile(blocks.tolist(), num_hydros * num_stages),
-        })
+        df = pd.DataFrame(
+            {
+                HYDRO_CODE_COL: np.tile(
+                    np.repeat(hydros.tolist(), num_blocks), num_stages
+                ),
+                STAGE_COL: np.repeat(stages.tolist(), num_blocks * num_hydros),
+                BLOCK_COL: np.tile(blocks.tolist(), num_hydros * num_stages),
+            }
+        )
         return df.copy()
 
     @classmethod
@@ -1384,7 +1433,9 @@ class Deck:
         return df.reset_index(drop=True)
 
     @classmethod
-    def hydro_spilled_flow_bounds(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+    def hydro_spilled_flow_bounds(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         # TODO: comportamento não é conforme o esperado pois o resultado de soleira
         # impresso no relato não é o que foi considerado no PL efetivamente, e sim
         # um cálculo pós-processamento com resultados da operação
@@ -1458,6 +1509,33 @@ class Deck:
     def hydro_turbined_flow_bounds(
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
+
+        def _get_turbined_flow_bounds(uow, df) -> pd.DataFrame:
+            df_qmax = Deck.avl_turb_max(uow)
+            df_qmax = df_qmax.rename(
+                {"estagio": STAGE_COL, "codigo_usina": HYDRO_CODE_COL}
+            )
+            df = pd.merge(
+                df,
+                df_qmax[
+                    [
+                        STAGE_COL,
+                        HYDRO_CODE_COL,
+                        "vazao_turbinada_maxima_pl_m3s",
+                    ]
+                ],
+                how="left",
+                on=[HYDRO_CODE_COL, STAGE_COL],
+            )
+            # TODO: trocar arquivo de analise pois o avl_turb_max nao contem dados para o ultimo estagio
+            df.loc[
+                df["vazao_turbinada_maxima_pl_m3s"].isna(),
+                "vazao_turbinada_maxima_pl_m3s",
+            ] = float("inf")
+            df[UPPER_BOUND_COL] = df["vazao_turbinada_maxima_pl_m3s"]
+            df.drop(columns=["vazao_turbinada_maxima_pl_m3s"], inplace=True)
+            return df
+
         name = "hydro_turbined_bounds"
         hydro_turbined_bounds = cls.DECK_DATA_CACHING.get(name)
         if hydro_turbined_bounds is None:
@@ -1465,6 +1543,9 @@ class Deck:
             df = cls.__initialize_df_hydro_bounds(uow)
             df[LOWER_BOUND_COL] = 0.00
             df[UPPER_BOUND_COL] = float("inf")  # TODO
+            # Obtem turbinamento maximo considerado no PL pelo Decomp, que correspodne
+            # ao min(Qmaxgerador,Qmaxturbina)
+            df = _get_turbined_flow_bounds(uow, df)
             # Obtem restricoes operativas de QTUR
             df_constraints = cls._get_hydro_flow_operative_constraints(
                 uow, "QTUR"

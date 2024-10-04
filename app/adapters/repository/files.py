@@ -21,6 +21,7 @@ from idecomp.decomp.dec_oper_ree import DecOperRee
 from idecomp.decomp.dec_oper_sist import DecOperSist
 from idecomp.decomp.dec_oper_interc import DecOperInterc
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
+from idecomp.decomp.avl_turb_max import AvlTurbMax
 
 from app.model.settings import Settings
 from app.utils.encoding import converte_codificacao
@@ -108,6 +109,10 @@ class AbstractFilesRepository(ABC):
     def get_dec_eco_discr(self) -> DecEcoDiscr:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_avl_turb_max(self) -> AvlTurbMax:
+        raise NotImplementedError
+
 
 class RawFilesRepository(AbstractFilesRepository):
     def __init__(self, tmppath: str):
@@ -140,6 +145,7 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_dec_oper_sist = False
         self.__read_dec_oper_interc = False
         self.__read_dec_eco_discr = False
+        self.__read_avl_turb_max = False
 
     @property
     def extensao(self) -> str:
@@ -499,6 +505,22 @@ class RawFilesRepository(AbstractFilesRepository):
                     logger.error(f"Erro na leitura do dec_eco_discr.csv: {e}")
                 raise e
         return self.__dec_eco_discr
+
+    def get_avl_turb_max(self) -> AvlTurbMax:
+        if self.__read_avl_turb_max is False:
+            self.__read_avl_turb_max = True
+            logger = Log.log()
+            try:
+                if logger is not None:
+                    logger.info("Lendo arquivo avl_turb_max.csv")
+                self.__avl_turb_max = AvlTurbMax.read(
+                    join(self.__tmppath, "avl_turb_max.csv")
+                )
+            except Exception as e:
+                if logger is not None:
+                    logger.error(f"Erro na leitura do avl_turb_max.csv: {e}")
+                raise e
+        return self.__avl_turb_max
 
 
 def factory(kind: str, *args, **kwargs) -> AbstractFilesRepository:
