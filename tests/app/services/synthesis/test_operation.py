@@ -3,9 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
-from idecomp.decomp import (
-    DecOperUsih,
-)
+from idecomp.decomp import DecOperUsih, DecOperUsit, DecOperSist, DecOperInterc
 
 from app.internal.constants import (
     LOWER_BOUND_COL,
@@ -118,7 +116,9 @@ def __sintetiza_com_mock(synthesis_str) -> tuple[pd.DataFrame, pd.DataFrame]:
         OperationSynthetizer.clear_cache()
     m.assert_called()
     df = __obtem_dados_sintese_mock(synthesis_str, m)
-    df_meta = __obtem_dados_sintese_mock(OPERATION_SYNTHESIS_METADATA_OUTPUT, m)
+    df_meta = __obtem_dados_sintese_mock(
+        OPERATION_SYNTHESIS_METADATA_OUTPUT, m
+    )
     assert df is not None
     assert df_meta is not None
     return df, df_meta
@@ -133,7 +133,9 @@ def __sintetiza_com_mock_wildcard(synthesis_str) -> pd.DataFrame:
         OperationSynthetizer.synthetize([synthesis_str], uow)
         OperationSynthetizer.clear_cache()
     m.assert_called()
-    df_meta = __obtem_dados_sintese_mock(OPERATION_SYNTHESIS_METADATA_OUTPUT, m)
+    df_meta = __obtem_dados_sintese_mock(
+        OPERATION_SYNTHESIS_METADATA_OUTPUT, m
+    )
     assert df_meta is not None
     return df_meta
 
@@ -443,48 +445,50 @@ def __obtem_dados_sintese_mock(
 #     __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_gter_sbm(test_settings):
-#     synthesis_str = "GTER_SBM"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperSist.read(
-#         join(DECK_TEST_DIR, "dec_oper_sist.csv")
-#     ).tabela
-#     df_dec_oper["geracao_termica_MW"] += df_dec_oper[
-#         "geracao_termica_antecipada_MW"
-#     ]
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "geracao_termica_MW",
-#         estagio=1,
-#         cenario=1,
-#         codigo_submercado=[1],
-#         patamar=[1],
-#     )
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_gter_sbm(test_settings):
+    synthesis_str = "GTER_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperSist.read(
+        join(DECK_TEST_DIR, "dec_oper_sist.csv")
+    ).tabela
+    df_dec_oper["geracao_termica_MW"] += df_dec_oper[
+        "geracao_termica_antecipada_MW"
+    ]
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_termica_MW",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[1],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_gter_sin(test_settings):
-#     synthesis_str = "GTER_SIN"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = (
-#         DecOperSist.read(join(DECK_TEST_DIR, "dec_oper_sist.csv"))
-#         .tabela.groupby(["estagio", "cenario", "patamar"])
-#         .sum()
-#         .reset_index()
-#     )
-#     df_dec_oper["geracao_termica_MW"] += df_dec_oper[
-#         "geracao_termica_antecipada_MW"
-#     ]
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "geracao_termica_MW",
-#         estagio=1,
-#         cenario=1,
-#         patamar=[1],
-#     )
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_gter_sin(test_settings):
+    synthesis_str = "GTER_SIN"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = (
+        DecOperSist.read(join(DECK_TEST_DIR, "dec_oper_sist.csv"))
+        .tabela.groupby(["estagio", "cenario", "patamar"])
+        .sum()
+        .reset_index()
+    )
+    df_dec_oper["geracao_termica_MW"] += df_dec_oper[
+        "geracao_termica_antecipada_MW"
+    ]
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_termica_MW",
+        estagio=1,
+        cenario=1,
+        patamar=[1],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
 # def test_sintese_ghid_uhe(test_settings):
@@ -1001,107 +1005,107 @@ def __obtem_dados_sintese_mock(
 #     __valida_metadata(synthesis_str, df_meta, False)
 
 
-def test_sintese_qinc_uhe(test_settings):
-    synthesis_str = "QINC_UHE"
-    df, df_meta = __sintetiza_com_mock(synthesis_str)
-    df_dec_oper = DecOperUsih.read(
-        join(DECK_TEST_DIR, "dec_oper_usih.csv")
-    ).tabela
-    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-    __compara_sintese_dec_oper(
-        df,
-        df_dec_oper,
-        "vazao_incremental_m3s",
-        estagio=1,
-        cenario=1,
-        codigo_usina=[1],
-        patamar=[0],
-    )
-    __valida_limites(df)
-    __valida_metadata(synthesis_str, df_meta, False)
+# def test_sintese_qinc_uhe(test_settings):
+#     synthesis_str = "QINC_UHE"
+#     df, df_meta = __sintetiza_com_mock(synthesis_str)
+#     df_dec_oper = DecOperUsih.read(
+#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
+#     ).tabela
+#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+#     __compara_sintese_dec_oper(
+#         df,
+#         df_dec_oper,
+#         "vazao_incremental_m3s",
+#         estagio=1,
+#         cenario=1,
+#         codigo_usina=[1],
+#         patamar=[0],
+#     )
+#     __valida_limites(df)
+#     __valida_metadata(synthesis_str, df_meta, False)
 
 
-def test_sintese_qafl_uhe(test_settings):
-    synthesis_str = "QAFL_UHE"
-    df, df_meta = __sintetiza_com_mock(synthesis_str)
-    df_dec_oper = DecOperUsih.read(
-        join(DECK_TEST_DIR, "dec_oper_usih.csv")
-    ).tabela
-    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-    __compara_sintese_dec_oper(
-        df,
-        df_dec_oper,
-        "vazao_afluente_m3s",
-        estagio=1,
-        cenario=1,
-        codigo_usina=[1],
-        patamar=[0],
-    )
-    __valida_limites(df)
-    __valida_metadata(synthesis_str, df_meta, False)
+# def test_sintese_qafl_uhe(test_settings):
+#     synthesis_str = "QAFL_UHE"
+#     df, df_meta = __sintetiza_com_mock(synthesis_str)
+#     df_dec_oper = DecOperUsih.read(
+#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
+#     ).tabela
+#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+#     __compara_sintese_dec_oper(
+#         df,
+#         df_dec_oper,
+#         "vazao_afluente_m3s",
+#         estagio=1,
+#         cenario=1,
+#         codigo_usina=[1],
+#         patamar=[0],
+#     )
+#     __valida_limites(df)
+#     __valida_metadata(synthesis_str, df_meta, False)
 
 
-def test_sintese_qdef_uhe(test_settings):
-    synthesis_str = "QDEF_UHE"
-    df, df_meta = __sintetiza_com_mock(synthesis_str)
-    df_dec_oper = DecOperUsih.read(
-        join(DECK_TEST_DIR, "dec_oper_usih.csv")
-    ).tabela
-    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-    __compara_sintese_dec_oper(
-        df,
-        df_dec_oper,
-        "vazao_defluente_m3s",
-        estagio=1,
-        cenario=1,
-        codigo_usina=[1],
-        patamar=[0],
-    )
-    # TODO - A vazão defluente impressa no arquivo dec_oper_usih até a versão 31.27
-    # considera erroneamente a vazão desviada. Retornar com o teste quando a impressão
-    # for corrigida
-    # __valida_limites(df)
-    __valida_metadata(synthesis_str, df_meta, False)
+# def test_sintese_qdef_uhe(test_settings):
+#     synthesis_str = "QDEF_UHE"
+#     df, df_meta = __sintetiza_com_mock(synthesis_str)
+#     df_dec_oper = DecOperUsih.read(
+#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
+#     ).tabela
+#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+#     __compara_sintese_dec_oper(
+#         df,
+#         df_dec_oper,
+#         "vazao_defluente_m3s",
+#         estagio=1,
+#         cenario=1,
+#         codigo_usina=[1],
+#         patamar=[0],
+#     )
+#     # TODO - A vazão defluente impressa no arquivo dec_oper_usih até a versão 31.27
+#     # considera erroneamente a vazão desviada. Retornar com o teste quando a impressão
+#     # for corrigida
+#     # __valida_limites(df)
+#     __valida_metadata(synthesis_str, df_meta, False)
 
 
-def test_sintese_qtur_uhe(test_settings):
-    synthesis_str = "QTUR_UHE"
-    df, df_meta = __sintetiza_com_mock(synthesis_str)
-    df_dec_oper = DecOperUsih.read(
-        join(DECK_TEST_DIR, "dec_oper_usih.csv")
-    ).tabela
-    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-    __compara_sintese_dec_oper(
-        df,
-        df_dec_oper,
-        "vazao_turbinada_m3s",
-        estagio=1,
-        cenario=1,
-        codigo_usina=[1],
-        patamar=[0],
-    )
-    __valida_limites(df)
-    __valida_metadata(synthesis_str, df_meta, False)
+# def test_sintese_qtur_uhe(test_settings):
+#     synthesis_str = "QTUR_UHE"
+#     df, df_meta = __sintetiza_com_mock(synthesis_str)
+#     df_dec_oper = DecOperUsih.read(
+#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
+#     ).tabela
+#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+#     __compara_sintese_dec_oper(
+#         df,
+#         df_dec_oper,
+#         "vazao_turbinada_m3s",
+#         estagio=1,
+#         cenario=1,
+#         codigo_usina=[1],
+#         patamar=[0],
+#     )
+#     __valida_limites(df)
+#     __valida_metadata(synthesis_str, df_meta, False)
 
 
-def test_sintese_qver_uhe(test_settings):
-    synthesis_str = "QVER_UHE"
-    df, df_meta = __sintetiza_com_mock(synthesis_str)
-    df_dec_oper = DecOperUsih.read(
-        join(DECK_TEST_DIR, "dec_oper_usih.csv")
-    ).tabela
-    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-    __compara_sintese_dec_oper(
-        df,
-        df_dec_oper,
-        "vazao_vertida_m3s",
-        estagio=1,
-        cenario=1,
-        codigo_usina=[1],
-        patamar=[0],
-    )
-    __valida_limites(df)
-    __valida_metadata(synthesis_str, df_meta, False)
+# def test_sintese_qver_uhe(test_settings):
+#     synthesis_str = "QVER_UHE"
+#     df, df_meta = __sintetiza_com_mock(synthesis_str)
+#     df_dec_oper = DecOperUsih.read(
+#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
+#     ).tabela
+#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+#     __compara_sintese_dec_oper(
+#         df,
+#         df_dec_oper,
+#         "vazao_vertida_m3s",
+#         estagio=1,
+#         cenario=1,
+#         codigo_usina=[1],
+#         patamar=[0],
+#     )
+#     __valida_limites(df)
+#     __valida_metadata(synthesis_str, df_meta, False)
 
 
 # def test_sintese_evert_uhe(test_settings):
@@ -1392,23 +1396,24 @@ def test_sintese_qver_uhe(test_settings):
 #     __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_gter_ute(test_settings):
-#     synthesis_str = "GTER_UTE"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsit.read(
-#         join(DECK_TEST_DIR, "dec_oper_usit.csv")
-#     ).tabela
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "geracao_MW",
-#         estagio=1,
-#         cenario=1,
-#         codigo_usina=[1],
-#         patamar=[0],
-#     )
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_gter_ute(test_settings):
+    synthesis_str = "GTER_UTE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsit.read(
+        join(DECK_TEST_DIR, "dec_oper_usit.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "geracao_MW",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
 # def test_sintese_cter_ute(test_settings):
@@ -1430,21 +1435,22 @@ def test_sintese_qver_uhe(test_settings):
 #     __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_int_sbp(test_settings):
-#     synthesis_str = "INT_SBP"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperInterc.read(
-#         join(DECK_TEST_DIR, "dec_oper_interc.csv")
-#     ).tabela
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "intercambio_origem_MW",
-#         estagio=1,
-#         cenario=1,
-#         codigo_submercado_de=[1],
-#         codigo_submercado_para=[3],
-#         patamar=[0],
-#     )
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_int_sbp(test_settings):
+    synthesis_str = "INT_SBP"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperInterc.read(
+        join(DECK_TEST_DIR, "dec_oper_interc.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "intercambio_origem_MW",
+        estagio=1,
+        cenario=1,
+        codigo_submercado_de=[1],
+        codigo_submercado_para=[3],
+        patamar=[0],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)

@@ -14,6 +14,8 @@ from app.internal.constants import (
     SCENARIO_COL,
     SUBMARKET_CODE_COL,
     IDENTIFICATION_COLUMNS,
+    EXCHANGE_SOURCE_CODE_COL,
+    EXCHANGE_TARGET_CODE_COL,
 )
 from app.utils.operations import fast_group_df
 from app.model.operation.operationsynthesis import OperationSynthesis
@@ -79,6 +81,13 @@ class OperationVariableBounds:
         ): lambda df, uow, _: OperationVariableBounds._thermal_generation_bounds(
             df, uow, entity_column=None
         ),
+        OperationSynthesis(
+            Variable.INTERCAMBIO,
+            SpatialResolution.PAR_SUBMERCADOS,
+        ): lambda df, uow, _: OperationVariableBounds._exchange_bounds(
+            df,
+            uow,
+        ),
     }
 
     @classmethod
@@ -110,7 +119,7 @@ class OperationVariableBounds:
     ) -> pd.DataFrame:
         """
         Adiciona ao DataFrame da síntese os limites inferior e superior
-        para a variávei de Vazão Vertida (QVER) para cada UHE.
+        para a variável de Vazão Vertida (QVER) para cada UHE.
         """
 
         df[VALUE_COL] = np.round(df[VALUE_COL], 2)
@@ -129,7 +138,7 @@ class OperationVariableBounds:
     ) -> pd.DataFrame:
         """
         Adiciona ao DataFrame da síntese os limites inferior e superior
-        para a variávei de Vazão Defluente (QDEF) para cada UHE.
+        para a variável de Vazão Defluente (QDEF) para cada UHE.
         """
 
         df[VALUE_COL] = np.round(df[VALUE_COL], 2)
@@ -148,7 +157,7 @@ class OperationVariableBounds:
     ) -> pd.DataFrame:
         """
         Adiciona ao DataFrame da síntese os limites inferior e superior
-        para a variávei de Vazão Turbinada (QTUR) para cada UHE.
+        para a variável de Vazão Turbinada (QTUR) para cada UHE.
         """
 
         df[VALUE_COL] = np.round(df[VALUE_COL], 2)
@@ -208,6 +217,10 @@ class OperationVariableBounds:
         uow: AbstractUnitOfWork,
         entity_column: Optional[str],
     ) -> pd.DataFrame:
+        """
+        Adiciona ao DataFrame da síntese os limites inferior e superior
+        para a variável de Geração Térmica (GTER) para cada UHE, submercado e SIN.
+        """
         df[VALUE_COL] = np.round(df[VALUE_COL], 2)
         df_bounds = Deck.thermal_generation_bounds(uow)
         if entity_column != THERMAL_CODE_COL:
@@ -228,6 +241,32 @@ class OperationVariableBounds:
         df[UPPER_BOUND_COL] = df[UPPER_BOUND_COL].fillna(float("inf"))
         df.drop(
             [c for c in df.columns if "_bounds" in c], axis=1, inplace=True
+        )
+        return df
+
+    @classmethod
+    def _exchange_bounds(
+        cls,
+        df: pd.DataFrame,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        """
+        Adiciona ao DataFrame da síntese os limites inferior e superior
+        para a variável de Intercâmbio (INT) para cada par de submercados.
+        """
+        df[VALUE_COL] = np.round(df[VALUE_COL], 2)
+        df_bounds = Deck.exchange_bounds(uow)
+        df = pd.merge(
+            df,
+            df_bounds,
+            how="left",
+            on=[
+                STAGE_COL,
+                SCENARIO_COL,
+                BLOCK_COL,
+                EXCHANGE_SOURCE_CODE_COL,
+                EXCHANGE_TARGET_CODE_COL,
+            ],
         )
         return df
 

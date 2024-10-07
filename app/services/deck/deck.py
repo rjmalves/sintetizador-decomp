@@ -39,6 +39,8 @@ from app.internal.constants import (
     UNIT_COL,
     UPPER_BOUND_COL,
     VALUE_COL,
+    EXCHANGE_SOURCE_CODE_COL,
+    EXCHANGE_TARGET_NAME_COL,
 )
 from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
 from app.services.unitofwork import AbstractUnitOfWork
@@ -1585,6 +1587,37 @@ class Deck:
                     BLOCK_COL,
                     THERMAL_CODE_COL,
                     SUBMARKET_CODE_COL,
+                    LOWER_BOUND_COL,
+                    UPPER_BOUND_COL,
+                ]
+            ]
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def exchange_bounds(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+
+        name = "exchange_bounds"
+        exchange_bounds = cls.DECK_DATA_CACHING.get(name)
+        if exchange_bounds is None:
+            df = cls.dec_oper_interc(uow)
+            df.rename(
+                {
+                    "capacidade_MW": UPPER_BOUND_COL,
+                },
+                axis=1,
+                inplace=True,
+            )
+            df[LOWER_BOUND_COL] = 0
+            cls.DECK_DATA_CACHING[name] = df[
+                [
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                    EXCHANGE_SOURCE_CODE_COL,
+                    EXCHANGE_TARGET_CODE_COL,
                     LOWER_BOUND_COL,
                     UPPER_BOUND_COL,
                 ]
