@@ -106,7 +106,11 @@ def _calc_mean_std(df: pd.DataFrame, probs: pd.DataFrame) -> pd.DataFrame:
             for c in grouping_columns
             if c not in OPERATION_SYNTHESIS_COMMON_COLUMNS
         ]
-        num_entities = df.drop_duplicates(subset=entity_columns).shape[0]
+        if len(entity_columns) > 0:
+            num_entities = df.drop_duplicates(subset=entity_columns).shape[0]
+        else:  # se é sintese do SIN
+            num_entities = 1
+
         num_blocks = len(df[BLOCK_COL].unique().tolist())
         probs_values = probs[VALUE_COL].to_numpy()
         probs_column = np.repeat(probs_values, num_blocks)
