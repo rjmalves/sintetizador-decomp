@@ -1005,107 +1005,107 @@ def test_sintese_gter_sin(test_settings):
 #     __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_qinc_uhe(test_settings):
-#     synthesis_str = "QINC_UHE"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsih.read(
-#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
-#     ).tabela
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "vazao_incremental_m3s",
-#         estagio=1,
-#         cenario=1,
-#         codigo_usina=[1],
-#         patamar=[0],
-#     )
-#     __valida_limites(df)
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_qinc_uhe(test_settings):
+    synthesis_str = "QINC_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_incremental_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_qafl_uhe(test_settings):
-#     synthesis_str = "QAFL_UHE"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsih.read(
-#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
-#     ).tabela
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "vazao_afluente_m3s",
-#         estagio=1,
-#         cenario=1,
-#         codigo_usina=[1],
-#         patamar=[0],
-#     )
-#     __valida_limites(df)
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_qafl_uhe(test_settings):
+    synthesis_str = "QAFL_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_afluente_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_qdef_uhe(test_settings):
-#     synthesis_str = "QDEF_UHE"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsih.read(
-#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
-#     ).tabela
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "vazao_defluente_m3s",
-#         estagio=1,
-#         cenario=1,
-#         codigo_usina=[1],
-#         patamar=[0],
-#     )
-#     # TODO - A vazão defluente impressa no arquivo dec_oper_usih até a versão 31.27
-#     # considera erroneamente a vazão desviada. Retornar com o teste quando a impressão
-#     # for corrigida
-#     # __valida_limites(df)
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_qdef_uhe(test_settings):
+    synthesis_str = "QDEF_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_defluente_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    # TODO - A vazão defluente impressa no arquivo dec_oper_usih até a versão 31.27
+    # considera erroneamente a vazão desviada. Retornar com o teste quando a impressão
+    # for corrigida
+    # __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_qtur_uhe(test_settings):
-#     synthesis_str = "QTUR_UHE"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsih.read(
-#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
-#     ).tabela
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "vazao_turbinada_m3s",
-#         estagio=1,
-#         cenario=1,
-#         codigo_usina=[1],
-#         patamar=[0],
-#     )
-#     __valida_limites(df)
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_qtur_uhe(test_settings):
+    synthesis_str = "QTUR_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_turbinada_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_qver_uhe(test_settings):
-#     synthesis_str = "QVER_UHE"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsih.read(
-#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
-#     ).tabela
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "vazao_vertida_m3s",
-#         estagio=1,
-#         cenario=1,
-#         codigo_usina=[1],
-#         patamar=[0],
-#     )
-#     __valida_limites(df)
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_qver_uhe(test_settings):
+    synthesis_str = "QVER_UHE"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "vazao_vertida_m3s",
+        estagio=1,
+        cenario=1,
+        codigo_usina=[1],
+        patamar=[0],
+    )
+    __valida_limites(df)
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
 # def test_sintese_evert_uhe(test_settings):

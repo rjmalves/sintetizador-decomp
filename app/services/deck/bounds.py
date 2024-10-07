@@ -293,6 +293,9 @@ class OperationVariableBounds:
 
         """
         if cls.is_bounded(s):
-            return cls.MAPPINGS[s](df, uow, ordered_synthesis_entities)
+            try:
+                return cls.MAPPINGS[s](df, uow, ordered_synthesis_entities)
+            except:
+                return cls._unbounded(df)
         else:
             return cls._unbounded(df)
