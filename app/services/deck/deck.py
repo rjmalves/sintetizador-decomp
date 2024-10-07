@@ -1527,11 +1527,11 @@ class Deck:
                 how="left",
                 on=[HYDRO_CODE_COL, STAGE_COL],
             )
-            # TODO: trocar arquivo de analise pois o avl_turb_max nao contem dados para o ultimo estagio
-            df.loc[
-                df["vazao_turbinada_maxima_pl_m3s"].isna(),
-                "vazao_turbinada_maxima_pl_m3s",
-            ] = float("inf")
+            # O arquivo avl_turb_max erroneamente nao
+            # contem dados para o ultimo estagio. Quando a impressao
+            df["vazao_turbinada_maxima_pl_m3s"] = df[
+                "vazao_turbinada_maxima_pl_m3s"
+            ].fillna(float("inf"))
             df[UPPER_BOUND_COL] = df["vazao_turbinada_maxima_pl_m3s"]
             df.drop(columns=["vazao_turbinada_maxima_pl_m3s"], inplace=True)
             return df
