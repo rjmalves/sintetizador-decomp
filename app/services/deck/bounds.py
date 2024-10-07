@@ -1,4 +1,4 @@
-from typing import Callable, Dict, TypeVar
+from typing import Callable, Dict, TypeVar, Optional, List
 
 import numpy as np
 import pandas as pd  # type: ignore
@@ -6,11 +6,16 @@ import pandas as pd  # type: ignore
 from app.internal.constants import (
     BLOCK_COL,
     HYDRO_CODE_COL,
+    THERMAL_CODE_COL,
     LOWER_BOUND_COL,
     STAGE_COL,
     UPPER_BOUND_COL,
     VALUE_COL,
+    SCENARIO_COL,
+    SUBMARKET_CODE_COL,
+    IDENTIFICATION_COLUMNS,
 )
+from app.utils.operations import fast_group_df
 from app.model.operation.operationsynthesis import OperationSynthesis
 from app.model.operation.spatialresolution import SpatialResolution
 from app.model.operation.variable import Variable
@@ -56,7 +61,48 @@ class OperationVariableBounds:
         ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
             df, uow
         ),
+        OperationSynthesis(
+            Variable.GERACAO_TERMICA,
+            SpatialResolution.USINA_TERMELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._thermal_generation_bounds(
+            df, uow, entity_column=THERMAL_CODE_COL
+        ),
+        OperationSynthesis(
+            Variable.GERACAO_TERMICA,
+            SpatialResolution.SUBMERCADO,
+        ): lambda df, uow, _: OperationVariableBounds._thermal_generation_bounds(
+            df, uow, entity_column=SUBMARKET_CODE_COL
+        ),
+        OperationSynthesis(
+            Variable.GERACAO_TERMICA,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._thermal_generation_bounds(
+            df, uow, entity_column=None
+        ),
     }
+
+    @classmethod
+    def _unbounded(cls, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Adiciona os valores padrão para variáveis não limitadas.
+        """
+        df[LOWER_BOUND_COL] = -float("inf")
+        df[UPPER_BOUND_COL] = float("inf")
+        return df
+
+    @classmethod
+    def _lower_bounded_bounds(
+        cls, df: pd.DataFrame, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        """
+        Adiciona ao DataFrame da síntese os limites inferior zero e superior
+        infinito.
+        """
+        df[VALUE_COL] = np.round(df[VALUE_COL], 2)
+        df[LOWER_BOUND_COL] = 0.0
+        df[UPPER_BOUND_COL] = float("inf")
+
+        return df
 
     @classmethod
     def _spilled_flow_bounds(
@@ -116,26 +162,73 @@ class OperationVariableBounds:
         return df
 
     @classmethod
-    def _lower_bounded_bounds(
-        cls, df: pd.DataFrame, uow: AbstractUnitOfWork
+    def _group_thermal_bounds_df(
+        cls,
+        df: pd.DataFrame,
+        grouping_column: Optional[str] = None,
+        extract_columns: Optional[list[str]] = [VALUE_COL],
     ) -> pd.DataFrame:
         """
-        Adiciona ao DataFrame da síntese os limites inferior zero e superior
-        infinito.
+        Realiza a agregação de variáveis fornecidas a nível de usina
+        para uma síntese de SBMs ou para o SIN. A agregação
+        tem como requisito que as variáveis fornecidas sejam em unidades
+        cuja agregação seja possível apenas pela soma.
         """
-        df[VALUE_COL] = np.round(df[VALUE_COL], 2)
-        df[LOWER_BOUND_COL] = 0.0
-        df[UPPER_BOUND_COL] = float("inf")
-
-        return df
+        valid_grouping_columns = [
+            THERMAL_CODE_COL,
+            SUBMARKET_CODE_COL,
+        ]
+        grouping_column_map: Dict[str, List[str]] = {
+            THERMAL_CODE_COL: [
+                THERMAL_CODE_COL,
+                SUBMARKET_CODE_COL,
+            ],
+            SUBMARKET_CODE_COL: [SUBMARKET_CODE_COL],
+        }
+        mapped_columns = (
+            grouping_column_map[grouping_column] if grouping_column else []
+        )
+        grouping_columns = mapped_columns + [
+            c
+            for c in df.columns
+            if c in IDENTIFICATION_COLUMNS and c not in valid_grouping_columns
+        ]
+        grouped_df = fast_group_df(
+            df,
+            grouping_columns,
+            extract_columns,
+            operation="sum",
+        )
+        return grouped_df
 
     @classmethod
-    def _unbounded(cls, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Adiciona os valores padrão para variáveis não limitadas.
-        """
-        df[LOWER_BOUND_COL] = -float("inf")
-        df[UPPER_BOUND_COL] = float("inf")
+    def _thermal_generation_bounds(
+        cls,
+        df: pd.DataFrame,
+        uow: AbstractUnitOfWork,
+        entity_column: Optional[str],
+    ) -> pd.DataFrame:
+        df[VALUE_COL] = np.round(df[VALUE_COL], 2)
+        df_bounds = Deck.thermal_generation_bounds(uow)
+        if entity_column != THERMAL_CODE_COL:
+            df_bounds = cls._group_thermal_bounds_df(
+                df_bounds,
+                entity_column,
+                extract_columns=[LOWER_BOUND_COL, UPPER_BOUND_COL],
+            )
+        entity_column = [] if entity_column is None else [entity_column]
+        df = pd.merge(
+            df,
+            df_bounds,
+            how="left",
+            on=[STAGE_COL, SCENARIO_COL, BLOCK_COL] + entity_column,
+            suffixes=[None, "_bounds"],
+        )
+        df[LOWER_BOUND_COL] = df[LOWER_BOUND_COL].fillna(float(0))
+        df[UPPER_BOUND_COL] = df[UPPER_BOUND_COL].fillna(float("inf"))
+        df.drop(
+            [c for c in df.columns if "_bounds" in c], axis=1, inplace=True
+        )
         return df
 
     @classmethod

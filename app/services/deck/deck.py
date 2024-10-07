@@ -1559,3 +1559,34 @@ class Deck:
             cls.DECK_DATA_CACHING[name] = df
 
         return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def thermal_generation_bounds(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+
+        name = "thermal_generation_bounds"
+        thermal_generation_bounds = cls.DECK_DATA_CACHING.get(name)
+        if thermal_generation_bounds is None:
+            df = cls.dec_oper_usit(uow)
+            df.rename(
+                {
+                    "geracao_minima_MW": LOWER_BOUND_COL,
+                    "geracao_maxima_MW": UPPER_BOUND_COL,
+                },
+                axis=1,
+                inplace=True,
+            )
+            cls.DECK_DATA_CACHING[name] = df[
+                [
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                    THERMAL_CODE_COL,
+                    SUBMARKET_CODE_COL,
+                    LOWER_BOUND_COL,
+                    UPPER_BOUND_COL,
+                ]
+            ]
+        return cls.DECK_DATA_CACHING[name]
