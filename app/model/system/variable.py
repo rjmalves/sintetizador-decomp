@@ -5,6 +5,7 @@ class Variable(Enum):
     EST = "EST"
     PAT = "PAT"
     SBM = "SBM"
+    REE = "REE"
     UTE = "UTE"
     UHE = "UHE"
 
@@ -24,6 +25,7 @@ class Variable(Enum):
             "EST": "EST",
             "PAT": "PAT",
             "SBM": "SBM",
+            "REE": "REE",
             "UTE": "UTE",
             "UHE": "UHE",
         }
@@ -35,6 +37,7 @@ class Variable(Enum):
             "EST": "Estágios",
             "PAT": "Patamares",
             "SBM": "Submercados",
+            "REE": "Reservatórios Equivalentes",
             "UTE": "Usinas Termelétricas",
             "UHE": "Usinas Hidroelétricas",
         }

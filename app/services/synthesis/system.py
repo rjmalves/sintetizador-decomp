@@ -92,6 +92,7 @@ class SystemSynthetizer:
             Variable.EST: cls._resolve_EST,
             Variable.PAT: cls._resolve_PAT,
             Variable.SBM: cls._resolve_SBM,
+            Variable.REE: cls._resolve_REE,
             Variable.UTE: cls._resolve_UTE,
             Variable.UHE: cls._resolve_UHE,
         }
@@ -119,6 +120,16 @@ class SystemSynthetizer:
         df = Deck.submarkets(uow)
         if df is None:
             cls._log("Dados de submercados não encontrados", ERROR)
+            raise RuntimeError()
+        return df
+
+    @classmethod
+    def _resolve_REE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        df = Deck.eers(uow)
+        if df is None:
+            cls._log(
+                "Dados de reservatório equivalente não encontrados", ERROR
+            )
             raise RuntimeError()
         return df
 

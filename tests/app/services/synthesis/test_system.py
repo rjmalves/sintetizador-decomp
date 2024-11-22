@@ -102,6 +102,14 @@ def test_synthesis_sbm(test_settings):
     __validate_metadata(synthesis_str, df_meta)
 
 
+def test_synthesis_ree(test_settings):
+    synthesis_str = "REE"
+    df, df_meta = __synthetize_with_mock(synthesis_str)
+    assert df.at[0, EER_CODE_COL] == 1
+    assert df.at[0, EER_NAME_COL] == "SUDESTE"
+    __validate_metadata(synthesis_str, df_meta)
+
+
 def test_synthesis_ute(test_settings):
     synthesis_str = "UTE"
     df, df_meta = __synthetize_with_mock(synthesis_str)

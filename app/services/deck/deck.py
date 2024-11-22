@@ -645,14 +645,32 @@ class Deck:
         return mapping
 
     @classmethod
+    def eers(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "eers"
+        eers = cls.DECK_DATA_CACHING.get(name)
+        if eers is None:
+            eers = cls.hydro_eer_submarket_map(uow)
+            eers = (
+                (eers[[EER_CODE_COL, EER_NAME_COL]].drop_duplicates())
+                .sort_values(by=[EER_CODE_COL])
+                .reset_index(drop=True)
+            )
+            cls.DECK_DATA_CACHING[name] = eers
+        return eers
+
+    @classmethod
     def submarkets(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         name = "submarkets"
         submarkets = cls.DECK_DATA_CACHING.get(name)
         if submarkets is None:
             submarkets = cls.hydro_eer_submarket_map(uow)
             submarkets = (
-                submarkets[[SUBMARKET_CODE_COL, SUBMARKET_NAME_COL]]
-                .drop_duplicates()
+                (
+                    submarkets[
+                        [SUBMARKET_CODE_COL, SUBMARKET_NAME_COL]
+                    ].drop_duplicates()
+                )
+                .sort_values(by=[SUBMARKET_CODE_COL])
                 .reset_index(drop=True)
             )
             cls.DECK_DATA_CACHING[name] = submarkets
