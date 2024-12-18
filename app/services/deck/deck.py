@@ -1,42 +1,44 @@
-from idecomp.decomp import Dadger, Relato, InviabUnic, Hidr, Decomptim, Vazoes
-from idecomp.decomp.dec_oper_usih import DecOperUsih
-from idecomp.decomp.dec_oper_usit import DecOperUsit
-from idecomp.decomp.dec_oper_gnl import DecOperGnl
-from idecomp.decomp.dec_oper_ree import DecOperRee
-from idecomp.decomp.dec_oper_sist import DecOperSist
-from idecomp.decomp.dec_oper_interc import DecOperInterc
-from idecomp.decomp.dec_eco_discr import DecEcoDiscr
-from idecomp.decomp.modelos.dadger import DT
 import logging
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Type, TypeVar
+
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
-from typing import Any, Optional, TypeVar, Type, Dict, List
-from datetime import datetime, timedelta
-from app.services.unitofwork import AbstractUnitOfWork
-from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
+from idecomp.decomp import Dadger, Decomptim, Hidr, InviabUnic, Relato, Vazoes
+from idecomp.decomp.dec_eco_discr import DecEcoDiscr
+from idecomp.decomp.dec_oper_gnl import DecOperGnl
+from idecomp.decomp.dec_oper_interc import DecOperInterc
+from idecomp.decomp.dec_oper_ree import DecOperRee
+from idecomp.decomp.dec_oper_sist import DecOperSist
+from idecomp.decomp.dec_oper_usih import DecOperUsih
+from idecomp.decomp.dec_oper_usit import DecOperUsit
+from idecomp.decomp.modelos.dadger import DT
+
 from app.internal.constants import (
-    ITERATION_COL,
-    STAGE_COL,
-    SCENARIO_COL,
     BLOCK_COL,
     BLOCK_DURATION_COL,
-    START_DATE_COL,
-    END_DATE_COL,
-    RUNTIME_COL,
-    UNIT_COL,
-    SUBMARKET_NAME_COL,
-    SUBMARKET_CODE_COL,
     EER_CODE_COL,
-    HYDRO_CODE_COL,
-    THERMAL_CODE_COL,
+    EER_NAME_COL,
+    END_DATE_COL,
     EXCHANGE_SOURCE_CODE_COL,
     EXCHANGE_TARGET_CODE_COL,
-    IV_SUBMARKET_CODE,
-    VALUE_COL,
-    THERMAL_NAME_COL,
+    HYDRO_CODE_COL,
     HYDRO_NAME_COL,
-    EER_NAME_COL,
+    ITERATION_COL,
+    IV_SUBMARKET_CODE,
+    RUNTIME_COL,
+    SCENARIO_COL,
+    STAGE_COL,
+    START_DATE_COL,
+    SUBMARKET_CODE_COL,
+    SUBMARKET_NAME_COL,
+    THERMAL_CODE_COL,
+    THERMAL_NAME_COL,
+    UNIT_COL,
+    VALUE_COL,
 )
+from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
+from app.services.unitofwork import AbstractUnitOfWork
 
 
 class Deck:
@@ -252,9 +254,10 @@ class Deck:
                 df_stage[STAGE_COL] = s
                 dfs.append(df_stage)
             df_complete = pd.concat(dfs, ignore_index=True)
-            df_complete = df_complete.astype(
-                {"valor_esperado": np.float64, "desvio_padrao": np.float64}
-            )
+            df_complete = df_complete.astype({
+                "valor_esperado": np.float64,
+                "desvio_padrao": np.float64,
+            })
             df_complete = df_complete.groupby("parcela").sum()
             df_complete = df_complete.reset_index()
 
@@ -394,9 +397,7 @@ class Deck:
             df_infeas = pd.concat([df_iter, df_fs], ignore_index=True)
             infeasibilities_aux: list[Infeasibility] = []
             for _, linha in df_infeas.iterrows():
-                infeasibility = Infeasibility.factory(
-                    linha, cls._get_hidr(uow)
-                )
+                infeasibility = Infeasibility.factory(linha, cls._get_hidr(uow))
                 infeasibility_posprocess = (
                     cls._posprocess_infeasibilities_units(infeasibility, uow)
                 )
@@ -489,9 +490,7 @@ class Deck:
             df = cls.probabilities(uow)
             df = cls._expand_scenarios_in_df(df)
             factors_df = (
-                df.groupby(STAGE_COL, as_index=False)
-                .sum()
-                .set_index(STAGE_COL)
+                df.groupby(STAGE_COL, as_index=False).sum().set_index(STAGE_COL)
             )
             df[VALUE_COL] = df.apply(
                 lambda line: line[VALUE_COL]
@@ -867,9 +866,12 @@ class Deck:
                 df["geracao_pequenas_usinas_MW"] + df["geracao_eolica_MW"]
             )
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values(
-                [SUBMARKET_CODE_COL, STAGE_COL, SCENARIO_COL, BLOCK_COL]
-            ).reset_index(drop=True)
+            df = df.sort_values([
+                SUBMARKET_CODE_COL,
+                STAGE_COL,
+                SCENARIO_COL,
+                BLOCK_COL,
+            ]).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -893,9 +895,12 @@ class Deck:
             df = cls._add_dates_to_df(df, uow)
             df = cls._add_stages_durations_to_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values(
-                [EER_CODE_COL, STAGE_COL, SCENARIO_COL, BLOCK_COL]
-            ).reset_index(drop=True)
+            df = df.sort_values([
+                EER_CODE_COL,
+                STAGE_COL,
+                SCENARIO_COL,
+                BLOCK_COL,
+            ]).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -908,9 +913,7 @@ class Deck:
         num_blocks_with_average = len(cls.blocks(uow)) + 1
         num_tiles = df.shape[0] // (len(hydro_order) * num_blocks_with_average)
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[
-            hydro_order, SUBMARKET_CODE_COL
-        ].to_numpy()
+        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.tile(
             np.repeat(submarket_codes, num_blocks_with_average), num_tiles
@@ -942,9 +945,12 @@ class Deck:
             df = df.rename(columns={"duracao": BLOCK_DURATION_COL})
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values(
-                [HYDRO_CODE_COL, STAGE_COL, SCENARIO_COL, BLOCK_COL]
-            ).reset_index(drop=True)
+            df = df.sort_values([
+                HYDRO_CODE_COL,
+                STAGE_COL,
+                SCENARIO_COL,
+                BLOCK_COL,
+            ]).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -997,9 +1003,12 @@ class Deck:
             df = df.rename(columns={"duracao": BLOCK_DURATION_COL})
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values(
-                [THERMAL_CODE_COL, STAGE_COL, SCENARIO_COL, BLOCK_COL]
-            ).reset_index(drop=True)
+            df = df.sort_values([
+                THERMAL_CODE_COL,
+                STAGE_COL,
+                SCENARIO_COL,
+                BLOCK_COL,
+            ]).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1054,15 +1063,13 @@ class Deck:
             df = cls._add_block_durations_to_df(df, uow)
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values(
-                [
-                    EXCHANGE_SOURCE_CODE_COL,
-                    EXCHANGE_TARGET_CODE_COL,
-                    STAGE_COL,
-                    SCENARIO_COL,
-                    BLOCK_COL,
-                ]
-            ).reset_index(drop=True)
+            df = df.sort_values([
+                EXCHANGE_SOURCE_CODE_COL,
+                EXCHANGE_TARGET_CODE_COL,
+                STAGE_COL,
+                SCENARIO_COL,
+                BLOCK_COL,
+            ]).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1074,6 +1081,8 @@ class Deck:
         col: str,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
+        relato_df = relato_df.copy()
+        relato2_df = relato2_df.copy()
         # Merge stage data
         relato_stages = relato_df[STAGE_COL].unique().tolist()
         relato2_stages = relato2_df[STAGE_COL].unique().tolist()
@@ -1114,6 +1123,115 @@ class Deck:
         return df
 
     @classmethod
+    def _merge_relato_relato2_energy_balance_df_data(
+        cls,
+        relato_df: pd.DataFrame,
+        relato2_df: pd.DataFrame,
+        col: str,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        # Fix block names
+        relato_df.loc[relato_df["patamar"] == "Medio", "patamar"] = "0"
+        relato2_df.loc[relato2_df["patamar"] == "Medio", "patamar"] = "0"
+        relato_df["patamar"] = relato_df["patamar"].astype(int)
+        relato2_df["patamar"] = relato2_df["patamar"].astype(int)
+        relato_df = relato_df.sort_values(["estagio", "cenario", "patamar"])
+        relato2_df = relato2_df.sort_values(["estagio", "cenario", "patamar"])
+        # Merge stage data
+        relato_stages = relato_df[STAGE_COL].unique().tolist()
+        relato2_stages = relato2_df[STAGE_COL].unique().tolist()
+        stages = list(set(relato_stages + relato2_stages))
+        # Merge scenario data
+        relato_scenarios = relato_df[SCENARIO_COL].unique().tolist()
+        relato2_scenarios = relato2_df[SCENARIO_COL].unique().tolist()
+        scenarios = list(set(relato_scenarios + relato2_scenarios))
+        # Create empty table
+        submarkets = relato_df["nome_submercado"].unique().tolist()
+        start_dates = [Deck.stages_start_date(uow)[i - 1] for i in stages]
+        num_blocks = len(Deck.blocks(uow)) + 1
+        num_submarkets = len(submarkets)
+        end_dates = [Deck.stages_end_date(uow)[i - 1] for i in stages]
+        empty_table = np.zeros((
+            len(start_dates) * num_blocks * num_submarkets,
+            len(scenarios),
+        ))
+        df = pd.DataFrame(empty_table, columns=scenarios)
+        # Fill table
+        df[STAGE_COL] = np.repeat(stages, num_blocks * num_submarkets)
+        df[BLOCK_COL] = np.tile(
+            np.repeat(list(range(num_blocks)), num_submarkets),
+            df.shape[0] // (num_blocks * num_submarkets),
+        )
+        df[SUBMARKET_NAME_COL] = np.tile(
+            submarkets, df.shape[0] // num_submarkets
+        )
+        df[START_DATE_COL] = np.repeat(start_dates, num_blocks * num_submarkets)
+        df[END_DATE_COL] = np.repeat(end_dates, num_blocks * num_submarkets)
+        for e in relato_stages:
+            df.loc[
+                (df[STAGE_COL] == e),
+                scenarios,
+            ] = (
+                relato_df.loc[relato_df[STAGE_COL] == e, col]
+                .to_numpy()[:, np.newaxis]
+                .repeat(len(scenarios), axis=1)
+            )
+        for e in relato2_stages:
+            df.loc[
+                df[STAGE_COL] == e,
+                scenarios,
+            ] = (
+                relato2_df.loc[relato2_df[STAGE_COL] == e, col]
+                .to_numpy()
+                .reshape(-1, len(scenarios))
+            )
+        df = df[
+            [
+                STAGE_COL,
+                SUBMARKET_NAME_COL,
+                BLOCK_COL,
+                START_DATE_COL,
+                END_DATE_COL,
+            ]
+            + scenarios
+        ]
+        df = pd.melt(
+            df,
+            id_vars=[
+                STAGE_COL,
+                SUBMARKET_NAME_COL,
+                START_DATE_COL,
+                END_DATE_COL,
+                BLOCK_COL,
+            ],
+            var_name=SCENARIO_COL,
+            value_name=VALUE_COL,
+        )
+        df[SCENARIO_COL] = df[SCENARIO_COL].astype(int)
+        df = cls._add_block_durations_to_df(df, uow)
+        submarket_df = Deck.submarkets(uow)
+        df[SUBMARKET_CODE_COL] = df.apply(
+            lambda line: submarket_df.loc[
+                submarket_df[SUBMARKET_NAME_COL] == line[SUBMARKET_NAME_COL],
+                SUBMARKET_CODE_COL,
+            ].iloc[0],
+            axis=1,
+        )
+        df = df.drop(columns=[SUBMARKET_NAME_COL])
+        energy_balance_cols = [
+            SUBMARKET_CODE_COL,
+            STAGE_COL,
+            START_DATE_COL,
+            END_DATE_COL,
+            SCENARIO_COL,
+            BLOCK_COL,
+            BLOCK_DURATION_COL,
+            VALUE_COL,
+        ]
+        df = df[energy_balance_cols]
+        return df
+
+    @classmethod
     def operation_report_data(
         cls, col: str, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
@@ -1132,6 +1250,27 @@ class Deck:
         )
 
     @classmethod
+    def energy_balance_report_data(
+        cls, col: str, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        relato_df = cls._validate_data(
+            cls.relato(uow).balanco_energetico,
+            pd.DataFrame,
+            "balanço energético do relato",
+        )
+        relato2_df = cls._validate_data(
+            cls.relato2(uow).balanco_energetico,
+            pd.DataFrame,
+            "balanço energético do relato2",
+        )
+        # Fix hydro gen variable
+        relato_df["geracao_hidraulica"] += relato_df["geracao_itaipu_60hz"]
+        relato2_df["geracao_hidraulica"] += relato2_df["geracao_itaipu_60hz"]
+        return cls._merge_relato_relato2_energy_balance_df_data(
+            relato_df, relato2_df, col, uow
+        )
+
+    @classmethod
     def _add_eer_sbm_to_expanded_df(
         cls, df: pd.DataFrame, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
@@ -1139,9 +1278,7 @@ class Deck:
         hydro_order = df[HYDRO_CODE_COL].unique().tolist()
         num_repeats = df.shape[0] // (len(hydro_order))
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[
-            hydro_order, SUBMARKET_CODE_COL
-        ].to_numpy()
+        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.repeat(submarket_codes, num_repeats)
         df[EER_CODE_COL] = np.repeat(eer_codes, num_repeats)
@@ -1172,6 +1309,48 @@ class Deck:
                 col,
                 uow,
             )
+            df[HYDRO_CODE_COL] = hydro
+            dfs.append(df)
+        df = pd.concat(dfs, ignore_index=True)
+        df = cls._add_eer_sbm_to_expanded_df(df, uow)
+        return df
+
+    @classmethod
+    def hydro_generation_report_data(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        relato_df = cls._validate_data(
+            cls.relato(uow).relatorio_operacao_uhe,
+            pd.DataFrame,
+            "relatório da operação das UHE do relato",
+        )
+        relato2_df = cls._validate_data(
+            cls.relato2(uow).relatorio_operacao_uhe,
+            pd.DataFrame,
+            "relatório da operação das UHE do relato2",
+        )
+        relato_df = relato_df.loc[~pd.isna(relato_df["FPCGC"])]
+        relato2_df = relato2_df.loc[~pd.isna(relato2_df["FPCGC"])]
+        hydros = relato_df[HYDRO_CODE_COL].unique().tolist()
+        dfs: List[pd.DataFrame] = []
+        col_block_mapping = {
+            "geracao_media": 0,
+            "geracao_patamar_1": 1,
+            "geracao_patamar_2": 2,
+            "geracao_patamar_3": 3,
+        }
+        for hydro in hydros:
+            hydro_dfs = []
+            for col, block in col_block_mapping.items():
+                df = cls._merge_relato_relato2_df_data(
+                    relato_df.loc[relato_df[HYDRO_CODE_COL] == hydro],
+                    relato2_df.loc[relato2_df[HYDRO_CODE_COL] == hydro],
+                    col,
+                    uow,
+                )
+                df[BLOCK_COL] = block
+                hydro_dfs.append(df)
+            df = pd.concat(hydro_dfs, ignore_index=True)
             df[HYDRO_CODE_COL] = hydro
             dfs.append(df)
         df = pd.concat(dfs, ignore_index=True)
