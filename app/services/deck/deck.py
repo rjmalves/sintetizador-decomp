@@ -1294,11 +1294,11 @@ class Deck:
             pd.DataFrame,
             "relatório da operação das UHE do relato",
         )
-        relato2_df = cls._validate_data(
-            cls.relato2(uow).relatorio_operacao_uhe,
-            pd.DataFrame,
-            "relatório da operação das UHE do relato2",
-        )
+        relato2_df = cls.relato2(uow).relatorio_operacao_uhe
+        if relato2_df is None:
+            relato2_df = pd.DataFrame(columns=relato_df.columns)
+            relato2_df = relato2_df.astype(relato_df.dtypes)
+
         relato_df = relato_df.loc[~pd.isna(relato_df["FPCGC"])]
         relato2_df = relato2_df.loc[~pd.isna(relato2_df["FPCGC"])]
         hydros = relato_df[HYDRO_CODE_COL].unique().tolist()
