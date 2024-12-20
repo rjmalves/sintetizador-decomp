@@ -1260,9 +1260,8 @@ class Deck:
         )
         relato2_df = cls.relato2(uow).balanco_energetico
         if relato2_df is None:
-            relato2_df = pd.DataFrame(
-                columns=relato_df.columns, dtype=relato_df.dtypes
-            )
+            relato2_df = pd.DataFrame(columns=relato_df.columns)
+            relato2_df = relato2_df.astype(relato_df.dtypes)
 
         # Fix hydro gen variable
         relato_df["geracao_hidraulica"] += relato_df["geracao_itaipu_60hz"]
