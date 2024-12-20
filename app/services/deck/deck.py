@@ -1126,16 +1126,16 @@ class Deck:
     def _merge_relato_relato2_energy_balance_df_data(
         cls,
         relato_df: pd.DataFrame,
-        relato2_df: pd.DataFrame,
+        relato2_df: pd.DataFrame | None,
         col: str,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
         # Fix block names
         relato_df.loc[relato_df["patamar"] == "Medio", "patamar"] = "0"
-        relato2_df.loc[relato2_df["patamar"] == "Medio", "patamar"] = "0"
         relato_df["patamar"] = relato_df["patamar"].astype(int)
-        relato2_df["patamar"] = relato2_df["patamar"].astype(int)
         relato_df = relato_df.sort_values(["estagio", "cenario", "patamar"])
+        relato2_df.loc[relato2_df["patamar"] == "Medio", "patamar"] = "0"
+        relato2_df["patamar"] = relato2_df["patamar"].astype(int)
         relato2_df = relato2_df.sort_values(["estagio", "cenario", "patamar"])
         # Merge stage data
         relato_stages = relato_df[STAGE_COL].unique().tolist()
@@ -1258,14 +1258,19 @@ class Deck:
             pd.DataFrame,
             "balanço energético do relato",
         )
-        relato2_df = cls._validate_data(
-            cls.relato2(uow).balanco_energetico,
-            pd.DataFrame,
-            "balanço energético do relato2",
-        )
         # Fix hydro gen variable
         relato_df["geracao_hidraulica"] += relato_df["geracao_itaipu_60hz"]
-        relato2_df["geracao_hidraulica"] += relato2_df["geracao_itaipu_60hz"]
+
+        relato2_df = cls.relato2(uow).balanco_energetico
+        if relato2_df is not None:
+            # Fix hydro gen variable
+            relato2_df["geracao_hidraulica"] += relato2_df[
+                "geracao_itaipu_60hz"
+            ]
+            relato2_df = pd.DataFrame(
+                columns=relato_df.columns, dtype=relato_df.dtypes
+            )
+
         return cls._merge_relato_relato2_energy_balance_df_data(
             relato_df, relato2_df, col, uow
         )
