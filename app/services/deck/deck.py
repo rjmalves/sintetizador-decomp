@@ -1258,18 +1258,15 @@ class Deck:
             pd.DataFrame,
             "balanço energético do relato",
         )
-        # Fix hydro gen variable
-        relato_df["geracao_hidraulica"] += relato_df["geracao_itaipu_60hz"]
-
         relato2_df = cls.relato2(uow).balanco_energetico
-        if relato2_df is not None:
-            # Fix hydro gen variable
-            relato2_df["geracao_hidraulica"] += relato2_df[
-                "geracao_itaipu_60hz"
-            ]
+        if relato2_df is None:
             relato2_df = pd.DataFrame(
                 columns=relato_df.columns, dtype=relato_df.dtypes
             )
+
+        # Fix hydro gen variable
+        relato_df["geracao_hidraulica"] += relato_df["geracao_itaipu_60hz"]
+        relato2_df["geracao_hidraulica"] += relato2_df["geracao_itaipu_60hz"]
 
         return cls._merge_relato_relato2_energy_balance_df_data(
             relato_df, relato2_df, col, uow
