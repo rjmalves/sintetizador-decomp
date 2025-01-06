@@ -662,16 +662,13 @@ class Deck:
         name = "submarkets"
         submarkets = cls.DECK_DATA_CACHING.get(name)
         if submarkets is None:
-            submarkets = cls.hydro_eer_submarket_map(uow)
-            submarkets = (
-                (
-                    submarkets[
-                        [SUBMARKET_CODE_COL, SUBMARKET_NAME_COL]
-                    ].drop_duplicates()
-                )
-                .sort_values(by=[SUBMARKET_CODE_COL])
-                .reset_index(drop=True)
+            dadger = cls.dadger(uow)
+            submarkets = dadger.sb(df=True)
+            submarkets = submarkets.rename(
+                columns={"nome_submercado": SUBMARKET_NAME_COL}
             )
+            submarkets.loc[submarkets.shape[0], :] = [IV_SUBMARKET_CODE, "IV"]
+            submarkets = submarkets.astype({SUBMARKET_CODE_COL: int})
             cls.DECK_DATA_CACHING[name] = submarkets
         return submarkets
 
