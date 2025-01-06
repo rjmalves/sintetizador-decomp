@@ -808,6 +808,7 @@ class OperationSynthetizer:
                 Variable.MERCADO_LIQUIDO,
                 Variable.DEFICIT,
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+                Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
                 Variable.GERACAO_HIDRAULICA,
                 Variable.GERACAO_TERMICA,
                 Variable.GERACAO_USINAS_NAO_SIMULADAS,
