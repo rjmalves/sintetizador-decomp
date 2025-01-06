@@ -158,6 +158,14 @@ class OperationSynthetizer:
                 uow, "geracao_nao_simuladas_MW"
             ),
             (
+                Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ): lambda uow: cls._resolve_ena_coupling_eer(uow),
+            (
+                Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+                SpatialResolution.SUBMERCADO,
+            ): lambda uow: cls._resolve_ena_coupling_sbm(uow),
+            (
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
             ): lambda uow: cls._resolve_dec_oper_ree(
@@ -335,6 +343,24 @@ class OperationSynthetizer:
         ):
             df = Deck.dec_oper_ree(uow)
             return cls._post_resolve_file(df, col)
+
+    @classmethod
+    def _resolve_ena_coupling_eer(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados de ENA do relato",
+            logger=cls.logger,
+        ):
+            df = Deck.eer_afluent_energy(uow)
+            return df
+
+    @classmethod
+    def _resolve_ena_coupling_sbm(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados de ENA do relato",
+            logger=cls.logger,
+        ):
+            df = Deck.sbm_afluent_energy(uow)
+            return df
 
     @classmethod
     def _resolve_dec_oper_usih(

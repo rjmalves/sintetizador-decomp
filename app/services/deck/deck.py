@@ -1162,7 +1162,6 @@ class Deck:
         df[BLOCK_COL] = 0
         df[SCENARIO_COL] = df[SCENARIO_COL].astype(int)
         df = cls._add_stages_durations_to_df(df, uow)
-        print(df)
         return df
 
     @classmethod
@@ -1312,6 +1311,102 @@ class Deck:
 
         return cls._merge_relato_relato2_energy_balance_df_data(
             relato_df, relato2_df, col, uow
+        )
+
+    @classmethod
+    def _afluent_energy_for_coupling(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        name = "afluent_energy_for_coupling"
+        df = cls.DECK_DATA_CACHING.get(name)
+        if df is None:
+            df = cls._validate_data(
+                cls.relato(uow).ena_acoplamento_ree,
+                pd.DataFrame,
+                "ENA para acoplamento do relato",
+            )
+            df = df.rename(
+                columns={
+                    "nome_submercado": SUBMARKET_NAME_COL,
+                    "nome_ree": EER_NAME_COL,
+                }
+            )
+            df = df.melt(
+                id_vars=[
+                    SCENARIO_COL,
+                    EER_CODE_COL,
+                    EER_NAME_COL,
+                    SUBMARKET_NAME_COL,
+                ],
+                var_name=STAGE_COL,
+                value_name=VALUE_COL,
+            )
+            df[STAGE_COL] = df[STAGE_COL].apply(
+                lambda s: int(s.lstrip("estagio_"))
+            )
+            df[BLOCK_COL] = 0
+            df = cls._add_block_durations_to_df(df, uow)
+            start_dates = Deck.stages_start_date(uow)
+            end_dates = Deck.stages_end_date(uow)
+            df[START_DATE_COL] = df[STAGE_COL].apply(
+                lambda x: start_dates[x - 1]
+            )
+            df[END_DATE_COL] = df[STAGE_COL].apply(lambda x: end_dates[x - 1])
+
+            eer_sbm_df = cls.hydro_eer_submarket_map(uow)
+            eer_sbm_df = eer_sbm_df.drop_duplicates([
+                SUBMARKET_CODE_COL,
+                SUBMARKET_NAME_COL,
+            ])
+            sbm_name_map = {
+                line[SUBMARKET_NAME_COL]: line[SUBMARKET_CODE_COL]
+                for _, line in eer_sbm_df.iterrows()
+            }
+            df[SUBMARKET_CODE_COL] = df[SUBMARKET_NAME_COL].apply(
+                lambda x: sbm_name_map[x]
+            )
+            df = df.drop(columns=[SUBMARKET_NAME_COL, EER_NAME_COL])
+            df = df.sort_values([
+                EER_CODE_COL,
+                SUBMARKET_CODE_COL,
+                STAGE_COL,
+                SCENARIO_COL,
+            ])
+            df = df[
+                [
+                    EER_CODE_COL,
+                    SUBMARKET_CODE_COL,
+                    STAGE_COL,
+                    START_DATE_COL,
+                    END_DATE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                    BLOCK_DURATION_COL,
+                    VALUE_COL,
+                ]
+            ]
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
+    def eer_afluent_energy(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        return cls._afluent_energy_for_coupling(uow)
+
+    @classmethod
+    def sbm_afluent_energy(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        df = cls._afluent_energy_for_coupling(uow)
+        return (
+            df.groupby([
+                SUBMARKET_CODE_COL,
+                STAGE_COL,
+                SCENARIO_COL,
+                START_DATE_COL,
+                END_DATE_COL,
+                BLOCK_COL,
+                BLOCK_DURATION_COL,
+            ])
+            .sum()
+            .reset_index()
         )
 
     @classmethod

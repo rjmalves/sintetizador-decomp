@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from app.model.operation.variable import Variable
+from typing import Optional
+
 from app.model.operation.spatialresolution import SpatialResolution
 from app.model.operation.unit import Unit
-from typing import Optional
+from app.model.operation.variable import Variable
 
 
 @dataclass
@@ -11,12 +12,10 @@ class OperationSynthesis:
     spatial_resolution: SpatialResolution
 
     def __repr__(self) -> str:
-        return "_".join(
-            [
-                self.variable.value,
-                self.spatial_resolution.value,
-            ]
-        )
+        return "_".join([
+            self.variable.value,
+            self.spatial_resolution.value,
+        ])
 
     def __hash__(self) -> int:
         return hash(
@@ -27,12 +26,10 @@ class OperationSynthesis:
         if not isinstance(o, OperationSynthesis):
             return False
         else:
-            return all(
-                [
-                    self.variable == o.variable,
-                    self.spatial_resolution == o.spatial_resolution,
-                ]
-            )
+            return all([
+                self.variable == o.variable,
+                self.spatial_resolution == o.spatial_resolution,
+            ])
 
     @classmethod
     def factory(cls, synthesis: str) -> Optional["OperationSynthesis"]:
@@ -70,8 +67,12 @@ SUPPORTED_SYNTHESIS: list[str] = [
     "GHID_SIN",
     "GUNS_SBM",
     "GUNS_SIN",
+    "ENAA_REE",
     "ENAA_SBM",
     "ENAA_SIN",
+    "ENAC_REE",
+    "ENAC_SBM",
+    "ENAC_SIN",
     "MER_SBM",
     "MER_SIN",
     "MERL_SBM",
@@ -108,6 +109,7 @@ SUPPORTED_SYNTHESIS: list[str] = [
     "GTER_UTE",
     "CTER_UTE",
     "INT_SBP",
+    "INTL_SBP",
 ]
 
 SYNTHESIS_DEPENDENCIES: dict[OperationSynthesis, list[OperationSynthesis]] = {
@@ -188,6 +190,15 @@ SYNTHESIS_DEPENDENCIES: dict[OperationSynthesis, list[OperationSynthesis]] = {
     ): [
         OperationSynthesis(
             Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+            SpatialResolution.SUBMERCADO,
+        ),
+    ],
+    OperationSynthesis(
+        Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+        SpatialResolution.SISTEMA_INTERLIGADO,
+    ): [
+        OperationSynthesis(
+            Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
             SpatialResolution.SUBMERCADO,
         ),
     ],
@@ -427,6 +438,18 @@ UNITS: dict[OperationSynthesis, Unit] = {
         Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
         SpatialResolution.SISTEMA_INTERLIGADO,
     ): Unit.MWmes,
+    OperationSynthesis(
+        Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+        SpatialResolution.RESERVATORIO_EQUIVALENTE,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+        SpatialResolution.SUBMERCADO,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+        SpatialResolution.SISTEMA_INTERLIGADO,
+    ): Unit.MWmed,
     OperationSynthesis(
         Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
         SpatialResolution.RESERVATORIO_EQUIVALENTE,

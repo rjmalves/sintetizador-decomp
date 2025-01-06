@@ -8,6 +8,7 @@ class Variable(Enum):
     CUSTO_OPERACAO = "COP"
     CUSTO_FUTURO = "CFU"
     ENERGIA_NATURAL_AFLUENTE_ABSOLUTA = "ENAA"
+    ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO = "ENAC"
     ENERGIA_NATURAL_AFLUENTE_MLT = "ENAM"
     ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL = "EARMI"
     ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL = "EARPI"
@@ -59,6 +60,7 @@ class Variable(Enum):
             "COP": "COPER",
             "CFU": "CFU",
             "ENAA": "ENA",
+            "ENAC": "ENA Acoplamento",
             "ENAM": "ENA %MLT",
             "EARMI": "EAR Inicial",
             "EARPI": "EAR Percentual Inicial",
@@ -104,6 +106,7 @@ class Variable(Enum):
             "COP": "Custo de Operação",
             "CFU": "Custo Futuro",
             "ENAA": "Energia Natural Afluente Absoluta",
+            "ENAC": "Energia Natural Afluente para Acoplamento",
             "ENAM": "Energia Natural Afluente Percentual MLT",
             "EARMI": "Energia Armazenada Absoluta Inicial",
             "EARPI": "Energia Armazenada Percentual Inicial",
