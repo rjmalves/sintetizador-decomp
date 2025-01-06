@@ -254,6 +254,24 @@ class OperationSynthetizer:
                 SpatialResolution.USINA_HIDROELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usih(uow, "vazao_vertida_m3s"),
             (
+                Variable.VAZAO_DESVIADA,
+                SpatialResolution.USINA_HIDROELETRICA,
+            ): lambda uow: cls._resolve_dec_oper_usih(
+                uow, "vazao_desviada_m3s"
+            ),
+            (
+                Variable.VAZAO_RETIRADA,
+                SpatialResolution.USINA_HIDROELETRICA,
+            ): lambda uow: cls._resolve_dec_oper_usih(
+                uow, "vazao_retirada_m3s"
+            ),
+            (
+                Variable.VAZAO_EVAPORADA,
+                SpatialResolution.USINA_HIDROELETRICA,
+            ): lambda uow: cls._resolve_dec_oper_usih(
+                uow, "vazao_evaporada_m3s"
+            ),
+            (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.USINA_TERMELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usit(uow, "geracao_MW"),

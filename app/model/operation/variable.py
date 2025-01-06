@@ -26,6 +26,9 @@ class Variable(Enum):
     VAZAO_INCREMENTAL = "QINC"
     VAZAO_TURBINADA = "QTUR"
     VAZAO_VERTIDA = "QVER"
+    VAZAO_DESVIADA = "QDES"
+    VAZAO_RETIRADA = "QRET"
+    VAZAO_EVAPORADA = "QEVP"
     VELOCIDADE_VENTO = "VENTO"
     VOLUME_ARMAZENADO_ABSOLUTO_INICIAL = "VARMI"
     VOLUME_ARMAZENADO_PERCENTUAL_INICIAL = "VARPI"
@@ -78,6 +81,7 @@ class Variable(Enum):
             "QVER": "Vazão VER",
             "QRET": "Vazão RET",
             "QDES": "Vazão DES",
+            "QEVP": "Vazão EVP",
             "VENTO": "Vel. Vento",
             "VARMI": "VAR Inicial",
             "VARPI": "VAR Percentual Inicial",
@@ -122,6 +126,7 @@ class Variable(Enum):
             "QVER": "Vazão Vertida",
             "QRET": "Vazão Retirada",
             "QDES": "Vazão Desviada",
+            "QEVP": "Vazão Evaporada",
             "VENTO": "Velocidade do Vento",
             "VARMI": "Volume Armazenado Absoluto Inicial",
             "VARPI": "Volume Armazenado Percentual Inicial",
