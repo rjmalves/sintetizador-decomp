@@ -267,6 +267,12 @@ class OperationSynthetizer:
             ): lambda uow: cls._resolve_dec_oper_interc(
                 uow, "intercambio_origem_MW"
             ),
+            (
+                Variable.INTERCAMBIO_LIQUIDO,
+                SpatialResolution.PAR_SUBMERCADOS,
+            ): lambda uow: cls._resolve_dec_oper_interc_net(
+                uow, "intercambio_origem_MW"
+            ),
         }
         return _rules[synthesis]
 
@@ -350,6 +356,19 @@ class OperationSynthetizer:
             logger=cls.logger,
         ):
             df = Deck.dec_oper_interc(uow)
+            return cls._post_resolve_file(df, col)
+
+    @classmethod
+    def _resolve_dec_oper_interc_net(
+        cls,
+        uow: AbstractUnitOfWork,
+        col: str,
+    ) -> pd.DataFrame:
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados do dec_oper_interc",
+            logger=cls.logger,
+        ):
+            df = Deck.dec_oper_interc_net(uow)
             return cls._post_resolve_file(df, col)
 
     @classmethod

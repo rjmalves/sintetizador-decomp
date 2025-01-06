@@ -32,6 +32,7 @@ class Variable(Enum):
     VOLUME_ARMAZENADO_ABSOLUTO_FINAL = "VARMF"
     VOLUME_ARMAZENADO_PERCENTUAL_FINAL = "VARPF"
     INTERCAMBIO = "INT"
+    INTERCAMBIO_LIQUIDO = "INTL"
     MERCADO = "MER"
     MERCADO_LIQUIDO = "MERL"
     DEFICIT = "DEF"
@@ -83,6 +84,7 @@ class Variable(Enum):
             "VARMF": "VAR Final",
             "VARPF": "VAR Percentual Final",
             "INT": "Intercâmbio",
+            "INTL": "Intercâmbio Líquido",
             "MER": "Mercado",
             "MERL": "Mercado Líq.",
             "DEF": "Déficit",
@@ -126,6 +128,7 @@ class Variable(Enum):
             "VARMF": "Volume Armazenado Absoluto Final",
             "VARPF": "Volume Armazenado Percentual Final",
             "INT": "Intercâmbio de Energia",
+            "INTL": "Intercâmbio Líquido de Energia",
             "MER": "Mercado de Energia",
             "MERL": "Mercado de Energia Líquido",
             "DEF": "Déficit",

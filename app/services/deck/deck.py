@@ -1042,6 +1042,31 @@ class Deck:
         return df
 
     @classmethod
+    def _eval_net_exchange(
+        cls, df: pd.DataFrame, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        # get IA register orders
+        dadger = cls.dadger(uow)
+        registers = dadger.ia()
+        registers = cls._validate_data(registers, list, "registros IA")
+        # eval net exchanges for the declared pairs
+        for r in registers:
+            direct_filter = (
+                df["nome_submercado_de"] == r.nome_submercado_de
+            ) & (df["nome_submercado_para"] == r.nome_submercado_para)
+            reverse_filter = (
+                df["nome_submercado_de"] == r.nome_submercado_para
+            ) & (df["nome_submercado_para"] == r.nome_submercado_de)
+            if df.loc[reverse_filter].empty:
+                continue
+            for col in ["intercambio_origem_MW", "intercambio_destino_MW"]:
+                df.loc[direct_filter, col] -= df.loc[
+                    reverse_filter, col
+                ].to_numpy()
+            df = df.drop(index=df.loc[reverse_filter].index)
+        return df
+
+    @classmethod
     def dec_oper_interc(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         name = "dec_oper_interc"
         df = cls.DECK_DATA_CACHING.get(name)
@@ -1063,6 +1088,23 @@ class Deck:
             df = cls._add_block_durations_to_df(df, uow)
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
+            df = df.sort_values([
+                EXCHANGE_SOURCE_CODE_COL,
+                EXCHANGE_TARGET_CODE_COL,
+                STAGE_COL,
+                SCENARIO_COL,
+                BLOCK_COL,
+            ]).reset_index(drop=True)
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
+    def dec_oper_interc_net(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_oper_interc_net"
+        df = cls.DECK_DATA_CACHING.get(name)
+        if df is None:
+            df = cls.dec_oper_interc(uow)
+            df = cls._eval_net_exchange(df, uow)
             df = df.sort_values([
                 EXCHANGE_SOURCE_CODE_COL,
                 EXCHANGE_TARGET_CODE_COL,
@@ -1120,6 +1162,7 @@ class Deck:
         df[BLOCK_COL] = 0
         df[SCENARIO_COL] = df[SCENARIO_COL].astype(int)
         df = cls._add_stages_durations_to_df(df, uow)
+        print(df)
         return df
 
     @classmethod
