@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
+from cfinterface.components import Register
 from idecomp.decomp import Dadger, Decomptim, Hidr, InviabUnic, Relato, Vazoes
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
 from idecomp.decomp.dec_oper_gnl import DecOperGnl
@@ -191,18 +192,101 @@ class Deck:
         return relato
 
     @classmethod
-    def stored_energy_upper_bounds(
+    def stored_energy_upper_bounds_eer(
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
-        name = "stored_energy_upper_bounds"
+        name = "stored_energy_upper_bounds_eer"
+        if name not in cls.DECK_DATA_CACHING:
+            df = cls.dec_oper_ree(uow)
+            df = df.loc[
+                df[SCENARIO_COL] == 1,
+                [STAGE_COL, EER_CODE_COL, "earm_maximo_MWmes"],
+            ].reset_index(drop=True)
+            df = df.sort_values([STAGE_COL, EER_CODE_COL])
+            df = df.rename(columns={"earm_maximo_MWmes": VALUE_COL})
+            map_df = cls.hydro_eer_submarket_map(uow)
+            df[SUBMARKET_CODE_COL] = df[EER_CODE_COL].apply(
+                lambda x: map_df.loc[
+                    map_df[EER_CODE_COL] == x, SUBMARKET_CODE_COL
+                ].iloc[0]
+            )
+            cls.DECK_DATA_CACHING[name] = df
+        return cls.DECK_DATA_CACHING[name].copy()
+
+    @classmethod
+    def stored_energy_lower_bounds_eer(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        def __eval_eer_lower_bound_at_stage(eer_code: int, stage: int) -> float:
+            dadger = cls.dadger(uow)
+            cm_registers = dadger.cm(codigo_ree=eer_code)
+            if isinstance(cm_registers, Register):
+                cm_registers = [cm_registers]
+            elif cm_registers is None:
+                cm_registers = []
+            he_codes = [cm.codigo_restricao for cm in cm_registers]
+            bound = 0.0
+            upper_bound_df = cls.stored_energy_upper_bounds_eer(uow)
+            for he_code in he_codes:
+                he = dadger.he(codigo_restricao=he_code, estagio=stage)
+                if isinstance(he, Register):
+                    if he.tipo_limite == 1:
+                        bound += he.limite
+                    else:
+                        bound += (he.limite / 100.0) * upper_bound_df.loc[
+                            (upper_bound_df[EER_CODE_COL] == eer_code)
+                            & (upper_bound_df[STAGE_COL] == stage),
+                            VALUE_COL,
+                        ].iloc[0]
+            return bound
+
+        name = "stored_energy_lower_bounds_eer"
+        if name not in cls.DECK_DATA_CACHING:
+            stages: list[int] = []
+            eer_codes: list[int] = []
+            bounds: list[float] = []
+            eers = cls.eers(uow)[EER_CODE_COL].tolist()
+            num_stages = len(cls.stages_start_date(uow))
+            for stage in range(1, num_stages + 1):
+                for eer in eers:
+                    stages.append(stage)
+                    eer_codes.append(eer)
+                    bounds.append(__eval_eer_lower_bound_at_stage(eer, stage))
+            df = pd.DataFrame({
+                STAGE_COL: stages,
+                EER_CODE_COL: eer_codes,
+                VALUE_COL: bounds,
+            })
+            df = df.sort_values([STAGE_COL, EER_CODE_COL])
+            map_df = cls.hydro_eer_submarket_map(uow)
+            df[SUBMARKET_CODE_COL] = df[EER_CODE_COL].apply(
+                lambda x: map_df.loc[
+                    map_df[EER_CODE_COL] == x, SUBMARKET_CODE_COL
+                ].iloc[0]
+            )
+            cls.DECK_DATA_CACHING[name] = df
+        return cls.DECK_DATA_CACHING[name].copy()
+
+    @classmethod
+    def stored_energy_upper_bounds_sbm(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        name = "stored_energy_upper_bounds_sbm"
         if name not in cls.DECK_DATA_CACHING:
             df = cls._validate_data(
                 cls.relato(uow).energia_armazenada_maxima_submercado,
                 pd.DataFrame,
                 "energia armazenada máxima por submercado",
             )
+            df = df.rename(columns={"nome_submercado": SUBMARKET_NAME_COL})
+            map_df = cls.hydro_eer_submarket_map(uow)
+            df[SUBMARKET_CODE_COL] = df[SUBMARKET_NAME_COL].apply(
+                lambda x: map_df.loc[
+                    map_df[SUBMARKET_NAME_COL] == x, SUBMARKET_CODE_COL
+                ].iloc[0]
+            )
             cls.DECK_DATA_CACHING[name] = df
-        return cls.DECK_DATA_CACHING[name]
+        return cls.DECK_DATA_CACHING[name].copy()
 
     @classmethod
     def relato2(cls, uow: AbstractUnitOfWork) -> Relato:
@@ -371,10 +455,10 @@ class Deck:
             fracao = durations[block_index - 1] / np.sum(durations)
             violation_perc = infeasibility.violation * fracao
 
-            max_stored_energy = cls.stored_energy_upper_bounds(uow)
+            max_stored_energy = cls.stored_energy_upper_bounds_sbm(uow)
             max_stored_energy_submarket = float(
                 max_stored_energy.loc[
-                    max_stored_energy["nome_submercado"]
+                    max_stored_energy[SUBMARKET_NAME_COL]
                     == infeasibility.submarket,
                     "energia_armazenada_maxima",
                 ].iloc[0]

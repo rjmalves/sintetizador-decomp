@@ -112,13 +112,13 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist_sist(
                 uow, "earm_inicial_MWmes"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist_sist(
                 uow, "earm_inicial_percentual"
             ),
             (
@@ -134,11 +134,13 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(uow, "earm_final_MWmes"),
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist_sist(
+                uow, "earm_final_MWmes"
+            ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist_sist(
                 uow, "earm_final_percentual"
             ),
             (
@@ -730,6 +732,16 @@ class OperationSynthetizer:
             hydro_df,
             grouping_column=grouping_col_map[synthesis.spatial_resolution],
         )
+
+    @classmethod
+    def __stub_block_0_dec_oper_sist_sist(
+        cls, uow: AbstractUnitOfWork, col: str
+    ) -> pd.DataFrame:
+        df = cls._resolve_dec_oper_sist(uow, col)
+        df = df.loc[(df[BLOCK_COL] == 0) & (~df[VALUE_COL].isna())].reset_index(
+            drop=True
+        )
+        return df
 
     @classmethod
     def __stub_percent_SIN(

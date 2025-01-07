@@ -1,15 +1,19 @@
-import pandas as pd  # type: ignore
+from typing import Callable, Dict, List
+
 import numpy as np  # type: ignore
+import pandas as pd  # type: ignore
+
 from app.internal.constants import (
-    PANDAS_GROUPING_ENGINE,
-    SCENARIO_COL,
-    VALUE_COL,
     BLOCK_COL,
+    LOWER_BOUND_COL,
+    OPERATION_SYNTHESIS_COMMON_COLUMNS,
+    PANDAS_GROUPING_ENGINE,
     PROBABILITY_COL,
     QUANTILES_FOR_STATISTICS,
-    OPERATION_SYNTHESIS_COMMON_COLUMNS,
+    SCENARIO_COL,
+    UPPER_BOUND_COL,
+    VALUE_COL,
 )
-from typing import Dict, Callable, List
 
 
 def fast_group_df(
@@ -102,9 +106,15 @@ def _calc_mean_std(df: pd.DataFrame, probs: pd.DataFrame) -> pd.DataFrame:
         entity_columns = [
             c
             for c in grouping_columns
-            if c not in OPERATION_SYNTHESIS_COMMON_COLUMNS
+            if c
+            not in OPERATION_SYNTHESIS_COMMON_COLUMNS
+            + [LOWER_BOUND_COL, UPPER_BOUND_COL]
         ]
-        num_entities = df.drop_duplicates(subset=entity_columns).shape[0]
+        num_entities = (
+            df.drop_duplicates(subset=entity_columns).shape[0]
+            if len(entity_columns) > 0
+            else 1
+        )
         num_blocks = len(df[BLOCK_COL].unique().tolist())
         probs_values = probs[VALUE_COL].to_numpy()
         probs_column = np.repeat(probs_values, num_blocks)
