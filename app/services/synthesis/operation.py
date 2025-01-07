@@ -1138,6 +1138,8 @@ class OperationSynthetizer:
     @classmethod
     def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork):
         cls.logger = logging.getLogger("main")
+        Deck.logger = cls.logger
+        OperationVariableBounds.logger = cls.logger
         uow.subdir = OPERATION_SYNTHESIS_SUBDIR
         with time_and_log(
             message_root="Tempo para sintese da operacao",

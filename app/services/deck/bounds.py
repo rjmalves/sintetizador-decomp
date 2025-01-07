@@ -1,5 +1,6 @@
 import pandas as pd  # type: ignore
-from typing import Dict, Callable, TypeVar
+from logging import Logger
+from typing import Dict, Callable, TypeVar, Optional
 from app.model.operation.operationsynthesis import OperationSynthesis
 from app.services.unitofwork import AbstractUnitOfWork
 from app.internal.constants import (
@@ -16,6 +17,7 @@ class OperationVariableBounds:
     """
 
     T = TypeVar("T")
+    logger: Optional[Logger] = None
 
     MAPPINGS: Dict[OperationSynthesis, Callable] = {}
 
