@@ -6,7 +6,7 @@ import pathlib
 
 def main():
     os.environ["APP_INSTALLDIR"] = os.path.dirname(os.path.abspath(__file__))
-    BASEDIR = "./test_case"
+    BASEDIR = pathlib.Path().resolve()
     os.environ["APP_BASEDIR"] = str(BASEDIR)
     Log.configure_logging(BASEDIR)
     app()
