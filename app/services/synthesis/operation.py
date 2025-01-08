@@ -1073,14 +1073,10 @@ class OperationSynthetizer:
         for res, dfs in cls.SYNTHESIS_STATS.items():
             with uow:
                 df = pd.concat(dfs, ignore_index=True)
-                df_columns = df.columns.tolist()
-                columns_without_variable = [
-                    c for c in df_columns if c != VARIABLE_COL
-                ]
-                df = df[[VARIABLE_COL] + columns_without_variable]
+                df = df[[VARIABLE_COL] + res.all_synthesis_df_columns]
                 df = df.astype({VARIABLE_COL: STRING_DF_TYPE})
                 df = df.sort_values(
-                    res.sorting_synthesis_df_columns
+                    [VARIABLE_COL] + res.sorting_synthesis_df_columns
                 ).reset_index(drop=True)
                 uow.export.synthetize_df(
                     df, f"{OPERATION_SYNTHESIS_STATS_ROOT}_{res.value}"

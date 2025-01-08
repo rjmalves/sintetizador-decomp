@@ -543,6 +543,14 @@ UNITS: dict[OperationSynthesis, Unit] = {
     ): Unit.MWmed,
     OperationSynthesis(
         Variable.ENERGIA_VERTIDA,
+        SpatialResolution.USINA_HIDROELETRICA,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.ENERGIA_VERTIDA,
+        SpatialResolution.RESERVATORIO_EQUIVALENTE,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.ENERGIA_VERTIDA,
         SpatialResolution.SUBMERCADO,
     ): Unit.MWmed,
     OperationSynthesis(
@@ -551,6 +559,14 @@ UNITS: dict[OperationSynthesis, Unit] = {
     ): Unit.MWmed,
     OperationSynthesis(
         Variable.ENERGIA_VERTIDA_TURBINAVEL,
+        SpatialResolution.USINA_HIDROELETRICA,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.ENERGIA_VERTIDA_TURBINAVEL,
+        SpatialResolution.RESERVATORIO_EQUIVALENTE,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.ENERGIA_VERTIDA_TURBINAVEL,
         SpatialResolution.SUBMERCADO,
     ): Unit.MWmed,
     OperationSynthesis(
@@ -559,6 +575,14 @@ UNITS: dict[OperationSynthesis, Unit] = {
     ): Unit.MWmed,
     OperationSynthesis(
         Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+        SpatialResolution.USINA_HIDROELETRICA,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+        SpatialResolution.RESERVATORIO_EQUIVALENTE,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
         SpatialResolution.SUBMERCADO,
     ): Unit.MWmed,
     OperationSynthesis(
@@ -643,6 +667,54 @@ UNITS: dict[OperationSynthesis, Unit] = {
     ): Unit.m3s,
     OperationSynthesis(
         Variable.VAZAO_DEFLUENTE,
+        SpatialResolution.SISTEMA_INTERLIGADO,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_DESVIADA,
+        SpatialResolution.USINA_HIDROELETRICA,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_DESVIADA,
+        SpatialResolution.RESERVATORIO_EQUIVALENTE,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_DESVIADA,
+        SpatialResolution.SUBMERCADO,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_DESVIADA,
+        SpatialResolution.SISTEMA_INTERLIGADO,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_RETIRADA,
+        SpatialResolution.USINA_HIDROELETRICA,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_RETIRADA,
+        SpatialResolution.RESERVATORIO_EQUIVALENTE,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_RETIRADA,
+        SpatialResolution.SUBMERCADO,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_RETIRADA,
+        SpatialResolution.SISTEMA_INTERLIGADO,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_EVAPORADA,
+        SpatialResolution.USINA_HIDROELETRICA,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_EVAPORADA,
+        SpatialResolution.RESERVATORIO_EQUIVALENTE,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_EVAPORADA,
+        SpatialResolution.SUBMERCADO,
+    ): Unit.m3s,
+    OperationSynthesis(
+        Variable.VAZAO_EVAPORADA,
         SpatialResolution.SISTEMA_INTERLIGADO,
     ): Unit.m3s,
     OperationSynthesis(
