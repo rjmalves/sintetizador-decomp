@@ -1,34 +1,32 @@
-from abc import ABC, abstractmethod
-from typing import Dict, Type, Optional
-import pathlib
 import asyncio
+import pathlib
+import platform
+from abc import ABC, abstractmethod
 from os.path import join
+from typing import Dict, Optional, Type
 
-from idecomp.decomp.caso import Caso
 from idecomp.decomp.arquivos import Arquivos
+from idecomp.decomp.avl_turb_max import AvlTurbMax
+from idecomp.decomp.caso import Caso
 from idecomp.decomp.dadger import Dadger
 from idecomp.decomp.dadgnl import Dadgnl
-from idecomp.decomp.inviabunic import InviabUnic
-from idecomp.decomp.relato import Relato
-from idecomp.decomp.decomptim import Decomptim
-from idecomp.decomp.relgnl import Relgnl
-from idecomp.decomp.hidr import Hidr
-from idecomp.decomp.vazoes import Vazoes
-from idecomp.decomp.dec_oper_usih import DecOperUsih
-from idecomp.decomp.dec_oper_usit import DecOperUsit
+from idecomp.decomp.dec_eco_discr import DecEcoDiscr
 from idecomp.decomp.dec_oper_gnl import DecOperGnl
+from idecomp.decomp.dec_oper_interc import DecOperInterc
 from idecomp.decomp.dec_oper_ree import DecOperRee
 from idecomp.decomp.dec_oper_sist import DecOperSist
-from idecomp.decomp.dec_oper_interc import DecOperInterc
-from idecomp.decomp.dec_eco_discr import DecEcoDiscr
-from idecomp.decomp.avl_turb_max import AvlTurbMax
+from idecomp.decomp.dec_oper_usih import DecOperUsih
+from idecomp.decomp.dec_oper_usit import DecOperUsit
+from idecomp.decomp.decomptim import Decomptim
+from idecomp.decomp.hidr import Hidr
+from idecomp.decomp.inviabunic import InviabUnic
+from idecomp.decomp.relato import Relato
+from idecomp.decomp.relgnl import Relgnl
+from idecomp.decomp.vazoes import Vazoes
 
 from app.model.settings import Settings
 from app.utils.encoding import converte_codificacao
 from app.utils.log import Log
-
-
-import platform
 
 if platform.system() == "Windows":
     Dadger.ENCODING = "iso-8859-1"
@@ -175,9 +173,7 @@ class RawFilesRepository(AbstractFilesRepository):
                 arq_dadger = self.arquivos.dadger
                 if arq_dadger is None:
                     raise FileNotFoundError()
-                caminho = str(
-                    pathlib.Path(self.__tmppath).joinpath(arq_dadger)
-                )
+                caminho = str(pathlib.Path(self.__tmppath).joinpath(arq_dadger))
                 script = str(
                     pathlib.Path(Settings().installdir).joinpath(
                         Settings().encoding_script
@@ -476,9 +472,7 @@ class RawFilesRepository(AbstractFilesRepository):
                     )
             except Exception as e:
                 if logger is not None:
-                    logger.error(
-                        f"Erro na leitura do dec_oper_interc.csv: {e}"
-                    )
+                    logger.error(f"Erro na leitura do dec_oper_interc.csv: {e}")
                 raise e
         return self.__dec_oper_interc
 

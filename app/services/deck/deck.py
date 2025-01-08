@@ -29,6 +29,7 @@ from app.internal.constants import (
     HYDRO_NAME_COL,
     ITERATION_COL,
     IV_SUBMARKET_CODE,
+    LOWER_BOUND_COL,
     RUNTIME_COL,
     SCENARIO_COL,
     STAGE_COL,
@@ -38,11 +39,12 @@ from app.internal.constants import (
     THERMAL_CODE_COL,
     THERMAL_NAME_COL,
     UNIT_COL,
+    UPPER_BOUND_COL,
     VALUE_COL,
 )
 from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
 from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.operations import cast_ac_fields_to_stage
+from app.utils.operations import cast_ac_fields_to_stage, fast_group_df
 
 
 class Deck:
