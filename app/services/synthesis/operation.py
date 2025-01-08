@@ -112,13 +112,13 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_block_0_dec_oper_sist_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
                 uow, "earm_inicial_MWmes"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_block_0_dec_oper_sist_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
                 uow, "earm_inicial_percentual"
             ),
             (
@@ -134,13 +134,13 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_block_0_dec_oper_sist_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
                 uow, "earm_final_MWmes"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_block_0_dec_oper_sist_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
                 uow, "earm_final_percentual"
             ),
             (
@@ -198,26 +198,26 @@ class OperationSynthetizer:
             (
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_inicial_percentual", blocks=[0]
+            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
+                uow, "volume_util_inicial_percentual"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_final_percentual", blocks=[0]
+            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
+                uow, "volume_util_final_percentual"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_inicial_hm3", blocks=[0]
+            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
+                uow, "volume_util_inicial_hm3"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_final_hm3", blocks=[0]
+            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
+                uow, "volume_util_final_hm3"
             ),
             (
                 Variable.VAZAO_INCREMENTAL,
@@ -734,10 +734,20 @@ class OperationSynthetizer:
         )
 
     @classmethod
-    def __stub_block_0_dec_oper_sist_sist(
+    def __stub_block_0_dec_oper_sist(
         cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
         df = cls._resolve_dec_oper_sist(uow, col)
+        df = df.loc[(df[BLOCK_COL] == 0) & (~df[VALUE_COL].isna())].reset_index(
+            drop=True
+        )
+        return df
+
+    @classmethod
+    def __stub_stored_volume_dec_oper_usih(
+        cls, uow: AbstractUnitOfWork, col: str
+    ) -> pd.DataFrame:
+        df = cls._resolve_dec_oper_usih(uow, col)
         df = df.loc[(df[BLOCK_COL] == 0) & (~df[VALUE_COL].isna())].reset_index(
             drop=True
         )

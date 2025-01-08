@@ -6,6 +6,7 @@ import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
 from cfinterface.components import Register
 from idecomp.decomp import Dadger, Decomptim, Hidr, InviabUnic, Relato, Vazoes
+from idecomp.decomp.dadger import ACVOLMIN
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
 from idecomp.decomp.dec_oper_gnl import DecOperGnl
 from idecomp.decomp.dec_oper_interc import DecOperInterc
@@ -40,6 +41,7 @@ from app.internal.constants import (
 )
 from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
 from app.services.unitofwork import AbstractUnitOfWork
+from app.utils.operations import cast_ac_fields_to_stage
 
 
 class Deck:
@@ -284,6 +286,66 @@ class Deck:
                 lambda x: map_df.loc[
                     map_df[SUBMARKET_NAME_COL] == x, SUBMARKET_CODE_COL
                 ].iloc[0]
+            )
+            cls.DECK_DATA_CACHING[name] = df
+        return cls.DECK_DATA_CACHING[name].copy()
+
+    @classmethod
+    def stored_volume_upper_bounds(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        name = "stored_volume_upper_bounds"
+        if name not in cls.DECK_DATA_CACHING:
+            df = cls.dec_oper_usih(uow)
+            df = df.loc[
+                (df[SCENARIO_COL] == 1) & (df[BLOCK_COL] == 0),
+                [STAGE_COL, HYDRO_CODE_COL, "volume_util_maximo_hm3"],
+            ].reset_index(drop=True)
+            df = df.sort_values([STAGE_COL, HYDRO_CODE_COL])
+            df = df.rename(columns={"volume_util_maximo_hm3": VALUE_COL})
+            map_df = cls.hydro_eer_submarket_map(uow)
+            df[EER_CODE_COL] = df[HYDRO_CODE_COL].apply(
+                lambda x: map_df.loc[
+                    map_df[HYDRO_CODE_COL] == x, EER_CODE_COL
+                ].iloc[0]
+            )
+            df[SUBMARKET_CODE_COL] = df[HYDRO_CODE_COL].apply(
+                lambda x: map_df.loc[
+                    map_df[HYDRO_CODE_COL] == x, SUBMARKET_CODE_COL
+                ].iloc[0]
+            )
+            df = df.drop(index=df.loc[df[VALUE_COL].isna()].index).reset_index(
+                drop=True
+            )
+            cls.DECK_DATA_CACHING[name] = df
+        return cls.DECK_DATA_CACHING[name].copy()
+
+    @classmethod
+    def stored_volume_lower_bounds(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        name = "stored_volume_lower_bounds"
+        if name not in cls.DECK_DATA_CACHING:
+            df = cls.dec_oper_usih(uow)
+            df = df.loc[
+                (df[SCENARIO_COL] == 1) & (df[BLOCK_COL] == 0),
+                [STAGE_COL, HYDRO_CODE_COL, "volume_minimo_hm3"],
+            ].reset_index(drop=True)
+            df = df.sort_values([STAGE_COL, HYDRO_CODE_COL])
+            df = df.rename(columns={"volume_minimo_hm3": VALUE_COL})
+            map_df = cls.hydro_eer_submarket_map(uow)
+            df[EER_CODE_COL] = df[HYDRO_CODE_COL].apply(
+                lambda x: map_df.loc[
+                    map_df[HYDRO_CODE_COL] == x, EER_CODE_COL
+                ].iloc[0]
+            )
+            df[SUBMARKET_CODE_COL] = df[HYDRO_CODE_COL].apply(
+                lambda x: map_df.loc[
+                    map_df[HYDRO_CODE_COL] == x, SUBMARKET_CODE_COL
+                ].iloc[0]
+            )
+            df = df.drop(index=df.loc[df[VALUE_COL].isna()].index).reset_index(
+                drop=True
             )
             cls.DECK_DATA_CACHING[name] = df
         return cls.DECK_DATA_CACHING[name].copy()
@@ -1006,6 +1068,59 @@ class Deck:
 
     @classmethod
     def dec_oper_usih(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        def _cast_volumes_to_absolute(df: pd.DataFrame) -> pd.DataFrame:
+            hidr_df = cls._validate_data(
+                cls._get_hidr(uow).cadastro,
+                pd.DataFrame,
+                "hidr",
+            )
+            codes = df[HYDRO_CODE_COL].unique()
+            volume_columns = [
+                "volume_util_maximo_hm3",
+                "volume_util_inicial_hm3",
+                "volume_util_final_hm3",
+            ]
+            df["volume_minimo_hm3"] = 0.0
+            dadger = cls.dadger(uow)
+            stage_start_dates = cls.stages_start_date(uow)
+            stage_end_dates = cls.stages_end_date(uow)
+            num_stages = len(stage_start_dates)
+            for hydro_code in codes:
+                regulation = hidr_df.at[hydro_code, "tipo_regulacao"]
+                min_volume = hidr_df.at[hydro_code, "volume_minimo"]
+                for stage in range(1, num_stages + 1):
+                    min_volume_ac = dadger.ac(hydro_code, ACVOLMIN)
+                    if isinstance(min_volume_ac, Register):
+                        min_volume_ac = [min_volume_ac]
+                    elif min_volume_ac is None:
+                        min_volume_ac = []
+                    # Get latest AC modification for stage
+                    if min_volume_ac:
+                        previous_acs = [
+                            ac
+                            for ac in min_volume_ac
+                            if stage
+                            >= cast_ac_fields_to_stage(
+                                ac, stage_start_dates, stage_end_dates
+                            )
+                        ]
+                        if len(previous_acs) > 0:
+                            min_volume = previous_acs[-1].volume
+                    filters = (df[HYDRO_CODE_COL] == hydro_code) & (
+                        df[STAGE_COL] == stage
+                    )
+                    max_volume = df.loc[
+                        filters,
+                        "volume_util_maximo_hm3",
+                    ].iloc[0]
+                    is_run_of_river = (min_volume >= max_volume) or (
+                        regulation not in ["M", "S"]
+                    )
+                    min_volume = np.nan if is_run_of_river else min_volume
+                    df.loc[filters, "volume_minimo_hm3"] = min_volume
+                    df.loc[filters, volume_columns] += min_volume
+            return df
+
         name = "dec_oper_usih"
         df = cls.DECK_DATA_CACHING.get(name)
         if df is None:
@@ -1014,6 +1129,7 @@ class Deck:
                 pd.DataFrame,
                 name,
             )
+            df = _cast_volumes_to_absolute(df)
             version = cls._validate_data(
                 cls._get_dec_oper_usih(uow).versao,
                 str,

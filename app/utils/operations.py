@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import Callable, Dict, List
 
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
+from idecomp.decomp import Dadger
 
 from app.internal.constants import (
     BLOCK_COL,
@@ -168,3 +170,37 @@ def calc_statistics(df: pd.DataFrame, probs: pd.DataFrame) -> pd.DataFrame:
     df_m = _calc_mean_std(df, probs)
     df_stats = pd.concat([df_q, df_m], ignore_index=True)
     return df_stats
+
+
+__MONTH_STR_INT_MAP = {
+    "JAN": 1,
+    "FEV": 2,
+    "MAR": 3,
+    "ABR": 4,
+    "MAI": 5,
+    "JUN": 6,
+    "JUL": 7,
+    "AGO": 8,
+    "SET": 9,
+    "OUT": 10,
+    "NOV": 11,
+    "DEZ": 12,
+}
+
+
+def cast_ac_fields_to_stage(
+    ac: Dadger.AC,
+    stage_start_dates: list[datetime],
+    stage_end_dates: list[datetime],
+) -> int:
+    if not ac.mes:
+        return 1
+
+    week_index = ac.semana
+    month_index = __MONTH_STR_INT_MAP[ac.mes]
+
+    if month_index == stage_end_dates[0].month:
+        return week_index
+    else:
+        stage_date = [s for s in stage_start_dates if s.month == month_index][0]
+        return stage_start_dates.index(stage_date) + 1
