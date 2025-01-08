@@ -7,6 +7,8 @@ import pandas as pd  # type: ignore
 from app.internal.constants import (
     BLOCK_COL,
     EER_CODE_COL,
+    EXCHANGE_SOURCE_CODE_COL,
+    EXCHANGE_TARGET_CODE_COL,
     HYDRO_CODE_COL,
     IDENTIFICATION_COLUMNS,
     LOWER_BOUND_COL,
@@ -734,7 +736,7 @@ class OperationVariableBounds:
             THERMAL_CODE_COL,
             SUBMARKET_CODE_COL,
         ]
-        grouping_column_map: Dict[str, List[str]] = {
+        grouping_column_map: Dict[str, list[str]] = {
             THERMAL_CODE_COL: [
                 THERMAL_CODE_COL,
                 SUBMARKET_CODE_COL,
@@ -816,14 +818,6 @@ class OperationVariableBounds:
         return df
 
     @classmethod
-    def is_bounded(cls, s: OperationSynthesis) -> bool:
-        """
-        Verifica se uma determinada síntese possui limites implementados
-        para adição ao DataFrame.
-        """
-        return s in cls.MAPPINGS
-
-    @classmethod
     def resolve_bounds(
         cls,
         s: OperationSynthesis,
@@ -840,7 +834,7 @@ class OperationVariableBounds:
         if cls.is_bounded(s):
             try:
                 return cls.MAPPINGS[s](df, uow, ordered_synthesis_entities)
-            except:
+            except Exception:
                 return cls._unbounded(df)
         else:
             return cls._unbounded(df)
