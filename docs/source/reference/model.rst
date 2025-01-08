@@ -114,6 +114,8 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
      - `DEF`
    * - Energia Natural Afluente Absoluta (MWmes)
      - `ENAA`
+   * - Energia Natural Afluente para Acoplamento (MWmed)
+     - `ENAA`
    * - Energia Armazenada Inicial (MWmes)
      - `EARMI`
    * - Energia Armazenada Inicial (%)
@@ -148,6 +150,8 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
      - `GEOL`
    * - Intercâmbio (MWmed)
      - `INT`
+   * - Intercâmbio Líquido (MWmed)
+     - `INTL`
    * - Mercado de Energia (MWmed)
      - `MER`
    * - Mercado de Energia Líquido (MWmes)

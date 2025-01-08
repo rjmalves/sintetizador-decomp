@@ -8,6 +8,7 @@ class Variable(Enum):
     CUSTO_OPERACAO = "COP"
     CUSTO_FUTURO = "CFU"
     ENERGIA_NATURAL_AFLUENTE_ABSOLUTA = "ENAA"
+    ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO = "ENAC"
     ENERGIA_NATURAL_AFLUENTE_MLT = "ENAM"
     ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL = "EARMI"
     ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL = "EARPI"
@@ -26,12 +27,16 @@ class Variable(Enum):
     VAZAO_INCREMENTAL = "QINC"
     VAZAO_TURBINADA = "QTUR"
     VAZAO_VERTIDA = "QVER"
+    VAZAO_DESVIADA = "QDES"
+    VAZAO_RETIRADA = "QRET"
+    VAZAO_EVAPORADA = "QEVP"
     VELOCIDADE_VENTO = "VENTO"
     VOLUME_ARMAZENADO_ABSOLUTO_INICIAL = "VARMI"
     VOLUME_ARMAZENADO_PERCENTUAL_INICIAL = "VARPI"
     VOLUME_ARMAZENADO_ABSOLUTO_FINAL = "VARMF"
     VOLUME_ARMAZENADO_PERCENTUAL_FINAL = "VARPF"
     INTERCAMBIO = "INT"
+    INTERCAMBIO_LIQUIDO = "INTL"
     MERCADO = "MER"
     MERCADO_LIQUIDO = "MERL"
     DEFICIT = "DEF"
@@ -55,6 +60,7 @@ class Variable(Enum):
             "COP": "COPER",
             "CFU": "CFU",
             "ENAA": "ENA",
+            "ENAC": "ENA Acoplamento",
             "ENAM": "ENA %MLT",
             "EARMI": "EAR Inicial",
             "EARPI": "EAR Percentual Inicial",
@@ -77,12 +83,14 @@ class Variable(Enum):
             "QVER": "Vazão VER",
             "QRET": "Vazão RET",
             "QDES": "Vazão DES",
+            "QEVP": "Vazão EVP",
             "VENTO": "Vel. Vento",
             "VARMI": "VAR Inicial",
             "VARPI": "VAR Percentual Inicial",
             "VARMF": "VAR Final",
             "VARPF": "VAR Percentual Final",
             "INT": "Intercâmbio",
+            "INTL": "Intercâmbio Líquido",
             "MER": "Mercado",
             "MERL": "Mercado Líq.",
             "DEF": "Déficit",
@@ -98,6 +106,7 @@ class Variable(Enum):
             "COP": "Custo de Operação",
             "CFU": "Custo Futuro",
             "ENAA": "Energia Natural Afluente Absoluta",
+            "ENAC": "Energia Natural Afluente para Acoplamento",
             "ENAM": "Energia Natural Afluente Percentual MLT",
             "EARMI": "Energia Armazenada Absoluta Inicial",
             "EARPI": "Energia Armazenada Percentual Inicial",
@@ -120,12 +129,14 @@ class Variable(Enum):
             "QVER": "Vazão Vertida",
             "QRET": "Vazão Retirada",
             "QDES": "Vazão Desviada",
+            "QEVP": "Vazão Evaporada",
             "VENTO": "Velocidade do Vento",
             "VARMI": "Volume Armazenado Absoluto Inicial",
             "VARPI": "Volume Armazenado Percentual Inicial",
             "VARMF": "Volume Armazenado Absoluto Final",
             "VARPF": "Volume Armazenado Percentual Final",
             "INT": "Intercâmbio de Energia",
+            "INTL": "Intercâmbio Líquido de Energia",
             "MER": "Mercado de Energia",
             "MERL": "Mercado de Energia Líquido",
             "DEF": "Déficit",

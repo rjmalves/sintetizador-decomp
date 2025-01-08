@@ -3,16 +3,19 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
-from idecomp.decomp import DecOperUsih, DecOperUsit, DecOperSist, DecOperInterc
+from idecomp.decomp import (
+    DecOperInterc,
+    DecOperSist,
+    DecOperUsih,
+    DecOperUsit,
+)
 
 from app.internal.constants import (
-    LOWER_BOUND_COL,
     OPERATION_SYNTHESIS_METADATA_OUTPUT,
-    UPPER_BOUND_COL,
-    VALUE_COL,
 )
 from app.model.operation.operationsynthesis import UNITS, OperationSynthesis
 from app.services.deck.bounds import OperationVariableBounds
+from app.services.deck.deck import Deck
 from app.services.synthesis.operation import OperationSynthetizer
 from app.services.unitofwork import factory
 from tests.conftest import DECK_TEST_DIR
@@ -116,9 +119,7 @@ def __sintetiza_com_mock(synthesis_str) -> tuple[pd.DataFrame, pd.DataFrame]:
         OperationSynthetizer.clear_cache()
     m.assert_called()
     df = __obtem_dados_sintese_mock(synthesis_str, m)
-    df_meta = __obtem_dados_sintese_mock(
-        OPERATION_SYNTHESIS_METADATA_OUTPUT, m
-    )
+    df_meta = __obtem_dados_sintese_mock(OPERATION_SYNTHESIS_METADATA_OUTPUT, m)
     assert df is not None
     assert df_meta is not None
     return df, df_meta
@@ -133,9 +134,7 @@ def __sintetiza_com_mock_wildcard(synthesis_str) -> pd.DataFrame:
         OperationSynthetizer.synthetize([synthesis_str], uow)
         OperationSynthetizer.clear_cache()
     m.assert_called()
-    df_meta = __obtem_dados_sintese_mock(
-        OPERATION_SYNTHESIS_METADATA_OUTPUT, m
-    )
+    df_meta = __obtem_dados_sintese_mock(OPERATION_SYNTHESIS_METADATA_OUTPUT, m)
     assert df_meta is not None
     return df_meta
 
@@ -899,64 +898,70 @@ def test_sintese_gter_sin(test_settings):
 #     __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_varmi_sbm(test_settings):
-#     synthesis_str = "VARMI_SBM"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsih.read(
-#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
-#     ).tabela
-#     map_df = Deck.hydro_eer_submarket_map(uow)
-#     df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
-#         lambda x: map_df.at[x, "codigo_submercado"]
-#     )
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     df_dec_oper = (
-#         df_dec_oper.groupby(
-#             ["estagio", "cenario", "patamar", "codigo_submercado"]
-#         )
-#         .sum()
-#         .reset_index()
-#     )
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "volume_util_inicial_hm3",
-#         estagio=1,
-#         cenario=1,
-#         codigo_submercado=[1],
-#         patamar=[0],
-#     )
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_varmi_sbm(test_settings):
+    synthesis_str = "VARMI_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_submercado"]
+    )
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby([
+            "estagio",
+            "cenario",
+            "patamar",
+            "codigo_submercado",
+        ])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_inicial_hm3",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
-# def test_sintese_varmf_sbm(test_settings):
-#     synthesis_str = "VARMF_SBM"
-#     df, df_meta = __sintetiza_com_mock(synthesis_str)
-#     df_dec_oper = DecOperUsih.read(
-#         join(DECK_TEST_DIR, "dec_oper_usih.csv")
-#     ).tabela
-#     map_df = Deck.hydro_eer_submarket_map(uow)
-#     df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
-#         lambda x: map_df.at[x, "codigo_submercado"]
-#     )
-#     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
-#     df_dec_oper = (
-#         df_dec_oper.groupby(
-#             ["estagio", "cenario", "patamar", "codigo_submercado"]
-#         )
-#         .sum()
-#         .reset_index()
-#     )
-#     __compara_sintese_dec_oper(
-#         df,
-#         df_dec_oper,
-#         "volume_util_final_hm3",
-#         estagio=1,
-#         cenario=1,
-#         codigo_submercado=[1],
-#         patamar=[0],
-#     )
-#     __valida_metadata(synthesis_str, df_meta, False)
+def test_sintese_varmf_sbm(test_settings):
+    synthesis_str = "VARMF_SBM"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    df_dec_oper = DecOperUsih.read(
+        join(DECK_TEST_DIR, "dec_oper_usih.csv")
+    ).tabela
+    map_df = Deck.hydro_eer_submarket_map(uow)
+    df_dec_oper["codigo_submercado"] = df_dec_oper["codigo_usina"].apply(
+        lambda x: map_df.at[x, "codigo_submercado"]
+    )
+    df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
+    df_dec_oper = (
+        df_dec_oper.groupby([
+            "estagio",
+            "cenario",
+            "patamar",
+            "codigo_submercado",
+        ])
+        .sum()
+        .reset_index()
+    )
+    __compara_sintese_dec_oper(
+        df,
+        df_dec_oper,
+        "volume_util_final_hm3",
+        estagio=1,
+        cenario=1,
+        codigo_submercado=[1],
+        patamar=[0],
+    )
+    __valida_metadata(synthesis_str, df_meta, False)
 
 
 # def test_sintese_varmi_sin(test_settings):

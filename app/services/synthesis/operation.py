@@ -102,9 +102,7 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_dec_oper_ree(
-                uow, "earm_inicial_MWmes"
-            ),
+            ): lambda uow: cls._resolve_dec_oper_ree(uow, "earm_inicial_MWmes"),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
@@ -114,13 +112,13 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
                 uow, "earm_inicial_MWmes"
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
                 uow, "earm_inicial_percentual"
             ),
             (
@@ -136,11 +134,13 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(uow, "earm_final_MWmes"),
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
+                uow, "earm_final_MWmes"
+            ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
+            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
                 uow, "earm_final_percentual"
             ),
             (
@@ -152,15 +152,21 @@ class OperationSynthetizer:
             (
                 Variable.GERACAO_HIDRAULICA,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
-                uow, "geracao_hidro_com_itaipu_MW"
-            ),
+            ): lambda uow: cls._resolve_hydro_generation_report_block(uow),
             (
                 Variable.GERACAO_USINAS_NAO_SIMULADAS,
                 SpatialResolution.SUBMERCADO,
             ): lambda uow: cls._resolve_dec_oper_sist(
                 uow, "geracao_nao_simuladas_MW"
             ),
+            (
+                Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+                SpatialResolution.RESERVATORIO_EQUIVALENTE,
+            ): lambda uow: cls._resolve_ena_coupling_eer(uow),
+            (
+                Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+                SpatialResolution.SUBMERCADO,
+            ): lambda uow: cls._resolve_ena_coupling_sbm(uow),
             (
                 Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
                 SpatialResolution.RESERVATORIO_EQUIVALENTE,
@@ -192,26 +198,26 @@ class OperationSynthetizer:
             (
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_inicial_percentual", blocks=[0]
+            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
+                uow, "volume_util_inicial_percentual"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_final_percentual", blocks=[0]
+            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
+                uow, "volume_util_final_percentual"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_inicial_hm3", blocks=[0]
+            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
+                uow, "volume_util_inicial_hm3"
             ),
             (
                 Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
                 SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "volume_util_final_hm3", blocks=[0]
+            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
+                uow, "volume_util_final_hm3"
             ),
             (
                 Variable.VAZAO_INCREMENTAL,
@@ -256,8 +262,24 @@ class OperationSynthetizer:
             (
                 Variable.VAZAO_VERTIDA,
                 SpatialResolution.USINA_HIDROELETRICA,
+            ): lambda uow: cls._resolve_dec_oper_usih(uow, "vazao_vertida_m3s"),
+            (
+                Variable.VAZAO_DESVIADA,
+                SpatialResolution.USINA_HIDROELETRICA,
             ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_vertida_m3s"
+                uow, "vazao_desviada_m3s"
+            ),
+            (
+                Variable.VAZAO_RETIRADA,
+                SpatialResolution.USINA_HIDROELETRICA,
+            ): lambda uow: cls._resolve_dec_oper_usih(
+                uow, "vazao_retirada_m3s"
+            ),
+            (
+                Variable.VAZAO_EVAPORADA,
+                SpatialResolution.USINA_HIDROELETRICA,
+            ): lambda uow: cls._resolve_dec_oper_usih(
+                uow, "vazao_evaporada_m3s"
             ),
             (
                 Variable.GERACAO_TERMICA,
@@ -271,6 +293,12 @@ class OperationSynthetizer:
                 Variable.INTERCAMBIO,
                 SpatialResolution.PAR_SUBMERCADOS,
             ): lambda uow: cls._resolve_dec_oper_interc(
+                uow, "intercambio_origem_MW"
+            ),
+            (
+                Variable.INTERCAMBIO_LIQUIDO,
+                SpatialResolution.PAR_SUBMERCADOS,
+            ): lambda uow: cls._resolve_dec_oper_interc_net(
                 uow, "intercambio_origem_MW"
             ),
         }
@@ -319,6 +347,24 @@ class OperationSynthetizer:
             return cls._post_resolve_file(df, col)
 
     @classmethod
+    def _resolve_ena_coupling_eer(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados de ENA do relato",
+            logger=cls.logger,
+        ):
+            df = Deck.eer_afluent_energy(uow)
+            return df
+
+    @classmethod
+    def _resolve_ena_coupling_sbm(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados de ENA do relato",
+            logger=cls.logger,
+        ):
+            df = Deck.sbm_afluent_energy(uow)
+            return df
+
+    @classmethod
     def _resolve_dec_oper_usih(
         cls, uow: AbstractUnitOfWork, col: str, blocks: list[int] | None = None
     ):
@@ -360,6 +406,19 @@ class OperationSynthetizer:
             return cls._post_resolve_file(df, col)
 
     @classmethod
+    def _resolve_dec_oper_interc_net(
+        cls,
+        uow: AbstractUnitOfWork,
+        col: str,
+    ) -> pd.DataFrame:
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados do dec_oper_interc",
+            logger=cls.logger,
+        ):
+            df = Deck.dec_oper_interc_net(uow)
+            return cls._post_resolve_file(df, col)
+
+    @classmethod
     def _resolve_hydro_operation_report_block(
         cls, uow: AbstractUnitOfWork, col: str
     ) -> pd.DataFrame:
@@ -368,6 +427,16 @@ class OperationSynthetizer:
             logger=cls.logger,
         ):
             return Deck.hydro_operation_report_data(col, uow)
+
+    @classmethod
+    def _resolve_hydro_generation_report_block(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados dos relato e relato2",
+            logger=cls.logger,
+        ):
+            return Deck.energy_balance_report_data("geracao_hidraulica", uow)
 
     @classmethod
     def _resolve_operation_report_block(
@@ -666,6 +735,26 @@ class OperationSynthetizer:
         )
 
     @classmethod
+    def __stub_block_0_dec_oper_sist(
+        cls, uow: AbstractUnitOfWork, col: str
+    ) -> pd.DataFrame:
+        df = cls._resolve_dec_oper_sist(uow, col)
+        df = df.loc[(df[BLOCK_COL] == 0) & (~df[VALUE_COL].isna())].reset_index(
+            drop=True
+        )
+        return df
+
+    @classmethod
+    def __stub_stored_volume_dec_oper_usih(
+        cls, uow: AbstractUnitOfWork, col: str
+    ) -> pd.DataFrame:
+        df = cls._resolve_dec_oper_usih(uow, col)
+        df = df.loc[(df[BLOCK_COL] == 0) & (~df[VALUE_COL].isna())].reset_index(
+            drop=True
+        )
+        return df
+
+    @classmethod
     def __stub_percent_SIN(
         cls, synthesis: OperationSynthesis, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
@@ -724,55 +813,47 @@ class OperationSynthetizer:
         f = None
         if s.variable == Variable.ENERGIA_VERTIDA:
             f = cls.__stub_EVER
-        elif all(
-            [
-                s.variable
-                in [
-                    Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                    Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                    Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                    Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                ],
-                s.spatial_resolution != SpatialResolution.USINA_HIDROELETRICA,
-            ]
-        ):
+        elif all([
+            s.variable
+            in [
+                Variable.ENERGIA_VERTIDA_TURBINAVEL,
+                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
+                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
+            ],
+            s.spatial_resolution != SpatialResolution.USINA_HIDROELETRICA,
+        ]):
             f = cls.__stub_grouping_hydro
-        elif all(
-            [
-                s.variable
-                in [
-                    Variable.MERCADO,
-                    Variable.MERCADO_LIQUIDO,
-                    Variable.DEFICIT,
-                    Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
-                    Variable.GERACAO_HIDRAULICA,
-                    Variable.GERACAO_TERMICA,
-                    Variable.GERACAO_USINAS_NAO_SIMULADAS,
-                    Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
-                    Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
-                ],
-                s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
-            ]
-        ):
+        elif all([
+            s.variable
+            in [
+                Variable.MERCADO,
+                Variable.MERCADO_LIQUIDO,
+                Variable.DEFICIT,
+                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+                Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+                Variable.GERACAO_HIDRAULICA,
+                Variable.GERACAO_TERMICA,
+                Variable.GERACAO_USINAS_NAO_SIMULADAS,
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
+                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
+            ],
+            s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
+        ]):
             f = cls.__stub_grouping_submarket
-        elif all(
-            [
-                s.variable == Variable.GERACAO_HIDRAULICA,
-                s.spatial_resolution
-                == SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ]
-        ):
+        elif all([
+            s.variable == Variable.GERACAO_HIDRAULICA,
+            s.spatial_resolution == SpatialResolution.RESERVATORIO_EQUIVALENTE,
+        ]):
             f = cls.__stub_GHID_REE
-        elif all(
-            [
-                s.variable
-                in [
-                    Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
-                    Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
-                ],
-                s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
-            ]
-        ):
+        elif all([
+            s.variable
+            in [
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
+                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
+            ],
+            s.spatial_resolution == SpatialResolution.SISTEMA_INTERLIGADO,
+        ]):
             f = cls.__stub_percent_SIN
 
         return f
@@ -993,14 +1074,10 @@ class OperationSynthetizer:
         for res, dfs in cls.SYNTHESIS_STATS.items():
             with uow:
                 df = pd.concat(dfs, ignore_index=True)
-                df_columns = df.columns.tolist()
-                columns_without_variable = [
-                    c for c in df_columns if c != VARIABLE_COL
-                ]
-                df = df[[VARIABLE_COL] + columns_without_variable]
+                df = df[[VARIABLE_COL] + res.all_synthesis_df_columns]
                 df = df.astype({VARIABLE_COL: STRING_DF_TYPE})
                 df = df.sort_values(
-                    res.sorting_synthesis_df_columns
+                    [VARIABLE_COL] + res.sorting_synthesis_df_columns
                 ).reset_index(drop=True)
                 uow.export.synthetize_df(
                     df, f"{OPERATION_SYNTHESIS_STATS_ROOT}_{res.value}"
@@ -1020,9 +1097,7 @@ class OperationSynthetizer:
                 all_variables = cls._default_args()
             else:
                 all_variables = cls._match_wildcards(variables)
-            synthesis_variables = cls._process_variable_arguments(
-                all_variables
-            )
+            synthesis_variables = cls._process_variable_arguments(all_variables)
             valid_synthesis = cls._filter_valid_variables(
                 synthesis_variables, uow
             )
@@ -1082,6 +1157,8 @@ class OperationSynthetizer:
     @classmethod
     def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork):
         cls.logger = logging.getLogger("main")
+        Deck.logger = cls.logger
+        OperationVariableBounds.logger = cls.logger
         uow.subdir = OPERATION_SYNTHESIS_SUBDIR
         with time_and_log(
             message_root="Tempo para sintese da operacao",

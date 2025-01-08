@@ -1,34 +1,35 @@
-from typing import Callable, Optional
-import pandas as pd  # type: ignore
 import logging
-from logging import INFO, ERROR
+from logging import ERROR, INFO
 from traceback import print_exc
-from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.timing import time_and_log
-from app.utils.regex import match_variables_with_wildcards
-from app.model.system.variable import Variable
-from app.services.deck.deck import Deck
-from app.model.system.systemsynthesis import (
-    SystemSynthesis,
-    SUPPORTED_SYNTHESIS,
-)
+from typing import Callable, Optional
+
+import pandas as pd  # type: ignore
+
 from app.internal.constants import (
-    SYSTEM_SYNTHESIS_SUBDIR,
-    SYSTEM_SYNTHESIS_METADATA_OUTPUT,
-    STAGE_COL,
-    START_DATE_COL,
-    END_DATE_COL,
     BLOCK_COL,
     BLOCK_DURATION_COL,
+    END_DATE_COL,
+    STAGE_COL,
+    START_DATE_COL,
+    SYSTEM_SYNTHESIS_METADATA_OUTPUT,
+    SYSTEM_SYNTHESIS_SUBDIR,
     VALUE_COL,
 )
+from app.model.system.systemsynthesis import (
+    SUPPORTED_SYNTHESIS,
+    SystemSynthesis,
+)
+from app.model.system.variable import Variable
+from app.services.deck.deck import Deck
+from app.services.unitofwork import AbstractUnitOfWork
+from app.utils.regex import match_variables_with_wildcards
+from app.utils.timing import time_and_log
 
 # TODO - utilizar valor do internal.constants
 FATOR_HM3_M3S = 1.0 / 2.63
 
 
 class SystemSynthetizer:
-
     DEFAULT_SYSTEM_SYNTHESIS_ARGS = SUPPORTED_SYNTHESIS
 
     logger: Optional[logging.Logger] = None
@@ -74,9 +75,7 @@ class SystemSynthetizer:
                 all_variables = cls._default_args()
             else:
                 all_variables = cls._match_wildcards(variables)
-            synthesis_variables = cls._process_variable_arguments(
-                all_variables
-            )
+            synthesis_variables = cls._process_variable_arguments(all_variables)
         except Exception as e:
             print_exc()
             cls._log(str(e), ERROR)
@@ -92,6 +91,7 @@ class SystemSynthetizer:
             Variable.EST: cls._resolve_EST,
             Variable.PAT: cls._resolve_PAT,
             Variable.SBM: cls._resolve_SBM,
+            Variable.REE: cls._resolve_REE,
             Variable.UTE: cls._resolve_UTE,
             Variable.UHE: cls._resolve_UHE,
         }
@@ -119,6 +119,14 @@ class SystemSynthetizer:
         df = Deck.submarkets(uow)
         if df is None:
             cls._log("Dados de submercados não encontrados", ERROR)
+            raise RuntimeError()
+        return df
+
+    @classmethod
+    def _resolve_REE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        df = Deck.eers(uow)
+        if df is None:
+            cls._log("Dados de reservatório equivalente não encontrados", ERROR)
             raise RuntimeError()
         return df
 
