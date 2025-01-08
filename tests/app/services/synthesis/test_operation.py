@@ -11,7 +11,10 @@ from idecomp.decomp import (
 )
 
 from app.internal.constants import (
+    LOWER_BOUND_COL,
     OPERATION_SYNTHESIS_METADATA_OUTPUT,
+    UPPER_BOUND_COL,
+    VALUE_COL,
 )
 from app.model.operation.operationsynthesis import UNITS, OperationSynthesis
 from app.services.deck.bounds import OperationVariableBounds
