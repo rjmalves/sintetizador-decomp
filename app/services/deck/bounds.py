@@ -221,6 +221,12 @@ class OperationVariableBounds:
         ),
         OperationSynthesis(
             Variable.CUSTO_GERACAO_TERMICA,
+            SpatialResolution.USINA_TERMELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.CUSTO_GERACAO_TERMICA,
             SpatialResolution.SISTEMA_INTERLIGADO,
         ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
             df, uow
@@ -882,7 +888,7 @@ class OperationVariableBounds:
         cls,
         df: pd.DataFrame,
         grouping_column: Optional[str] = None,
-        extract_columns: Optional[list[str]] = [VALUE_COL],
+        extract_columns: list[str] = [VALUE_COL],
     ) -> pd.DataFrame:
         """
         Realiza a agregação de variáveis fornecidas a nível de usina
@@ -928,7 +934,6 @@ class OperationVariableBounds:
         Adiciona ao DataFrame da síntese os limites inferior e superior
         para a variável de Geração Térmica (GTER) para cada UHE, submercado e SIN.
         """
-        df[VALUE_COL] = np.round(df[VALUE_COL], 2)
         df_bounds = Deck.thermal_generation_bounds(uow)
         if entity_column != THERMAL_CODE_COL:
             df_bounds = cls._group_thermal_bounds_df(
@@ -936,16 +941,18 @@ class OperationVariableBounds:
                 entity_column,
                 extract_columns=[LOWER_BOUND_COL, UPPER_BOUND_COL],
             )
-        entity_column = [] if entity_column is None else [entity_column]
+        entity_column_list = [] if entity_column is None else [entity_column]
         df = pd.merge(
             df,
             df_bounds,
             how="left",
-            on=[STAGE_COL, SCENARIO_COL, BLOCK_COL] + entity_column,
+            on=[STAGE_COL, SCENARIO_COL, BLOCK_COL] + entity_column_list,
             suffixes=[None, "_bounds"],
         )
         df[LOWER_BOUND_COL] = df[LOWER_BOUND_COL].fillna(float(0))
         df[UPPER_BOUND_COL] = df[UPPER_BOUND_COL].fillna(float("inf"))
+        for col in [VALUE_COL, UPPER_BOUND_COL, LOWER_BOUND_COL]:
+            df[col] = np.round(df[col], 2)
         df.drop([c for c in df.columns if "_bounds" in c], axis=1, inplace=True)
         return df
 
@@ -959,7 +966,6 @@ class OperationVariableBounds:
         Adiciona ao DataFrame da síntese os limites inferior e superior
         para a variável de Intercâmbio (INT) para cada par de submercados.
         """
-        df[VALUE_COL] = np.round(df[VALUE_COL], 2)
         df_bounds = Deck.exchange_bounds(uow)
         df = pd.merge(
             df,
@@ -973,6 +979,8 @@ class OperationVariableBounds:
                 EXCHANGE_TARGET_CODE_COL,
             ],
         )
+        for col in [VALUE_COL, UPPER_BOUND_COL, LOWER_BOUND_COL]:
+            df[col] = np.round(df[col], 2)
         return df
 
     @classmethod

@@ -112,14 +112,14 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
-                uow, "earm_inicial_MWmes"
+            ): lambda uow: cls.__stub_valid_values_dec_oper_sist(
+                uow, "earm_inicial_MWmes", blocks=[0]
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
-                uow, "earm_inicial_percentual"
+            ): lambda uow: cls.__stub_valid_values_dec_oper_sist(
+                uow, "earm_inicial_percentual", blocks=[0]
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
@@ -134,19 +134,19 @@ class OperationSynthetizer:
             (
                 Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
-                uow, "earm_final_MWmes"
+            ): lambda uow: cls.__stub_valid_values_dec_oper_sist(
+                uow, "earm_final_MWmes", blocks=[0]
             ),
             (
                 Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_block_0_dec_oper_sist(
-                uow, "earm_final_percentual"
+            ): lambda uow: cls.__stub_valid_values_dec_oper_sist(
+                uow, "earm_final_percentual", blocks=[0]
             ),
             (
                 Variable.GERACAO_TERMICA,
                 SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
+            ): lambda uow: cls.__stub_thermal_submarkets_dec_oper_sist(
                 uow, "geracao_termica_total_MW"
             ),
             (
@@ -735,13 +735,14 @@ class OperationSynthetizer:
         )
 
     @classmethod
-    def __stub_block_0_dec_oper_sist(
-        cls, uow: AbstractUnitOfWork, col: str
+    def __stub_valid_values_dec_oper_sist(
+        cls, uow: AbstractUnitOfWork, col: str, blocks: list[int] | None = None
     ) -> pd.DataFrame:
         df = cls._resolve_dec_oper_sist(uow, col)
-        df = df.loc[(df[BLOCK_COL] == 0) & (~df[VALUE_COL].isna())].reset_index(
-            drop=True
-        )
+        filters = ~df[VALUE_COL].isna()
+        if blocks:
+            filters &= df[BLOCK_COL].isin(blocks)
+        df = df.loc[filters].reset_index(drop=True)
         return df
 
     @classmethod
@@ -750,6 +751,18 @@ class OperationSynthetizer:
     ) -> pd.DataFrame:
         df = cls._resolve_dec_oper_usih(uow, col)
         df = df.loc[(df[BLOCK_COL] == 0) & (~df[VALUE_COL].isna())].reset_index(
+            drop=True
+        )
+        return df
+
+    @classmethod
+    def __stub_thermal_submarkets_dec_oper_sist(
+        cls, uow: AbstractUnitOfWork, col: str
+    ) -> pd.DataFrame:
+        df = cls._resolve_dec_oper_sist(uow, col)
+        thermals = Deck.thermals(uow)
+        submarkets = thermals[SUBMARKET_CODE_COL].unique().tolist()
+        df = df.loc[df[SUBMARKET_CODE_COL].isin(submarkets)].reset_index(
             drop=True
         )
         return df

@@ -201,7 +201,7 @@ def cast_ac_fields_to_stage(
     month_index = __MONTH_STR_INT_MAP[ac.mes]
 
     if month_index == stage_end_dates[0].month:
-        return week_index
+        return week_index if week_index else 1
     else:
         stage_date = [s for s in stage_start_dates if s.month == month_index][0]
         return stage_start_dates.index(stage_date) + 1
