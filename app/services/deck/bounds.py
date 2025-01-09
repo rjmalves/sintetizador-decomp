@@ -68,6 +68,134 @@ class OperationVariableBounds:
             df, uow
         ),
         OperationSynthesis(
+            Variable.VAZAO_EVAPORADA,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        # TODO - melhorar usando os valores de retirada como upper e lower
+        OperationSynthesis(
+            Variable.VAZAO_RETIRADA,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        # TODO - melhorar usando os valores de desvio fornecidos
+        OperationSynthesis(
+            Variable.VAZAO_DESVIADA,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+            SpatialResolution.RESERVATORIO_EQUIVALENTE,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+            SpatialResolution.SUBMERCADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+            SpatialResolution.RESERVATORIO_EQUIVALENTE,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+            SpatialResolution.SUBMERCADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA,
+            SpatialResolution.RESERVATORIO_EQUIVALENTE,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA,
+            SpatialResolution.SUBMERCADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_TURBINAVEL,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_TURBINAVEL,
+            SpatialResolution.RESERVATORIO_EQUIVALENTE,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_TURBINAVEL,
+            SpatialResolution.SUBMERCADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_TURBINAVEL,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+            SpatialResolution.USINA_HIDROELETRICA,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+            SpatialResolution.RESERVATORIO_EQUIVALENTE,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+            SpatialResolution.SUBMERCADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
             Variable.GERACAO_TERMICA,
             SpatialResolution.USINA_TERMELETRICA,
         ): lambda df,
@@ -90,6 +218,36 @@ class OperationVariableBounds:
         uow,
         _: OperationVariableBounds._thermal_generation_bounds(
             df, uow, entity_column=None
+        ),
+        OperationSynthesis(
+            Variable.CUSTO_GERACAO_TERMICA,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.CUSTO_OPERACAO,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.CUSTO_FUTURO,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.GERACAO_USINAS_NAO_SIMULADAS,
+            SpatialResolution.SUBMERCADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
+        ),
+        OperationSynthesis(
+            Variable.GERACAO_USINAS_NAO_SIMULADAS,
+            SpatialResolution.SISTEMA_INTERLIGADO,
+        ): lambda df, uow, _: OperationVariableBounds._lower_bounded_bounds(
+            df, uow
         ),
         OperationSynthesis(
             Variable.INTERCAMBIO,

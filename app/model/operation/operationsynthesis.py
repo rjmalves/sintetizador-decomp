@@ -766,6 +766,10 @@ UNITS: dict[OperationSynthesis, Unit] = {
         SpatialResolution.PAR_SUBMERCADOS,
     ): Unit.MWmed,
     OperationSynthesis(
+        Variable.INTERCAMBIO_LIQUIDO,
+        SpatialResolution.PAR_SUBMERCADOS,
+    ): Unit.MWmed,
+    OperationSynthesis(
         Variable.DEFICIT,
         SpatialResolution.SUBMERCADO,
     ): Unit.MWmed,
