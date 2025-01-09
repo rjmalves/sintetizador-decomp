@@ -1,31 +1,30 @@
-from unittest.mock import patch, MagicMock
-from app.services.unitofwork import factory
-from app.services.synthesis.system import SystemSynthetizer
-from app.model.system.systemsynthesis import SystemSynthesis
-import numpy as np
-from tests.conftest import DECK_TEST_DIR
+from datetime import datetime, timedelta
+from os.path import join
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
+from idecomp.decomp import Dadger, DecEcoDiscr
+
 from app.internal.constants import (
-    SYSTEM_SYNTHESIS_METADATA_OUTPUT,
-    STAGE_COL,
-    START_DATE_COL,
-    END_DATE_COL,
     BLOCK_COL,
-    VALUE_COL,
-    SUBMARKET_CODE_COL,
-    SUBMARKET_NAME_COL,
-    THERMAL_CODE_COL,
-    THERMAL_NAME_COL,
-    HYDRO_CODE_COL,
-    HYDRO_NAME_COL,
     EER_CODE_COL,
     EER_NAME_COL,
+    END_DATE_COL,
+    HYDRO_CODE_COL,
+    HYDRO_NAME_COL,
+    STAGE_COL,
+    START_DATE_COL,
+    SUBMARKET_CODE_COL,
+    SUBMARKET_NAME_COL,
+    SYSTEM_SYNTHESIS_METADATA_OUTPUT,
+    THERMAL_CODE_COL,
+    THERMAL_NAME_COL,
+    VALUE_COL,
 )
-from os.path import join
-from idecomp.decomp import DecEcoDiscr
-from idecomp.decomp import Dadger
-from datetime import datetime
-from datetime import timedelta
+from app.model.system.systemsynthesis import SystemSynthesis
+from app.services.synthesis.system import SystemSynthetizer
+from app.services.unitofwork import factory
+from tests.conftest import DECK_TEST_DIR
 
 uow = factory("FS", DECK_TEST_DIR)
 synthetizer = SystemSynthetizer()
@@ -84,9 +83,9 @@ def test_synthesis_pat(test_settings):
     ).tabela
     assert df.at[0, STAGE_COL] == 1
     assert df.at[0, START_DATE_COL] == start_date
-    assert df.at[0, BLOCK_COL] == 1
+    assert df.at[0, BLOCK_COL] == 0
     assert (
-        df.at[0, VALUE_COL]
+        df.at[1, VALUE_COL]
         == dec_eco_discr.loc[
             (dec_eco_discr["estagio"] == 1) & (dec_eco_discr["patamar"] == 1)
         ]["duracao"].iloc[0]
