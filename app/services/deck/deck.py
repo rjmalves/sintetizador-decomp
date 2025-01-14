@@ -1413,6 +1413,21 @@ class Deck:
         relato2_df.loc[relato2_df["patamar"] == "Medio", "patamar"] = "0"
         relato2_df["patamar"] = relato2_df["patamar"].astype(int)
         relato2_df = relato2_df.sort_values(["estagio", "cenario", "patamar"])
+        submarket_df = Deck.submarkets(uow)
+        relato_df[SUBMARKET_CODE_COL] = relato_df.apply(
+            lambda line: submarket_df.loc[
+                submarket_df[SUBMARKET_NAME_COL] == line["nome_submercado"],
+                SUBMARKET_CODE_COL,
+            ].iloc[0],
+            axis=1,
+        )
+        relato2_df[SUBMARKET_CODE_COL] = relato2_df.apply(
+            lambda line: submarket_df.loc[
+                submarket_df[SUBMARKET_NAME_COL] == line["nome_submercado"],
+                SUBMARKET_CODE_COL,
+            ].iloc[0],
+            axis=1,
+        )
         # Merge stage data
         relato_stages = relato_df[STAGE_COL].unique().tolist()
         relato2_stages = relato2_df[STAGE_COL].unique().tolist()
@@ -1422,7 +1437,7 @@ class Deck:
         relato2_scenarios = relato2_df[SCENARIO_COL].unique().tolist()
         scenarios = list(set(relato_scenarios + relato2_scenarios))
         # Create empty table
-        submarkets = relato_df["nome_submercado"].unique().tolist()
+        submarkets = relato_df[SUBMARKET_CODE_COL].unique().tolist()
         start_dates = [Deck.stages_start_date(uow)[i - 1] for i in stages]
         num_blocks = len(Deck.blocks(uow)) + 1
         num_submarkets = len(submarkets)
@@ -1438,7 +1453,7 @@ class Deck:
             np.repeat(list(range(num_blocks)), num_submarkets),
             df.shape[0] // (num_blocks * num_submarkets),
         )
-        df[SUBMARKET_NAME_COL] = np.tile(
+        df[SUBMARKET_CODE_COL] = np.tile(
             submarkets, df.shape[0] // num_submarkets
         )
         df[START_DATE_COL] = np.repeat(start_dates, num_blocks * num_submarkets)
@@ -1452,6 +1467,15 @@ class Deck:
                 .to_numpy()[:, np.newaxis]
                 .repeat(len(scenarios), axis=1)
             )
+        # Sort relato2 df
+        relato2_df = relato2_df.sort_values(
+            by=[
+                "estagio",
+                "patamar",
+                SUBMARKET_CODE_COL,
+                "cenario",
+            ],
+        )
         for e in relato2_stages:
             df.loc[
                 df[STAGE_COL] == e,
@@ -1464,7 +1488,7 @@ class Deck:
         df = df[
             [
                 STAGE_COL,
-                SUBMARKET_NAME_COL,
+                SUBMARKET_CODE_COL,
                 BLOCK_COL,
                 START_DATE_COL,
                 END_DATE_COL,
@@ -1475,7 +1499,7 @@ class Deck:
             df,
             id_vars=[
                 STAGE_COL,
-                SUBMARKET_NAME_COL,
+                SUBMARKET_CODE_COL,
                 START_DATE_COL,
                 END_DATE_COL,
                 BLOCK_COL,
@@ -1485,15 +1509,6 @@ class Deck:
         )
         df[SCENARIO_COL] = df[SCENARIO_COL].astype(int)
         df = cls._add_block_durations_to_df(df, uow)
-        submarket_df = Deck.submarkets(uow)
-        df[SUBMARKET_CODE_COL] = df.apply(
-            lambda line: submarket_df.loc[
-                submarket_df[SUBMARKET_NAME_COL] == line[SUBMARKET_NAME_COL],
-                SUBMARKET_CODE_COL,
-            ].iloc[0],
-            axis=1,
-        )
-        df = df.drop(columns=[SUBMARKET_NAME_COL])
         energy_balance_cols = [
             SUBMARKET_CODE_COL,
             STAGE_COL,
@@ -1538,6 +1553,7 @@ class Deck:
         )
         relato_df = relato_df.copy()
         relato2_df = cls.relato2(uow).balanco_energetico
+
         if relato2_df is None:
             relato2_df = pd.DataFrame(columns=relato_df.columns)
             relato2_df = relato2_df.astype(relato_df.dtypes)
@@ -1547,9 +1563,11 @@ class Deck:
         relato_df["geracao_hidraulica"] += relato_df["geracao_itaipu_60hz"]
         relato2_df["geracao_hidraulica"] += relato2_df["geracao_itaipu_60hz"]
 
-        return cls._merge_relato_relato2_energy_balance_df_data(
+        df = cls._merge_relato_relato2_energy_balance_df_data(
             relato_df, relato2_df, col, uow
         )
+
+        return df
 
     @classmethod
     def _afluent_energy_for_coupling(
@@ -2089,6 +2107,36 @@ class Deck:
                     SCENARIO_COL,
                     BLOCK_COL,
                     THERMAL_CODE_COL,
+                    SUBMARKET_CODE_COL,
+                    LOWER_BOUND_COL,
+                    UPPER_BOUND_COL,
+                ]
+            ]
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def hydro_generation_bounds(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        name = "hydro_generation_bounds"
+        hydro_generation_bounds = cls.DECK_DATA_CACHING.get(name)
+        if hydro_generation_bounds is None:
+            df = cls.dec_oper_usih(uow)
+            df.rename(
+                {
+                    "potencia_disponivel_MW": UPPER_BOUND_COL,
+                },
+                axis=1,
+                inplace=True,
+            )
+            df[LOWER_BOUND_COL] = 0.00
+            cls.DECK_DATA_CACHING[name] = df[
+                [
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                    HYDRO_CODE_COL,
                     SUBMARKET_CODE_COL,
                     LOWER_BOUND_COL,
                     UPPER_BOUND_COL,

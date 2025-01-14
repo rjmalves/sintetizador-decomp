@@ -522,6 +522,7 @@ def test_sintese_ghid_uhe(test_settings):
         codigo_usina=[1],
         patamar=[1],
     )
+    __valida_limites(df)
     __valida_metadata(synthesis_str, df_meta, False)
 
 
@@ -542,6 +543,7 @@ def test_sintese_ghid_sbm(test_settings):
         codigo_submercado=[1],
         patamar=[1],
     )
+    __valida_limites(df)
     __valida_metadata(synthesis_str, df_meta, False)
 
 
@@ -564,6 +566,7 @@ def test_sintese_ghid_sin(test_settings):
         cenario=1,
         patamar=[1],
     )
+    __valida_limites(df)
     __valida_metadata(synthesis_str, df_meta, False)
 
 
