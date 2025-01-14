@@ -29,6 +29,7 @@ from app.internal.constants import (
     HYDRO_NAME_COL,
     ITERATION_COL,
     IV_SUBMARKET_CODE,
+    LOWER_BOUND_COL,
     RUNTIME_COL,
     SCENARIO_COL,
     STAGE_COL,
@@ -38,11 +39,12 @@ from app.internal.constants import (
     THERMAL_CODE_COL,
     THERMAL_NAME_COL,
     UNIT_COL,
+    UPPER_BOUND_COL,
     VALUE_COL,
 )
 from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
 from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.operations import cast_ac_fields_to_stage
+from app.utils.operations import cast_ac_fields_to_stage, fast_group_df
 
 
 class Deck:
@@ -1324,24 +1326,6 @@ class Deck:
                 STAGE_COL,
                 SCENARIO_COL,
                 BLOCK_COL,
-            ]).reset_index(drop=True)
-            cls.DECK_DATA_CACHING[name] = df
-        return df.copy()
-
-    @classmethod
-    def avl_turb_max(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        name = "avl_turb_max"
-        df = cls.DECK_DATA_CACHING.get(name)
-        if df is None:
-            df = cls._validate_data(
-                cls._get_avl_turb_max(uow).tabela,
-                pd.DataFrame,
-                name,
-            )
-            df = df.loc[~(df[STAGE_COL].isna())]
-            df = df.sort_values([
-                HYDRO_CODE_COL,
-                STAGE_COL,
             ]).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
