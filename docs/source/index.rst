@@ -11,20 +11,23 @@ desenvolvido pelo `CEPEL <http://www.cepel.br/>`_ e utilizado para a planejament
 .. toctree::
    :caption: Apresentação 
    :maxdepth: 3
-   :hidden:
 
-   ./install.rst
-
-.. toctree::
-   :caption: Referência 
-   :maxdepth: 3
-   :hidden:
-
-   ./reference.rst
+   apresentacao/apresentacao.rst
 
 .. toctree::
-   :caption: Exemplos 
+   :caption: Geral 
    :maxdepth: 3
-   :hidden:
 
+   geral/instalacao
+   geral/tutorial
    examples/index.rst
+   geral/contribuicao
+
+.. toctree::
+   :caption: Referência
+   :maxdepth: 2
+
+   referencia/saidas
+   referencia/modelo
+
+:ref:`genindex`

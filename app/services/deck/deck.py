@@ -15,7 +15,7 @@ from idecomp.decomp.dec_oper_ree import DecOperRee
 from idecomp.decomp.dec_oper_sist import DecOperSist
 from idecomp.decomp.dec_oper_usih import DecOperUsih
 from idecomp.decomp.dec_oper_usit import DecOperUsit
-from idecomp.decomp.modelos.dadger import DT
+from idecomp.decomp.modelos.dadger import DT, HE
 
 from app.internal.constants import (
     BLOCK_COL,
@@ -240,11 +240,12 @@ class Deck:
             upper_bound_df = cls.stored_energy_upper_bounds_eer(uow)
             for he_code in he_codes:
                 he = dadger.he(codigo_restricao=he_code, estagio=stage)
-                if isinstance(he, Register):
+                if isinstance(he, HE):
                     if he.tipo_limite == 1:
-                        bound += he.limite
+                        bound += he.limite if he.limite else 0.0
                     else:
-                        bound += (he.limite / 100.0) * upper_bound_df.loc[
+                        lim = he.limite if he.limite else 0.0
+                        bound += (lim / 100.0) * upper_bound_df.loc[
                             (upper_bound_df[EER_CODE_COL] == eer_code)
                             & (upper_bound_df[STAGE_COL] == stage),
                             VALUE_COL,
@@ -827,12 +828,12 @@ class Deck:
         submarkets = cls.DECK_DATA_CACHING.get(name)
         if submarkets is None:
             dadger = cls.dadger(uow)
-            submarkets = dadger.sb(df=True)
-            submarkets = submarkets.rename(
+            sbm_df: pd.DataFrame = dadger.sb(df=True)
+            sbm_df = sbm_df.rename(
                 columns={"nome_submercado": SUBMARKET_NAME_COL}
             )
-            submarkets.loc[submarkets.shape[0], :] = [IV_SUBMARKET_CODE, "IV"]
-            submarkets = submarkets.astype({SUBMARKET_CODE_COL: int})
+            sbm_df.loc[sbm_df.shape[0], :] = [IV_SUBMARKET_CODE, "IV"]
+            submarkets = sbm_df.astype({SUBMARKET_CODE_COL: int})
             cls.DECK_DATA_CACHING[name] = submarkets
         return submarkets
 
@@ -1123,7 +1124,7 @@ class Deck:
                             )
                         ]
                         if len(previous_acs) > 0:
-                            min_volume = previous_acs[-1].volume
+                            min_volume = previous_acs[-1].volume  # type: ignore
                     filters = (df[HYDRO_CODE_COL] == hydro_code) & (
                         df[STAGE_COL] == stage
                     )
@@ -1401,7 +1402,7 @@ class Deck:
     def _merge_relato_relato2_energy_balance_df_data(
         cls,
         relato_df: pd.DataFrame,
-        relato2_df: pd.DataFrame | None,
+        relato2_df: pd.DataFrame,
         col: str,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
@@ -1504,7 +1505,7 @@ class Deck:
             VALUE_COL,
         ]
         df = df[energy_balance_cols]
-        return df
+        return df.copy()
 
     @classmethod
     def operation_report_data(
@@ -1515,10 +1516,12 @@ class Deck:
             pd.DataFrame,
             "relatório da operação do relato",
         )
+        relato_df = relato_df.copy()
         relato2_df = cls.relato2(uow).relatorio_operacao_custos
         if relato2_df is None:
             relato2_df = pd.DataFrame(columns=relato_df.columns)
             relato2_df = relato2_df.astype(relato_df.dtypes)
+        relato2_df = relato2_df.copy()
 
         return cls._merge_relato_relato2_df_data(
             relato_df, relato2_df, col, uow
@@ -1533,10 +1536,12 @@ class Deck:
             pd.DataFrame,
             "balanço energético do relato",
         )
+        relato_df = relato_df.copy()
         relato2_df = cls.relato2(uow).balanco_energetico
         if relato2_df is None:
             relato2_df = pd.DataFrame(columns=relato_df.columns)
             relato2_df = relato2_df.astype(relato_df.dtypes)
+        relato2_df = relato2_df.copy()
 
         # Fix hydro gen variable
         relato_df["geracao_hidraulica"] += relato_df["geracao_itaipu_60hz"]

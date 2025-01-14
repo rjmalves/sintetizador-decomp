@@ -9,7 +9,6 @@ class Variable(Enum):
     CUSTO_FUTURO = "CFU"
     ENERGIA_NATURAL_AFLUENTE_ABSOLUTA = "ENAA"
     ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO = "ENAC"
-    ENERGIA_NATURAL_AFLUENTE_MLT = "ENAM"
     ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL = "EARMI"
     ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL = "EARPI"
     ENERGIA_ARMAZENADA_ABSOLUTA_FINAL = "EARMF"
@@ -30,7 +29,6 @@ class Variable(Enum):
     VAZAO_DESVIADA = "QDES"
     VAZAO_RETIRADA = "QRET"
     VAZAO_EVAPORADA = "QEVP"
-    VELOCIDADE_VENTO = "VENTO"
     VOLUME_ARMAZENADO_ABSOLUTO_INICIAL = "VARMI"
     VOLUME_ARMAZENADO_PERCENTUAL_INICIAL = "VARPI"
     VOLUME_ARMAZENADO_ABSOLUTO_FINAL = "VARMF"
@@ -61,18 +59,15 @@ class Variable(Enum):
             "CFU": "CFU",
             "ENAA": "ENA",
             "ENAC": "ENA Acoplamento",
-            "ENAM": "ENA %MLT",
             "EARMI": "EAR Inicial",
             "EARPI": "EAR Percentual Inicial",
             "EARMF": "EAR Final",
             "EARPF": "EAR Percentual Final",
             "GHID": "GH",
             "GUNS": "Geração Não Simuladas",
-            "HMON": "Cota de Montante",
-            "HJUS": "Cota de Jusante",
-            "HLIQ": "Queda Líquida",
+            "GUNSD": "Geração Não Simuladas Disponível",
+            "CUNS": "Corte de Não Simuladas",
             "GTER": "GT",
-            "GEOL": "GEOL",
             "EVER": "EVER",
             "EVERT": "EVER Turbinável",
             "EVERNT": "EVER Não-Turbinável",
@@ -84,7 +79,6 @@ class Variable(Enum):
             "QRET": "Vazão RET",
             "QDES": "Vazão DES",
             "QEVP": "Vazão EVP",
-            "VENTO": "Vel. Vento",
             "VARMI": "VAR Inicial",
             "VARPI": "VAR Percentual Inicial",
             "VARMF": "VAR Final",
@@ -107,18 +101,15 @@ class Variable(Enum):
             "CFU": "Custo Futuro",
             "ENAA": "Energia Natural Afluente Absoluta",
             "ENAC": "Energia Natural Afluente para Acoplamento",
-            "ENAM": "Energia Natural Afluente Percentual MLT",
             "EARMI": "Energia Armazenada Absoluta Inicial",
             "EARPI": "Energia Armazenada Percentual Inicial",
             "EARMF": "Energia Armazenada Absoluta Final",
             "EARPF": "Energia Armazenada Percentual Final",
             "GHID": "Geração Hidráulica",
             "GUNS": "Geração de Usinas Não Simuladas",
-            "HMON": "Cota de Montante",
-            "HJUS": "Cota de Jusante",
-            "HLIQ": "Queda Líquida",
+            "GUNSD": "Geração de Usinas Não Simuladas Disponível",
+            "CUNS": "Corte da Geração de Usinas Não Simuladas",
             "GTER": "Geração Térmica",
-            "GEOL": "Geração Eólica",
             "EVER": "Energia Vertida",
             "EVERT": "Energia Vertida Turbinável",
             "EVERNT": "Energia Vertida Não-Turbinável",
@@ -130,7 +121,6 @@ class Variable(Enum):
             "QRET": "Vazão Retirada",
             "QDES": "Vazão Desviada",
             "QEVP": "Vazão Evaporada",
-            "VENTO": "Velocidade do Vento",
             "VARMI": "Volume Armazenado Absoluto Inicial",
             "VARPI": "Volume Armazenado Percentual Inicial",
             "VARMF": "Volume Armazenado Absoluto Final",

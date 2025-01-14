@@ -1,4 +1,4 @@
-.. _model:
+.. _modelo:
 
 Modelo Unificado de Dados
 ############################
@@ -27,8 +27,6 @@ Informações da representação do sistema existente e alvo da otimização.
      - `SBM`
    * - Reservatórios Equivalentes de Energia
      - `REE`
-   * - Parques Eólicos Equivalentes
-     - `PEE`
    * - Usina Termoelétrica
      - `UTE`
    * - Usina Hidroelétrica
@@ -53,13 +51,7 @@ Informações da execução do modelo, como ambiente escolhido, recursos computa
      - `CONVERGENCIA`
    * - Inviabilidades do caso
      - `INVIABILIDADES`
-   * - Recursos Computacionais do Job
-     - `RECURSOS_JOB`
-   * - Recursos Computacionais do Cluster
-     - `RECURSOS_CLUSTER`
 
-Os mnemônicos `RECURSOS_JOB` e `RECURSOS_CLUSTER` dependem de arquivos que não são gerados automaticamente pelo modelo DECOMP,
-e sim por outras ferramentas adicionais. Portanto, não devem ser utilizados em ambientes recentemente configurados.
 
 Cenários
 *********
@@ -96,12 +88,6 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
 
    * - VARIÁVEL
      - MNEMÔNICO
-   * - Corte de Geração Eólica (MWMes)
-     - `VEOL`
-   * - Cota de Jusante (m)
-     - `HJUS`
-   * - Cota de Montante (m)
-     - `HMON`
    * - Custo de Operação (Presente - 10^3 R$)
      - `COP`
    * - Custo Futuro (10^3 R$)
@@ -115,14 +101,14 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
    * - Energia Natural Afluente Absoluta (MWmes)
      - `ENAA`
    * - Energia Natural Afluente para Acoplamento (MWmed)
-     - `ENAA`
-   * - Energia Armazenada Inicial (MWmes)
+     - `ENAC`
+   * - Energia Armazenada Absoluta Inicial (MWmes)
      - `EARMI`
-   * - Energia Armazenada Inicial (%)
+   * - Energia Armazenada Percentual Inicial (%)
      - `EARPI`
-   * - Energia Armazenada Final (MWmes)
+   * - Energia Armazenada Absoluta Final (MWmes)
      - `EARMF`
-   * - Energia Armazenada Final (%)
+   * - Energia Armazenada Percentual Final (%)
      - `EARPF`
    * - Energia Vertida (MWmed)
      - `EVER`
@@ -130,24 +116,16 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
      - `EVERT`
    * - Energia Vertida Não-Turbinável (MWmed)
      - `EVERNT`
-   * - Energia Vertida em Reservatórios (MWmed)
-     - `EVERR`
-   * - Energia Vertida Turbinável em Reservatórios (MWmed)
-     - `EVERRT`
-   * - Energia Vertida Não-Turbinável em Reservatórios (MWmed)
-     - `EVERRNT`
-   * - Energia Vertida em Fio d'Água (MWmed)
-     - `EVERF`
-   * - Energia Vertida Turbinável em Fio d'Água (MWmed)
-     - `EVERFT`
-   * - Energia Vertida Não-Turbinável em Fio d'Água (MWmed)
-     - `EVERFNT`
    * - Geração Hidráulica (MWmed)
      - `GHID`
    * - Geração Térmica (MWmed)
      - `GTER`
-   * - Geração Eólica (MWmed)
-     - `GEOL`
+   * - Geração de Usinas Não Simuladas (MWmed)
+     - `GUNS`
+   * - Geração de Usinas Não Simuladas Disponível (MWmed)
+     - `GUND`
+   * - Corte de Geração de Usinas Não Simuladas (MWmed)
+     - `CUNS`
    * - Intercâmbio (MWmed)
      - `INT`
    * - Intercâmbio Líquido (MWmed)
@@ -156,8 +134,6 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
      - `MER`
    * - Mercado de Energia Líquido (MWmes)
      - `MERL`
-   * - Queda Líquida (m)
-     - `HLIQ`
    * - Valor da Água (R$/hm3)
      - `VAGUA`
    * - Vazão Afluente (m3/s)
@@ -174,30 +150,17 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
      - `QTUR`
    * - Vazão Vertida (m3/s)
      - `QVER`
-   * - Velocidade do Vento (m/s)
-     - `VENTO`
-   * - Volume Armazenado Inicial (hm3)
+   * - Vazão Evaporada (m3/s)
+     - `QEVP`
+   * - Volume Armazenado Absoluto Inicial (hm3)
      - `VARMI`
-   * - Volume Armazenado Inicial (%)
+   * - Volume Armazenado Percentual Inicial (%)
      - `VARPI`
-   * - Volume Armazenado Final (hm3)
+   * - Volume Armazenado Absoluto Final (hm3)
      - `VARMF`
-   * - Volume Armazenado Final (%)
+   * - Volume Armazenado Percentual Final (%)
      - `VARPF`
-   * - Volume Afluente (hm3)
-     - `VAFL`
-   * - Volume Defluente (hm3)
-     - `VDEF`
-   * - Volume Desviado (hm3)
-     - `VDES`
-   * - Volume Incremental (hm3)
-     - `VINC`
-   * - Volume Retirado (hm3)
-     - `VRET`
-   * - Volume Turbinado (hm3)
-     - `VTUR`
-   * - Volume Vertido (hm3)
-     - `VVER`
+
 
 Agregação Espacial
 ===================
@@ -221,28 +184,9 @@ em relação ao conjunto de elementos do sistema.
      - `UHE`
    * - Usina Termelétrica
      - `UTE`
-   * - Parque Eólico Equivalente
-     - `PEE`
    * - Par de Submercados
      - `SBP`
 
-
-Agregação Temporal
-===================
-
-A agregação espacial informa o nível de agregação da variável em questão em relação
-à discretização temporal (médio diário, semanal, mensal, por patamar, etc.).
-
-.. list-table:: Possíveis Agregações Temporais
-   :widths: 50 10
-   :header-rows: 1
-
-   * - AGREGAÇÂO
-     - MNEMÔNICO
-   * - Estágio
-     - `EST`
-   * - Patamar
-     - `PAT`
 
 
 Estado do Desenvolvimento
@@ -262,153 +206,71 @@ que estão disponíveis no modelo.
 
    * - VARIÁVEL
      - AGREGAÇÃO ESPACIAL
-     - AGREGAÇÃO TEMPORAL
-   * - `VEOL`
-     - 
-     - 
-   * - `HJUS`
-     - 
-     - 
-   * - `HMON`
-     - 
-     - 
    * - `COP`
      - `SIN`
-     - `EST`
    * - `CFU`
      - `SIN`
-     - `EST`
    * - `CMO`
      - `SBM`
-     - `EST`, `PAT`
    * - `CTER`
      - `SIN`, `UTE`
-     - `EST`
    * - `DEF`
      - `SIN`, `SBM`
-     - `EST`, `PAT`
    * - `ENAA`
      - `SIN`, `SBM`, `REE`
-     - `EST`
+   * - `ENAC`
+     - `SIN`, `SBM`, `REE`
    * - `EARMI`
      - `SIN`, `SBM`, `REE`
-     - `EST`
    * - `EARPI`
      - `SIN`, `SBM`, `REE`
-     - `EST`
    * - `EARMF`
      - `SIN`, `SBM`, `REE`
-     - `EST`
    * - `EARPF`
      - `SIN`, `SBM`, `REE`
-     - `EST`
    * - `EVER`
      - `SIN`, `SBM`, `REE`, `UHE`
-     - `EST`
    * - `EVERT`
      - `SIN`, `SBM`, `REE`, `UHE`
-     - `EST`
    * - `EVERNT`
      - `SIN`, `SBM`, `REE`, `UHE`
-     - `EST`
-   * - `EVERF`
-     - 
-     - 
-   * - `EVERR`
-     - 
-     - 
-   * - `EVERFT`
-     - 
-     - 
-   * - `EVERFNT`
-     - 
-     - 
-   * - `EVERRT`
-     - 
-     - 
-   * - `EVERRNT`
-     - 
-     - 
    * - `GHID`
      - `SIN`, `SBM`, `UHE`
-     - `EST`, `PAT`
    * - `GTER`
      - `SIN`, `SBM`, `UTE`
-     - `EST`, `PAT`
-   * - `GEOL`
-     - `SIN`, `SBM`
-     - `EST`, `PAT`
    * - `INT`
      - `SBP`
-     - `EST`, `PAT`
+   * - `INTL`
+     - `SBP`
    * - `MER`
      - `SIN`, `SBM`
-     - `EST`, `PAT`
    * - `MERL`
      - `SIN`, `SBM`
-     - `EST`, `PAT`
-   * - `HLIQ`
-     -
-     -
    * - `VAGUA`
-     - 
      - 
    * - `QAFL`
      - `UHE`
-     - `EST`
    * - `QDES`
-     -
-     -
+     - `UHE`
    * - `QDEF`
      - `UHE`
-     - `EST`
    * - `QINC`
-     - 
-     - 
+     - `UHE`
    * - `QRET`
-     - 
-     - 
+     - `UHE`
    * - `QTUR`
      - `UHE`
-     - `EST`
    * - `QVER`
      - `UHE`
-     - `EST`
-   * - `VENTO`
-     - 
-     -
+   * - `QEVP`
+     - `UHE`
    * - `VARMI`
      - `SIN`, `SBM`, `REE`, `UHE`
-     - `EST`
    * - `VARPI`
      - `SIN`, `SBM`, `REE`, `UHE`
-     - `EST`
    * - `VARMF`
      - `SIN`, `SBM`, `REE`, `UHE`
-     - `EST`
    * - `VARPF`
      - `UHE`
-     - `EST`
-   * - `VAFL`
-     - 
-     - 
-   * - `VDEF`
-     - 
-     - 
-   * - `VDES`
-     - 
-     - 
-   * - `VINC`
-     - 
-     - 
-   * - `VRET`
-     - 
-     - 
-   * - `VVER`
-     - 
-     - 
-   * - `VTUR`
-     - 
-     - 
 
-São exemplos de elementos de dados válidos para as sínteses da operação `EARPF_SBM_EST`, `VARPF_UHE_EST`, `GHID_UHE_PAT`, `CMO_SBM_EST`, dentre outras.
+São exemplos de elementos de dados válidos para as sínteses da operação `EARPF_SBM`, `VARPF_UHE`, `GHID_UHE`, `CMO_SBM`, dentre outras.

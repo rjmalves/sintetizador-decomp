@@ -45,6 +45,7 @@ class OperationSynthesis:
 
 SUPPORTED_SYNTHESIS: list[str] = [
     "CMO_SBM",
+    "CTER_UTE",
     "CTER_SIN",
     "COP_SIN",
     "CFU_SIN",
@@ -763,6 +764,10 @@ UNITS: dict[OperationSynthesis, Unit] = {
     ): Unit.MWmed,
     OperationSynthesis(
         Variable.INTERCAMBIO,
+        SpatialResolution.PAR_SUBMERCADOS,
+    ): Unit.MWmed,
+    OperationSynthesis(
+        Variable.INTERCAMBIO_LIQUIDO,
         SpatialResolution.PAR_SUBMERCADOS,
     ): Unit.MWmed,
     OperationSynthesis(
