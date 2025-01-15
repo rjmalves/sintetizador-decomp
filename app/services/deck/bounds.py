@@ -1027,6 +1027,7 @@ class OperationVariableBounds:
         """
         df[VALUE_COL] = np.round(df[VALUE_COL], 2)
         df_bounds = Deck.hydro_generation_bounds(uow)
+
         if entity_column != HYDRO_CODE_COL:
             df_bounds = cls._group_hydro_bounds_df(
                 df_bounds,
@@ -1038,12 +1039,14 @@ class OperationVariableBounds:
             df,
             df_bounds,
             how="left",
-            on=[STAGE_COL, SCENARIO_COL, BLOCK_COL] + entity_column,
+            on=[STAGE_COL, BLOCK_COL] + entity_column,
             suffixes=[None, "_bounds"],
         )
+
         df[LOWER_BOUND_COL] = df[LOWER_BOUND_COL].fillna(float(0))
         df[UPPER_BOUND_COL] = df[UPPER_BOUND_COL].fillna(float("inf"))
         df.drop([c for c in df.columns if "_bounds" in c], axis=1, inplace=True)
+
         return df
 
     @classmethod

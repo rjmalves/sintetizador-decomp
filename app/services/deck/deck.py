@@ -653,6 +653,9 @@ class Deck:
                 / factors_df.at[line[STAGE_COL], VALUE_COL],
                 axis=1,
             )
+            df = df.sort_values(by=[STAGE_COL, SCENARIO_COL]).reset_index(
+                drop=True
+            )
             cls.DECK_DATA_CACHING["expanded_probabilities"] = df
         return df
 
@@ -1776,13 +1779,13 @@ class Deck:
         return df.copy()
 
     @classmethod
-    def __hydro_operative_constraints_id(
+    def __hydro_flow_operative_constraints_id(
         cls,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
-        name = "hydro_operative_constraints_id"
-        hydro_operative_constraints_id = cls.DECK_DATA_CACHING.get(name)
-        if hydro_operative_constraints_id is None:
+        name = "hydro_flow_operative_constraints_id"
+        hydro_flow_operative_constraints_id = cls.DECK_DATA_CACHING.get(name)
+        if hydro_flow_operative_constraints_id is None:
             cls.DECK_DATA_CACHING[name] = cls._validate_data(
                 cls.dadger(uow).hq(df=True),
                 pd.DataFrame,
@@ -1791,13 +1794,15 @@ class Deck:
         return cls.DECK_DATA_CACHING[name]
 
     @classmethod
-    def __hydro_operative_constraints_bounds(
+    def __hydro_flow_operative_constraints_bounds(
         cls,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
-        name = "hydro_operative_constraints_bounds"
-        hydro_operative_constraints_bounds = cls.DECK_DATA_CACHING.get(name)
-        if hydro_operative_constraints_bounds is None:
+        name = "hydro_flow_operative_constraints_bounds"
+        hydro_flow_operative_constraints_bounds = cls.DECK_DATA_CACHING.get(
+            name
+        )
+        if hydro_flow_operative_constraints_bounds is None:
             cls.DECK_DATA_CACHING[name] = cls._validate_data(
                 cls.dadger(uow).lq(df=True),
                 pd.DataFrame,
@@ -1806,15 +1811,15 @@ class Deck:
         return cls.DECK_DATA_CACHING[name]
 
     @classmethod
-    def __hydro_operative_constraints_coefficients(
+    def __hydro_flow_operative_constraints_coefficients(
         cls,
         uow: AbstractUnitOfWork,
     ) -> pd.DataFrame:
-        name = "hydro_operative_constraints_coefficients"
-        hydro_operative_constraints_coefficients = cls.DECK_DATA_CACHING.get(
-            name
+        name = "hydro_flow_operative_constraints_coefficients"
+        hydro_flow_operative_constraints_coefficients = (
+            cls.DECK_DATA_CACHING.get(name)
         )
-        if hydro_operative_constraints_coefficients is None:
+        if hydro_flow_operative_constraints_coefficients is None:
             df = cls._validate_data(
                 cls.dadger(uow).cq(df=True),
                 pd.DataFrame,
@@ -1835,9 +1840,9 @@ class Deck:
     def _get_hydro_flow_operative_constraints(
         cls, uow: AbstractUnitOfWork, type: str
     ) -> pd.DataFrame:
-        df_hq = cls.__hydro_operative_constraints_id(uow)
-        df_lq = cls.__hydro_operative_constraints_bounds(uow)
-        df_cq = cls.__hydro_operative_constraints_coefficients(uow)
+        df_hq = cls.__hydro_flow_operative_constraints_id(uow)
+        df_lq = cls.__hydro_flow_operative_constraints_bounds(uow)
+        df_cq = cls.__hydro_flow_operative_constraints_coefficients(uow)
 
         df_type = df_cq.loc[df_cq["tipo"] == type].copy()
         df_type = pd.merge(
@@ -1923,6 +1928,178 @@ class Deck:
         return df
 
     @classmethod
+    def __hydro_electrical_operative_constraints_id(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        name = "hydro_electrical_operative_constraints_id"
+        hydro_electrical_operative_constraints_id = cls.DECK_DATA_CACHING.get(
+            name
+        )
+        if hydro_electrical_operative_constraints_id is None:
+            cls.DECK_DATA_CACHING[name] = cls._validate_data(
+                cls.dadger(uow).re(df=True),
+                pd.DataFrame,
+                "registros RE do dadger",
+            )
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def __hydro_electrical_operative_constraints_bounds(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        name = "hydro_electrical_operative_constraints_bounds"
+        hydro_electrical_operative_constraints_bounds = (
+            cls.DECK_DATA_CACHING.get(name)
+        )
+        if hydro_electrical_operative_constraints_bounds is None:
+            cls.DECK_DATA_CACHING[name] = cls._validate_data(
+                cls.dadger(uow).lu(df=True),  # TO
+                pd.DataFrame,
+                "registros LU do dadger",
+            )
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def __hydro_electrical_operative_constraints_coefficients(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        name = "hydro_electrical_operative_constraints_coefficients"
+        hydro_electrical_operative_constraints_coefficients = (
+            cls.DECK_DATA_CACHING.get(name)
+        )
+        if hydro_electrical_operative_constraints_coefficients is None:
+            df_fu = cls._validate_data(
+                cls.dadger(uow).fu(df=True),
+                pd.DataFrame,
+                "registros FU do dadger",
+            )
+            # Elimina restricoes RE com mais de um componente
+            df_ft = cls._validate_data(
+                cls.dadger(uow).ft(df=True),
+                pd.DataFrame,
+                "registros FT do dadger",
+            )
+            df_components = pd.merge(df_fu, df_ft, how="outer")
+            df_count = df_components.groupby(
+                by=["codigo_restricao"], as_index=False
+            ).count()[["codigo_restricao", "codigo_usina"]]
+            constraints_remove = df_count.loc[df_count["codigo_usina"] > 1][
+                "codigo_restricao"
+            ].unique()
+
+            # Remove restricoes
+            df = df_fu.loc[~df_fu["codigo_restricao"].isin(constraints_remove)]
+            cls.DECK_DATA_CACHING[name] = df
+        return cls.DECK_DATA_CACHING[name]
+
+    @classmethod
+    def _get_hydro_electrical_operative_constraints(
+        cls,
+        uow: AbstractUnitOfWork,
+    ) -> pd.DataFrame:
+        def __expand_constraints_stages_and_blocks(
+            df, df_constraints_bounds
+        ) -> pd.DataFrame:
+            constraint_data = []
+            for idx, row in df.iterrows():
+                id = row["codigo_restricao"]
+                hydro_code = row["codigo_usina"]
+                multiplier = row["coeficiente"]
+                initial_stage = row["estagio_inicial"]
+                final_stage = row["estagio_final"]
+                frequency = row["frequencia"]
+                consulted_stage = initial_stage
+                for stage in np.arange(initial_stage, final_stage + 1, 1):
+                    for block in cls.blocks(uow):
+                        find_constraint = df_constraints_bounds.loc[
+                            (df_constraints_bounds["codigo_restricao"] == id)
+                        ]
+                        find_constraint_stage = find_constraint.loc[
+                            find_constraint["estagio"] == stage
+                        ]
+
+                        if not find_constraint_stage.empty:
+                            consulted_stage = stage
+
+                        lower_bound = float(
+                            find_constraint.loc[
+                                (find_constraint["estagio"] == consulted_stage),
+                                f"limite_inferior_{str(int(block))}",
+                            ].iloc[0]
+                        )
+                        upper_bound = float(
+                            find_constraint.loc[
+                                (find_constraint["estagio"] == consulted_stage),
+                                f"limite_superior_{str(int(block))}",
+                            ].iloc[0]
+                        )
+                        data = {
+                            HYDRO_CODE_COL: hydro_code,
+                            STAGE_COL: stage,
+                            BLOCK_COL: int(block),
+                            LOWER_BOUND_COL: lower_bound / multiplier,
+                            UPPER_BOUND_COL: upper_bound / multiplier,
+                            "frequencia": frequency,
+                        }
+                        constraint_data.append(data)
+
+            df_constraint = pd.DataFrame(constraint_data)
+            return df_constraint
+
+        df_re = cls.__hydro_electrical_operative_constraints_id(uow)
+        df_lu = cls.__hydro_electrical_operative_constraints_bounds(uow)
+        df_fu = cls.__hydro_electrical_operative_constraints_coefficients(uow)
+
+        df = df_fu.copy()
+        df = pd.merge(
+            df,
+            df_re[["codigo_restricao", "estagio_inicial", "estagio_final"]],
+            how="left",
+            on=["codigo_restricao"],
+        )
+        constraints_ids = df["codigo_restricao"].tolist()
+        df_constraints_bounds = df_lu.loc[
+            df_lu["codigo_restricao"].isin(constraints_ids)
+        ]
+        df_constraints = __expand_constraints_stages_and_blocks(
+            df, df_constraints_bounds
+        )
+        # Adota o mais restritivo se houver mais de uma restrição para a usina
+        df_lower = (
+            df_constraints.groupby(
+                by=[HYDRO_CODE_COL, STAGE_COL, BLOCK_COL, "frequencia"],
+                dropna=False,
+            )
+            .max()[LOWER_BOUND_COL]
+            .reset_index()
+        )
+        df_upper = (
+            df_constraints.groupby(
+                by=[HYDRO_CODE_COL, STAGE_COL, BLOCK_COL, "frequencia"],
+                dropna=False,
+            )
+            .min()[UPPER_BOUND_COL]
+            .reset_index()
+        )
+
+        df_bounds = df_lower
+        df_bounds[UPPER_BOUND_COL] = df_upper[UPPER_BOUND_COL].to_numpy()
+
+        # Agrupa (soma) restricoes para a mesma usina e diferentes frequencias
+        # (caso Itaipu)
+        df_bounds = (
+            df_bounds.groupby(
+                by=[HYDRO_CODE_COL, STAGE_COL, BLOCK_COL],
+            )[[LOWER_BOUND_COL, UPPER_BOUND_COL]]
+            .sum(min_count=1)
+            .reset_index()
+        )
+        return df_bounds
+
+    @classmethod
     def __eval_block_0_bounds(cls, uow: AbstractUnitOfWork, df: pd.DataFrame):
         df_pat = df.copy()
         # Adiciona duracao dos patamares e calcula media ponderada dos
@@ -1938,7 +2115,7 @@ class Deck:
         df[UPPER_BOUND_COL] = df[UPPER_BOUND_COL] * df[BLOCK_DURATION_COL]
         df_pat0 = fast_group_df(
             df,
-            [STAGE_COL, HYDRO_CODE_COL],
+            [STAGE_COL, HYDRO_CODE_COL, SUBMARKET_CODE_COL],
             [
                 BLOCK_DURATION_COL,
                 LOWER_BOUND_COL,
@@ -2122,7 +2299,10 @@ class Deck:
         name = "hydro_generation_bounds"
         hydro_generation_bounds = cls.DECK_DATA_CACHING.get(name)
         if hydro_generation_bounds is None:
+            # inicializa com limites cadastrais
             df = cls.dec_oper_usih(uow)
+            # bounds por patamar e únicos por estágio
+            df = df.loc[(df[BLOCK_COL] != 0) & (df[SCENARIO_COL] == 1)]
             df.rename(
                 {
                     "potencia_disponivel_MW": UPPER_BOUND_COL,
@@ -2131,7 +2311,7 @@ class Deck:
                 inplace=True,
             )
             df[LOWER_BOUND_COL] = 0.00
-            cls.DECK_DATA_CACHING[name] = df[
+            df = df[
                 [
                     STAGE_COL,
                     SCENARIO_COL,
@@ -2142,6 +2322,17 @@ class Deck:
                     UPPER_BOUND_COL,
                 ]
             ]
+            # Obtem restricoes operativas (RE))
+            df_constraints = cls._get_hydro_electrical_operative_constraints(
+                uow,
+            )
+            # Sobrescreve com restricoes operativas
+            df = cls.__overwrite_hydro_bounds_with_operative_constraints(
+                df, df_constraints
+            )
+            # Adiciona patamar 0
+            df = cls.__eval_block_0_bounds(uow, df)
+            cls.DECK_DATA_CACHING[name] = df
         return cls.DECK_DATA_CACHING[name]
 
     @classmethod
