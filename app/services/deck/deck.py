@@ -4,11 +4,12 @@ from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
-from cfinterface.components import Register
+from cfinterface.components.register import Register
 from idecomp.decomp import Dadger, Decomptim, Hidr, InviabUnic, Relato, Vazoes
 from idecomp.decomp.avl_turb_max import AvlTurbMax
 from idecomp.decomp.dadger import ACVOLMIN
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
+from idecomp.decomp.dec_fcf_cortes import DecFcfCortes
 from idecomp.decomp.dec_oper_gnl import DecOperGnl
 from idecomp.decomp.dec_oper_interc import DecOperInterc
 from idecomp.decomp.dec_oper_ree import DecOperRee
@@ -144,6 +145,14 @@ class Deck:
             return avl
 
     @classmethod
+    def _get_dec_fcf_cortes(
+        cls, stage: int, uow: AbstractUnitOfWork
+    ) -> DecFcfCortes:
+        with uow:
+            dec = uow.files.get_dec_fcf_cortes(stage)
+            return dec
+
+    @classmethod
     def _validate_data(cls, data, type: Type[T], msg: str = "dados") -> T:
         if not isinstance(data, type):
             if cls.logger is not None:
@@ -228,7 +237,9 @@ class Deck:
     def stored_energy_lower_bounds_eer(
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
-        def __eval_eer_lower_bound_at_stage(eer_code: int, stage: int) -> float:
+        def __eval_eer_lower_bound_at_stage(
+            eer_code: int, stage: int
+        ) -> float:
             dadger = cls.dadger(uow)
             cm_registers = dadger.cm(codigo_ree=eer_code)
             if isinstance(cm_registers, Register):
@@ -264,11 +275,13 @@ class Deck:
                     stages.append(stage)
                     eer_codes.append(eer)
                     bounds.append(__eval_eer_lower_bound_at_stage(eer, stage))
-            df = pd.DataFrame({
-                STAGE_COL: stages,
-                EER_CODE_COL: eer_codes,
-                VALUE_COL: bounds,
-            })
+            df = pd.DataFrame(
+                {
+                    STAGE_COL: stages,
+                    EER_CODE_COL: eer_codes,
+                    VALUE_COL: bounds,
+                }
+            )
             df = df.sort_values([STAGE_COL, EER_CODE_COL])
             map_df = cls.hydro_eer_submarket_map(uow)
             df[SUBMARKET_CODE_COL] = df[EER_CODE_COL].apply(
@@ -410,10 +423,12 @@ class Deck:
                 df_stage[STAGE_COL] = s
                 dfs.append(df_stage)
             df_complete = pd.concat(dfs, ignore_index=True)
-            df_complete = df_complete.astype({
-                "valor_esperado": np.float64,
-                "desvio_padrao": np.float64,
-            })
+            df_complete = df_complete.astype(
+                {
+                    "valor_esperado": np.float64,
+                    "desvio_padrao": np.float64,
+                }
+            )
             df_complete = df_complete.groupby("parcela").sum()
             df_complete = df_complete.reset_index()
 
@@ -553,7 +568,9 @@ class Deck:
             df_infeas = pd.concat([df_iter, df_fs], ignore_index=True)
             infeasibilities_aux: list[Infeasibility] = []
             for _, linha in df_infeas.iterrows():
-                infeasibility = Infeasibility.factory(linha, cls._get_hidr(uow))
+                infeasibility = Infeasibility.factory(
+                    linha, cls._get_hidr(uow)
+                )
                 infeasibility_posprocess = (
                     cls._posprocess_infeasibilities_units(infeasibility, uow)
                 )
@@ -646,7 +663,9 @@ class Deck:
             df = cls.probabilities(uow)
             df = cls._expand_scenarios_in_df(df)
             factors_df = (
-                df.groupby(STAGE_COL, as_index=False).sum().set_index(STAGE_COL)
+                df.groupby(STAGE_COL, as_index=False)
+                .sum()
+                .set_index(STAGE_COL)
             )
             df[VALUE_COL] = df.apply(
                 lambda line: line[VALUE_COL]
@@ -1028,12 +1047,14 @@ class Deck:
                 df["geracao_pequenas_usinas_MW"] + df["geracao_eolica_MW"]
             )
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                SUBMARKET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    SUBMARKET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1057,12 +1078,14 @@ class Deck:
             df = cls._add_dates_to_df(df, uow)
             df = cls._add_stages_durations_to_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                EER_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    EER_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1075,7 +1098,9 @@ class Deck:
         num_blocks_with_average = len(cls.blocks(uow)) + 1
         num_tiles = df.shape[0] // (len(hydro_order) * num_blocks_with_average)
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
+        submarket_codes = map_df.loc[
+            hydro_order, SUBMARKET_CODE_COL
+        ].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.tile(
             np.repeat(submarket_codes, num_blocks_with_average), num_tiles
@@ -1161,12 +1186,14 @@ class Deck:
             df = df.rename(columns={"duracao": BLOCK_DURATION_COL})
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                HYDRO_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    HYDRO_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1219,12 +1246,14 @@ class Deck:
             df = df.rename(columns={"duracao": BLOCK_DURATION_COL})
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                THERMAL_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    THERMAL_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1304,13 +1333,15 @@ class Deck:
             df = cls._add_block_durations_to_df(df, uow)
             df = cls._fill_average_block_in_df(df, uow)
             df = cls._expand_scenarios_in_df(df)
-            df = df.sort_values([
-                EXCHANGE_SOURCE_CODE_COL,
-                EXCHANGE_TARGET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    EXCHANGE_SOURCE_CODE_COL,
+                    EXCHANGE_TARGET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1321,13 +1352,15 @@ class Deck:
         if df is None:
             df = cls.dec_oper_interc(uow)
             df = cls._eval_net_exchange(df, uow)
-            df = df.sort_values([
-                EXCHANGE_SOURCE_CODE_COL,
-                EXCHANGE_TARGET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                BLOCK_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    EXCHANGE_SOURCE_CODE_COL,
+                    EXCHANGE_TARGET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                ]
+            ).reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1342,10 +1375,49 @@ class Deck:
                 name,
             )
             df = df.loc[~(df[STAGE_COL].isna())]
-            df = df.sort_values([
-                HYDRO_CODE_COL,
-                STAGE_COL,
-            ]).reset_index(drop=True)
+            df = df.sort_values(
+                [
+                    HYDRO_CODE_COL,
+                    STAGE_COL,
+                ]
+            ).reset_index(drop=True)
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
+    def dec_fcf_cortes(
+        cls, stage: int, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        name = f"dec_fcf_cortes_{str(stage).zfill(3)}"
+        df = cls.DECK_DATA_CACHING.get(name)
+        if df is None:
+            df = cls._validate_data(
+                cls._get_dec_fcf_cortes(stage, uow).tabela,
+                pd.DataFrame,
+                name,
+            )
+            # TODO processar aqui
+            df[STAGE_COL] = df.shape[0] * [stage]
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
+    def cortes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = f"cortes"
+        df = cls.DECK_DATA_CACHING.get(name)
+        if df is None:
+            # TODO melhorar logica para pegar dados de nos que geram cortes
+            # a partir do mapcut. A logica atual funciona apenas para casos
+            # com moldes de PMO
+            cut_stages = list(range(1, cls.num_stages(uow)))
+            # cut_stages = list(range(1, len(cls.stages_start_date)))
+            for stage in cut_stages:
+                df_stage = cls.dec_fcf_cortes(stage, uow)
+                if df is None:
+                    df = df_stage
+                else:
+                    df = pd.concat([df, df_stage], ignore_index=True)
+            # TODO processar aqui
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1427,10 +1499,12 @@ class Deck:
         num_blocks = len(Deck.blocks(uow)) + 1
         num_submarkets = len(submarkets)
         end_dates = [Deck.stages_end_date(uow)[i - 1] for i in stages]
-        empty_table = np.zeros((
-            len(start_dates) * num_blocks * num_submarkets,
-            len(scenarios),
-        ))
+        empty_table = np.zeros(
+            (
+                len(start_dates) * num_blocks * num_submarkets,
+                len(scenarios),
+            )
+        )
         df = pd.DataFrame(empty_table, columns=scenarios)
         # Fill table
         df[STAGE_COL] = np.repeat(stages, num_blocks * num_submarkets)
@@ -1441,7 +1515,9 @@ class Deck:
         df[SUBMARKET_NAME_COL] = np.tile(
             submarkets, df.shape[0] // num_submarkets
         )
-        df[START_DATE_COL] = np.repeat(start_dates, num_blocks * num_submarkets)
+        df[START_DATE_COL] = np.repeat(
+            start_dates, num_blocks * num_submarkets
+        )
         df[END_DATE_COL] = np.repeat(end_dates, num_blocks * num_submarkets)
         for e in relato_stages:
             df.loc[
@@ -1592,10 +1668,12 @@ class Deck:
             df[END_DATE_COL] = df[STAGE_COL].apply(lambda x: end_dates[x - 1])
 
             eer_sbm_df = cls.hydro_eer_submarket_map(uow)
-            eer_sbm_df = eer_sbm_df.drop_duplicates([
-                SUBMARKET_CODE_COL,
-                SUBMARKET_NAME_COL,
-            ])
+            eer_sbm_df = eer_sbm_df.drop_duplicates(
+                [
+                    SUBMARKET_CODE_COL,
+                    SUBMARKET_NAME_COL,
+                ]
+            )
             sbm_name_map = {
                 line[SUBMARKET_NAME_COL]: line[SUBMARKET_CODE_COL]
                 for _, line in eer_sbm_df.iterrows()
@@ -1604,12 +1682,14 @@ class Deck:
                 lambda x: sbm_name_map[x]
             )
             df = df.drop(columns=[SUBMARKET_NAME_COL, EER_NAME_COL])
-            df = df.sort_values([
-                EER_CODE_COL,
-                SUBMARKET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-            ])
+            df = df.sort_values(
+                [
+                    EER_CODE_COL,
+                    SUBMARKET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                ]
+            )
             df = df[
                 [
                     EER_CODE_COL,
@@ -1634,15 +1714,17 @@ class Deck:
     def sbm_afluent_energy(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         df = cls._afluent_energy_for_coupling(uow)
         return (
-            df.groupby([
-                SUBMARKET_CODE_COL,
-                STAGE_COL,
-                SCENARIO_COL,
-                START_DATE_COL,
-                END_DATE_COL,
-                BLOCK_COL,
-                BLOCK_DURATION_COL,
-            ])
+            df.groupby(
+                [
+                    SUBMARKET_CODE_COL,
+                    STAGE_COL,
+                    SCENARIO_COL,
+                    START_DATE_COL,
+                    END_DATE_COL,
+                    BLOCK_COL,
+                    BLOCK_DURATION_COL,
+                ]
+            )
             .sum()
             .reset_index()
         )
@@ -1655,7 +1737,9 @@ class Deck:
         hydro_order = df[HYDRO_CODE_COL].unique().tolist()
         num_repeats = df.shape[0] // (len(hydro_order))
         map_df = cls.hydro_eer_submarket_map(uow)
-        submarket_codes = map_df.loc[hydro_order, SUBMARKET_CODE_COL].to_numpy()
+        submarket_codes = map_df.loc[
+            hydro_order, SUBMARKET_CODE_COL
+        ].to_numpy()
         eer_codes = map_df.loc[hydro_order, EER_CODE_COL].to_numpy()
         df[SUBMARKET_CODE_COL] = np.repeat(submarket_codes, num_repeats)
         df[EER_CODE_COL] = np.repeat(eer_codes, num_repeats)
@@ -1748,13 +1832,15 @@ class Deck:
         num_stages = len(stages)
         num_blocks = len(blocks)
 
-        df = pd.DataFrame({
-            HYDRO_CODE_COL: np.tile(
-                np.repeat(hydros.tolist(), num_blocks), num_stages
-            ),
-            STAGE_COL: np.repeat(stages.tolist(), num_blocks * num_hydros),
-            BLOCK_COL: np.tile(blocks.tolist(), num_hydros * num_stages),
-        })
+        df = pd.DataFrame(
+            {
+                HYDRO_CODE_COL: np.tile(
+                    np.repeat(hydros.tolist(), num_blocks), num_stages
+                ),
+                STAGE_COL: np.repeat(stages.tolist(), num_blocks * num_hydros),
+                BLOCK_COL: np.tile(blocks.tolist(), num_hydros * num_stages),
+            }
+        )
         return df.copy()
 
     @classmethod
@@ -1941,7 +2027,9 @@ class Deck:
         return df.reset_index(drop=True)
 
     @classmethod
-    def hydro_spilled_flow_bounds(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+    def hydro_spilled_flow_bounds(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         # TODO: comportamento não é conforme o esperado pois o resultado de soleira
         # impresso no relato não é o que foi considerado no PL efetivamente, e sim
         # um cálculo pós-processamento com resultados da operação
@@ -2017,10 +2105,12 @@ class Deck:
     ) -> pd.DataFrame:
         def _get_turbined_flow_bounds(uow, df) -> pd.DataFrame:
             df_qmax = Deck.avl_turb_max(uow)
-            df_qmax = df_qmax.rename({
-                "estagio": STAGE_COL,
-                "codigo_usina": HYDRO_CODE_COL,
-            })
+            df_qmax = df_qmax.rename(
+                {
+                    "estagio": STAGE_COL,
+                    "codigo_usina": HYDRO_CODE_COL,
+                }
+            )
             df = pd.merge(
                 df,
                 df_qmax[

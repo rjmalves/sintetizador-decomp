@@ -95,12 +95,20 @@ class PolicySynthetizer:
     @classmethod
     def _resolve_cortes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         # TODO
-        return
+        df = Deck.cortes(uow)
+        if df is None:
+            cls._log("Dados dos cortes não encontrados", ERROR)
+            raise RuntimeError()
+        return df
 
     @classmethod
     def _resolve_estados(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         # TODO
-        return
+        df = Deck.cortes(uow)
+        if df is None:
+            cls._log("Dados dos cortes não encontrados", ERROR)
+            raise RuntimeError()
+        return df
 
     @classmethod
     def _export_metadata(
