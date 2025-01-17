@@ -7,6 +7,7 @@ from app.services.synthesis.system import SystemSynthetizer
 from app.services.synthesis.execution import ExecutionSynthetizer
 from app.services.synthesis.scenarios import ScenarioSynthetizer
 from app.services.synthesis.operation import OperationSynthetizer
+from app.services.synthesis.policy import PolicySynthetizer
 
 
 def synthetize_system(
@@ -31,6 +32,12 @@ def synthetize_operation(
     command: commands.SynthetizeOperation, uow: AbstractUnitOfWork
 ):
     OperationSynthetizer.synthetize(command.variables, uow)
+
+
+def synthetize_policy(
+    command: commands.SynthetizePolicy, uow: AbstractUnitOfWork
+):
+    PolicySynthetizer.synthetize(command.variables, uow)
 
 
 def clean():
