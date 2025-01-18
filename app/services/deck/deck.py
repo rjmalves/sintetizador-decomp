@@ -42,6 +42,14 @@ from app.internal.constants import (
     UNIT_COL,
     UPPER_BOUND_COL,
     VALUE_COL,
+    ITERATION_COL,
+    LAG_COL,
+    STATE_VARIABLE_VALUE_COL,
+    COEFFICIENT_VALUE_COL,
+    VOLUME_COEFFICIENT_TYPE,
+    THERMAL_COEFFICIENT_TYPE,
+    RHS_COEFFICIENT_TYPE,
+    OUTFLOW_COEFFICIENT_TYPE,
 )
 from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
 from app.services.unitofwork import AbstractUnitOfWork
@@ -1396,8 +1404,30 @@ class Deck:
                 pd.DataFrame,
                 name,
             )
-            # TODO processar aqui
+            df = df.rename(
+                {
+                    "indice_iteracao": ITERATION_COL,
+                    "indice_lag": LAG_COL,
+                    "indice_patamar": BLOCK_COL,
+                    "valor_coeficiente": COEFFICIENT_VALUE_COL,
+                    "ponto_consultado": STATE_VARIABLE_VALUE_COL,
+                },
+                axis=1,
+            )
+            MAP_ENTITY_TYPE = {
+                "VARM": VOLUME_COEFFICIENT_TYPE,
+                "-": VOLUME_COEFFICIENT_TYPE,
+                "RHS": RHS_COEFFICIENT_TYPE,
+                "GTERF": THERMAL_COEFFICIENT_TYPE,
+                "QDEFP": OUTFLOW_COEFFICIENT_TYPE,
+            }
+            df["tipo_coeficiente"] = df["tipo_coeficiente"].replace(
+                MAP_ENTITY_TYPE
+            )
             df[STAGE_COL] = df.shape[0] * [stage]
+            df[SCENARIO_COL] = df.shape[0] * [np.nan]
+            df.drop(columns=["tipo_entidade", "nome_entidade"], inplace=True)
+            # TODO create column indice_corte
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1410,7 +1440,6 @@ class Deck:
             # a partir do mapcut. A logica atual funciona apenas para casos
             # com moldes de PMO
             cut_stages = list(range(1, cls.num_stages(uow)))
-            # cut_stages = list(range(1, len(cls.stages_start_date)))
             for stage in cut_stages:
                 df_stage = cls.dec_fcf_cortes(stage, uow)
                 if df is None:

@@ -23,6 +23,7 @@ STAGE_COL = "estagio"
 START_DATE_COL = "data_inicio"
 END_DATE_COL = "data_fim"
 SCENARIO_COL = "cenario"
+LAG_COL = "lag"
 BLOCK_COL = "patamar"
 BLOCK_DURATION_COL = "duracao_patamar"
 VALUE_COL = "valor"
@@ -31,6 +32,9 @@ UPPER_BOUND_COL = "limite_superior"
 VARIABLE_COL = "variavel"
 NODE_COL = "no"
 PROBABILITY_COL = "probabilidade"
+CUT_COL = "indice_corte"
+STATE_VARIABLE_VALUE_COL = "valor_estado"
+COEFFICIENT_VALUE_COL = "valor_coeficiente"
 
 GROUPING_TMP_COL = "group"
 SYSTEM_GROUPING_COL = "sin"
@@ -51,6 +55,12 @@ RUNTIME_COL = "tempo"
 STATS_OR_SCENARIO_COL = "estatistica_ou_cenario"
 
 IV_SUBMARKET_CODE = 99
+
+VOLUME_COEFFICIENT_TYPE = "VARM"
+THERMAL_COEFFICIENT_TYPE = "GTER"
+RHS_COEFFICIENT_TYPE = "RHS"
+OUTFLOW_COEFFICIENT_TYPE = "QDEF"
+
 
 IDENTIFICATION_COLUMNS = [
     START_DATE_COL,
