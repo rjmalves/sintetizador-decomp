@@ -50,6 +50,7 @@ from app.internal.constants import (
     THERMAL_COEFFICIENT_TYPE,
     RHS_COEFFICIENT_TYPE,
     OUTFLOW_COEFFICIENT_TYPE,
+    CUT_COL,
 )
 from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
 from app.services.unitofwork import AbstractUnitOfWork
@@ -1427,7 +1428,15 @@ class Deck:
             df[STAGE_COL] = df.shape[0] * [stage]
             df[SCENARIO_COL] = df.shape[0] * [np.nan]
             df.drop(columns=["tipo_entidade", "nome_entidade"], inplace=True)
-            # TODO create column indice_corte
+            num_iterations = df[ITERATION_COL].max()
+            num_elements = len(
+                df.loc[
+                    df[ITERATION_COL] == num_iterations, ITERATION_COL
+                ].tolist()
+            )
+            df[CUT_COL] = np.repeat(
+                list(range(num_iterations, 0, -1)), num_elements
+            )
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 
@@ -1446,7 +1455,22 @@ class Deck:
                     df = df_stage
                 else:
                     df = pd.concat([df, df_stage], ignore_index=True)
-            # TODO processar aqui
+
+            df = df[
+                [
+                    STAGE_COL,
+                    CUT_COL,
+                    ITERATION_COL,
+                    SCENARIO_COL,
+                    "tipo_coeficiente",
+                    "indice_entidade",
+                    LAG_COL,
+                    BLOCK_COL,
+                    COEFFICIENT_VALUE_COL,
+                    STATE_VARIABLE_VALUE_COL,
+                ]
+            ]
+            df = df.reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()
 

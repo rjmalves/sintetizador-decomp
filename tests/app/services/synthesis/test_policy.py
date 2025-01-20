@@ -3,7 +3,7 @@ from os.path import join
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-from idecomp.decomp import Dadger
+from idecomp.decomp import Dadger, Caso
 from idecomp.decomp.dec_fcf_cortes import DecFcfCortes
 
 from app.internal.constants import (
@@ -53,6 +53,13 @@ def __validate_metadata(key: str, df_metadata: pd.DataFrame):
 def test_synthesis_est(test_settings):
     synthesis_str = "CORTES"
     df, df_meta = __synthetize_with_mock(synthesis_str)
+    stage = 1
+    rev = Caso.read(join(DECK_TEST_DIR, "caso.dat")).arquivos
+    df_dec_fcf = DecFcfCortes.read(
+        join(DECK_TEST_DIR, f"dec_fcf_cortes_{str(stage).zfill(3)}.{rev}")
+    ).tabela
+
+    # TODO function that compares df_dec_fcf with df
     # dadger = Dadger.read(join(DECK_TEST_DIR, "dadger.rv0")).dt
     # start_date = datetime(day=dadger.dia, month=dadger.mes, year=dadger.ano)
     # assert df.at[0, STAGE_COL] == 1
