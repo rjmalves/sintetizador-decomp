@@ -6,14 +6,8 @@ from typing import Callable, Optional
 import pandas as pd  # type: ignore
 
 from app.internal.constants import (
-    BLOCK_COL,
-    BLOCK_DURATION_COL,
-    END_DATE_COL,
-    STAGE_COL,
-    START_DATE_COL,
     POLICY_SYNTHESIS_METADATA_OUTPUT,
     POLICY_SYNTHESIS_SUBDIR,
-    VALUE_COL,
 )
 from app.model.policy.policysynthesis import (
     SUPPORTED_SYNTHESIS,
@@ -72,9 +66,7 @@ class PolicySynthetizer:
                 all_variables = cls._default_args()
             else:
                 all_variables = cls._match_wildcards(variables)
-            synthesis_variables = cls._process_variable_arguments(
-                all_variables
-            )
+            synthesis_variables = cls._process_variable_arguments(all_variables)
         except Exception as e:
             print_exc()
             cls._log(str(e), ERROR)
@@ -87,26 +79,27 @@ class PolicySynthetizer:
         cls, synthesis: PolicySynthesis, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
         RULES: dict[Variable, Callable] = {
-            Variable.CORTES: cls._resolve_cortes,
-            Variable.ESTADOS: cls._resolve_estados,
+            Variable.CORTES_COEFICIENTES: cls._resolve_cortes_coeficientes,
+            Variable.CORTES_VARIAVEIS: cls._resolve_cortes_variaveis,
         }
         return RULES[synthesis.variable](uow)
 
     @classmethod
-    def _resolve_cortes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        # TODO
+    def _resolve_cortes_coeficientes(
+        cls, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
         df = Deck.cortes(uow)
+
         if df is None:
             cls._log("Dados dos cortes não encontrados", ERROR)
             raise RuntimeError()
         return df
 
     @classmethod
-    def _resolve_estados(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        # TODO
-        df = Deck.cortes(uow)
+    def _resolve_cortes_variaveis(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        df = Deck.variaveis_cortes(uow)
         if df is None:
-            cls._log("Dados dos cortes não encontrados", ERROR)
+            cls._log("Dados das variáveis dos cortes não encontrados", ERROR)
             raise RuntimeError()
         return df
 

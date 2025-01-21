@@ -19,6 +19,6 @@ class PolicySynthesis:
 
 
 SUPPORTED_SYNTHESIS: list[str] = [
-    "CORTES",
-    "ESTADOS",
+    "CORTES_COEFICIENTES",
+    "CORTES_VARIAVEIS",
 ]

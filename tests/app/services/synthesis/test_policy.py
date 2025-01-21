@@ -1,13 +1,18 @@
-from datetime import datetime, timedelta
-from os.path import join
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pandas as pd
-from idecomp.decomp import Dadger, Caso
-from idecomp.decomp.dec_fcf_cortes import DecFcfCortes
 
 from app.internal.constants import (
+    COEF_TYPE_COL,
+    COEF_VALUE_COL,
+    CUT_INDEX_COL,
+    ENTITY_INDEX_COL,
+    ITERATION_COL,
     POLICY_SYNTHESIS_METADATA_OUTPUT,
+    SCENARIO_COL,
+    STAGE_COL,
+    STATE_VALUE_COL,
 )
 from app.model.policy.policysynthesis import PolicySynthesis
 from app.services.synthesis.policy import PolicySynthetizer
@@ -50,19 +55,31 @@ def __validate_metadata(key: str, df_metadata: pd.DataFrame):
     assert s.variable.long_name in df_metadata["nome_longo"].tolist()
 
 
-def test_synthesis_est(test_settings):
-    synthesis_str = "CORTES"
+def test_synthesis_cortes_coeficientes(test_settings: None):
+    synthesis_str = "CORTES_COEFICIENTES"
     df, df_meta = __synthetize_with_mock(synthesis_str)
-    stage = 1
-    rev = Caso.read(join(DECK_TEST_DIR, "caso.dat")).arquivos
-    df_dec_fcf = DecFcfCortes.read(
-        join(DECK_TEST_DIR, f"dec_fcf_cortes_{str(stage).zfill(3)}.{rev}")
-    ).tabela
 
-    # TODO function that compares df_dec_fcf with df
-    # dadger = Dadger.read(join(DECK_TEST_DIR, "dadger.rv0")).dt
-    # start_date = datetime(day=dadger.dia, month=dadger.mes, year=dadger.ano)
-    # assert df.at[0, STAGE_COL] == 1
-    # assert df.at[0, START_DATE_COL] == start_date
-    # assert df.at[0, END_DATE_COL] == start_date + timedelta(days=7)
+    # TODO improve comparison: function that compares df directly with dec_fcf_cortes
+    assert df.at[0, STAGE_COL] == 1
+    assert df.at[0, CUT_INDEX_COL] == 34
+    assert df.at[0, ITERATION_COL] == 1
+    assert np.isnan(df.at[0, SCENARIO_COL])
+    assert df.at[0, COEF_TYPE_COL] == 1
+    assert df.at[0, ENTITY_INDEX_COL] == 0
+    assert df.at[0, COEF_VALUE_COL] == 133525140.6137163
+    assert df.at[0, STATE_VALUE_COL] == 123349094.0040892
+
+    __validate_metadata(synthesis_str, df_meta)
+
+
+def test_synthesis_cortes_variaveis(test_settings: None):
+    synthesis_str = "CORTES_VARIAVEIS"
+    df, df_meta = __synthetize_with_mock(synthesis_str)
+
+    assert df.at[0, COEF_TYPE_COL] == 1
+    assert df.at[0, "nome_curto_coeficiente"] == "RHS"
+    assert df.at[0, "nome_longo_coeficiente"] == "Right Hand Side"
+    assert df.at[0, "unidade_coeficiente"] == "10^3 R$"
+    assert df.at[0, "unidade_estado"] == "10^3 R$"
+
     __validate_metadata(synthesis_str, df_meta)
