@@ -11,6 +11,7 @@ from idecomp.decomp.caso import Caso
 from idecomp.decomp.dadger import Dadger
 from idecomp.decomp.dadgnl import Dadgnl
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
+from idecomp.decomp.dec_fcf_cortes import DecFcfCortes
 from idecomp.decomp.dec_oper_gnl import DecOperGnl
 from idecomp.decomp.dec_oper_interc import DecOperInterc
 from idecomp.decomp.dec_oper_ree import DecOperRee
@@ -111,6 +112,10 @@ class AbstractFilesRepository(ABC):
     def get_avl_turb_max(self) -> AvlTurbMax:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_dec_fcf_cortes(self, stage: int) -> Optional[DecFcfCortes]:
+        pass
+
 
 class RawFilesRepository(AbstractFilesRepository):
     def __init__(self, tmppath: str):
@@ -144,6 +149,8 @@ class RawFilesRepository(AbstractFilesRepository):
         self.__read_dec_oper_interc = False
         self.__read_dec_eco_discr = False
         self.__read_avl_turb_max = False
+        self.__read_dec_fcf_cortes: Dict[int, bool] = {}
+        self.__dec_fcf_cortes: Dict[int, DecFcfCortes] = {}
 
     @property
     def extensao(self) -> str:
@@ -173,7 +180,9 @@ class RawFilesRepository(AbstractFilesRepository):
                 arq_dadger = self.arquivos.dadger
                 if arq_dadger is None:
                     raise FileNotFoundError()
-                caminho = str(pathlib.Path(self.__tmppath).joinpath(arq_dadger))
+                caminho = str(
+                    pathlib.Path(self.__tmppath).joinpath(arq_dadger)
+                )
                 script = str(
                     pathlib.Path(Settings().installdir).joinpath(
                         Settings().encoding_script
@@ -472,7 +481,9 @@ class RawFilesRepository(AbstractFilesRepository):
                     )
             except Exception as e:
                 if logger is not None:
-                    logger.error(f"Erro na leitura do dec_oper_interc.csv: {e}")
+                    logger.error(
+                        f"Erro na leitura do dec_oper_interc.csv: {e}"
+                    )
                 raise e
         return self.__dec_oper_interc
 
@@ -515,6 +526,23 @@ class RawFilesRepository(AbstractFilesRepository):
                     logger.error(f"Erro na leitura do avl_turb_max.csv: {e}")
                 raise e
         return self.__avl_turb_max
+
+    def get_dec_fcf_cortes(self, stage: int) -> Optional[DecFcfCortes]:
+        file_name = f"dec_fcf_cortes_{str(stage).zfill(3)}.{self.extensao}"
+        if self.__read_dec_fcf_cortes.get(stage) is None:
+            self.__read_dec_fcf_cortes[stage] = True
+            logger = Log.log()
+            try:
+                if logger is not None:
+                    logger.info(f"Lendo arquivo {file_name}")
+                self.__dec_fcf_cortes[stage] = DecFcfCortes.read(
+                    join(self.__tmppath, file_name)
+                )
+            except Exception as e:
+                if logger is not None:
+                    logger.error(f"Erro na leitura do {file_name}: {e}")
+                raise e
+        return self.__dec_fcf_cortes.get(stage)
 
 
 def factory(kind: str, *args, **kwargs) -> AbstractFilesRepository:

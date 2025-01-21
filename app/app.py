@@ -114,6 +114,31 @@ def operacao(variaveis, formato):
     Log.log().info("# Fim da síntese #")
 
 
+@click.command("politica")
+@click.argument(
+    "variaveis",
+    nargs=-1,
+)
+@click.option(
+    "--formato", default="PARQUET", help="formato para escrita da síntese"
+)
+def politica(variaveis, formato):
+    """
+    Realiza a síntese dos dados da política do DECOMP.
+    """
+    os.environ["FORMATO_SINTESE"] = formato
+    Log.log().info("# Realizando síntese da POLITICA #")
+
+    uow = factory(
+        "FS",
+        os.curdir,
+    )
+    command = commands.SynthetizeOperation(variaveis)
+    handlers.synthetize_policy(command, uow)
+
+    Log.log().info("# Fim da síntese #")
+
+
 @click.command("limpeza")
 def limpeza():
     """
@@ -136,9 +161,12 @@ def limpeza():
     "--operacao", multiple=True, help="variável da operação para síntese"
 )
 @click.option(
+    "--politica", multiple=True, help="variável da política para síntese"
+)
+@click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def completa(sistema, execucao, cenarios, operacao, formato):
+def completa(sistema, execucao, cenarios, operacao, politica, formato):
     """
     Realiza a síntese completa do DECOMP.
     """
@@ -157,6 +185,8 @@ def completa(sistema, execucao, cenarios, operacao, formato):
     handlers.synthetize_scenario(command, uow)
     command = commands.SynthetizeOperation(operacao)
     handlers.synthetize_operation(command, uow)
+    command = commands.SynthetizePolicy(politica)
+    handlers.synthetize_policy(command, uow)
 
     Log.log().info("# Fim da síntese #")
 
@@ -166,4 +196,5 @@ app.add_command(sistema)
 app.add_command(execucao)
 app.add_command(cenarios)
 app.add_command(operacao)
+app.add_command(politica)
 app.add_command(limpeza)

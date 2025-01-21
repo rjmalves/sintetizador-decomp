@@ -4,11 +4,12 @@ from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
-from cfinterface.components import Register
+from cfinterface.components.register import Register
 from idecomp.decomp import Dadger, Decomptim, Hidr, InviabUnic, Relato, Vazoes
 from idecomp.decomp.avl_turb_max import AvlTurbMax
 from idecomp.decomp.dadger import ACVOLMIN
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
+from idecomp.decomp.dec_fcf_cortes import DecFcfCortes
 from idecomp.decomp.dec_oper_gnl import DecOperGnl
 from idecomp.decomp.dec_oper_interc import DecOperInterc
 from idecomp.decomp.dec_oper_ree import DecOperRee
@@ -20,20 +21,29 @@ from idecomp.decomp.modelos.dadger import DT, HE
 from app.internal.constants import (
     BLOCK_COL,
     BLOCK_DURATION_COL,
+    COEF_TYPE_COL,
+    COEF_VALUE_COL,
+    CUT_INDEX_COL,
     EER_CODE_COL,
     EER_NAME_COL,
     END_DATE_COL,
+    ENTITY_INDEX_COL,
     EXCHANGE_SOURCE_CODE_COL,
     EXCHANGE_TARGET_CODE_COL,
+    GTER_COEF_CODE,
     HYDRO_CODE_COL,
     HYDRO_NAME_COL,
     ITERATION_COL,
     IV_SUBMARKET_CODE,
+    LAG_COL,
     LOWER_BOUND_COL,
+    QDEF_COEF_CODE,
+    RHS_COEF_CODE,
     RUNTIME_COL,
     SCENARIO_COL,
     STAGE_COL,
     START_DATE_COL,
+    STATE_VALUE_COL,
     SUBMARKET_CODE_COL,
     SUBMARKET_NAME_COL,
     THERMAL_CODE_COL,
@@ -41,8 +51,10 @@ from app.internal.constants import (
     UNIT_COL,
     UPPER_BOUND_COL,
     VALUE_COL,
+    VARM_COEF_CODE,
 )
 from app.model.execution.infeasibility import Infeasibility, InfeasibilityType
+from app.model.policy.unit import Unit
 from app.services.unitofwork import AbstractUnitOfWork
 from app.utils.operations import cast_ac_fields_to_stage, fast_group_df
 
@@ -142,6 +154,14 @@ class Deck:
         with uow:
             avl = uow.files.get_avl_turb_max()
             return avl
+
+    @classmethod
+    def _get_dec_fcf_cortes(
+        cls, stage: int, uow: AbstractUnitOfWork
+    ) -> DecFcfCortes:
+        with uow:
+            dec = uow.files.get_dec_fcf_cortes(stage)
+            return dec
 
     @classmethod
     def _validate_data(cls, data, type: Type[T], msg: str = "dados") -> T:
@@ -1350,6 +1370,147 @@ class Deck:
         return df.copy()
 
     @classmethod
+    def _dec_fcf_cortes_per_stage(
+        cls, stage: int, uow: AbstractUnitOfWork
+    ) -> pd.DataFrame:
+        name = f"dec_fcf_cortes_{str(stage).zfill(3)}"
+        df = cls.DECK_DATA_CACHING.get(name)
+        if df is None:
+            df = cls._validate_data(
+                cls._get_dec_fcf_cortes(stage, uow).tabela,
+                pd.DataFrame,
+                name,
+            )
+            df = df.rename(
+                {
+                    "indice_iteracao": ITERATION_COL,
+                    "indice_lag": LAG_COL,
+                    "indice_patamar": BLOCK_COL,
+                    "indice_entidade": ENTITY_INDEX_COL,
+                    "valor_coeficiente": COEF_VALUE_COL,
+                    "ponto_consultado": STATE_VALUE_COL,
+                },
+                axis=1,
+            )
+            MAP_COEF_CODE = {
+                "VARM": str(VARM_COEF_CODE),
+                "-": str(VARM_COEF_CODE),
+                "RHS": str(RHS_COEF_CODE),
+                "GTERF": str(GTER_COEF_CODE),
+                "QDEFP": str(QDEF_COEF_CODE),
+            }
+            df[COEF_TYPE_COL] = df["tipo_coeficiente"].replace(MAP_COEF_CODE)
+            df[COEF_TYPE_COL] = df[COEF_TYPE_COL].astype(int)
+            df[STAGE_COL] = df.shape[0] * [stage]
+            df[SCENARIO_COL] = df.shape[0] * [np.nan]
+            df.drop(columns=["tipo_entidade", "nome_entidade"], inplace=True)
+            num_iterations = df[ITERATION_COL].max()
+            num_elements = len(
+                df.loc[
+                    df[ITERATION_COL] == num_iterations, ITERATION_COL
+                ].tolist()
+            )
+            df[CUT_INDEX_COL] = np.repeat(
+                list(range(num_iterations, 0, -1)), num_elements
+            )
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
+    def dec_fcf_cortes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "dec_fcf_cortes"
+        df = cls.DECK_DATA_CACHING.get(name)
+        if df is None:
+            # TODO melhorar logica para pegar dados de nos que geram cortes
+            # a partir do mapcut. A logica atual funciona apenas para casos
+            # com moldes de PMO
+            cut_stages = list(range(1, cls.num_stages(uow)))
+            for stage in cut_stages:
+                df_stage = cls._dec_fcf_cortes_per_stage(stage, uow)
+                if df is None:
+                    df = df_stage
+                else:
+                    df = pd.concat([df, df_stage], ignore_index=True)
+            df = df.reset_index(drop=True)
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
+    def cortes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "cortes"
+        df = cls.DECK_DATA_CACHING.get(name)
+        if df is None:
+            df = cls.dec_fcf_cortes(uow)
+            df = df[
+                [
+                    STAGE_COL,
+                    CUT_INDEX_COL,
+                    ITERATION_COL,
+                    SCENARIO_COL,
+                    COEF_TYPE_COL,
+                    ENTITY_INDEX_COL,
+                    LAG_COL,
+                    BLOCK_COL,
+                    COEF_VALUE_COL,
+                    STATE_VALUE_COL,
+                ]
+            ]
+            df = df.reset_index(drop=True)
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
+    def variaveis_cortes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        name = "variaveis_cortes"
+        df = cls.DECK_DATA_CACHING.get(name)
+        MAP_COEF_TYPE_SHORT_NAME = {
+            RHS_COEF_CODE: "RHS",
+            VARM_COEF_CODE: "VARM",
+            GTER_COEF_CODE: "GTER",
+            QDEF_COEF_CODE: "QDEF",
+        }
+        MAP_COEF_TYPE_LONG_NAME = {
+            RHS_COEF_CODE: "Right Hand Side",
+            VARM_COEF_CODE: "Volume armazenado",
+            GTER_COEF_CODE: "Geração térmica antecipada",
+            QDEF_COEF_CODE: "Vazão defluente por tempo de viagem",
+        }
+        MAP_COEF_TYPE_UNIT = {
+            RHS_COEF_CODE: Unit.kRS.value,
+            VARM_COEF_CODE: Unit.kRS_hm3.value,
+            GTER_COEF_CODE: Unit.kRS_MWh.value,
+            QDEF_COEF_CODE: Unit.kRS_hm3.value,
+        }
+        MAP_COEF_TYPE_STATE_UNIT = {
+            RHS_COEF_CODE: Unit.kRS.value,
+            VARM_COEF_CODE: Unit.hm3.value,
+            GTER_COEF_CODE: Unit.MWh.value,
+            QDEF_COEF_CODE: Unit.hm3.value,
+        }
+        if df is None:
+            cuts_df = cls.dec_fcf_cortes(uow)
+            df = cuts_df[
+                [
+                    COEF_TYPE_COL,
+                ]
+            ].drop_duplicates()
+            df["nome_curto_coeficiente"] = df[COEF_TYPE_COL].replace(
+                MAP_COEF_TYPE_SHORT_NAME
+            )
+            df["nome_longo_coeficiente"] = df[COEF_TYPE_COL].replace(
+                MAP_COEF_TYPE_LONG_NAME
+            )
+            df["unidade_coeficiente"] = df[COEF_TYPE_COL].replace(
+                MAP_COEF_TYPE_UNIT
+            )
+            df["unidade_estado"] = df[COEF_TYPE_COL].replace(
+                MAP_COEF_TYPE_STATE_UNIT
+            )
+            df = df.reset_index(drop=True)
+            cls.DECK_DATA_CACHING[name] = df
+        return df.copy()
+
+    @classmethod
     def _merge_relato_relato2_df_data(
         cls,
         relato_df: pd.DataFrame,
@@ -2048,7 +2209,7 @@ class Deck:
             # Inicializa valores (liminf=0 e limsup=inf)
             df = cls.__initialize_df_hydro_bounds(uow)
             df[LOWER_BOUND_COL] = 0.00
-            df[UPPER_BOUND_COL] = float("inf")  # TODO
+            df[UPPER_BOUND_COL] = float("inf")
             # Obtem turbinamento maximo considerado no PL pelo Decomp, que correspodne
             # ao min(Qmaxgerador,Qmaxturbina)
             df = _get_turbined_flow_bounds(uow, df)

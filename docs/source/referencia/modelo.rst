@@ -70,7 +70,7 @@ Informações sobre os cenários visitados (gerados, fornecidos, processados, et
 Política
 *********
 
-Informações sobre a política operativa construída (ou lida) pelo modelo (TODO)
+Informações sobre a política operativa construída pelo modelo.
 
 Operação
 *********
