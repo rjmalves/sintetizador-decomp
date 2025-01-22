@@ -17,7 +17,7 @@
 - Implementada síntese de Energia Armazenada por UHE, com cálculo feito na aplicação de síntese (`EARMI_UHE`, `EARMF_UHE`) [#15](https://github.com/rjmalves/sintetizador-decomp/issues/15)
 - Logging do processo de síntese melhorado e resumido, incluindo os tempos gastos em cada etapa do processo
 - Criação da abstração `Deck` que centraliza as conversões de formato e implementação de cálculos já realizados pelo modelo quando necessários para padronização do restante dos módulos de síntese
-- Dependência da [idecomp](https://github.com/rjmalves/idecomp) atualizada para 1.6.0.
+- Dependência da [idecomp](https://github.com/rjmalves/idecomp) atualizada para 1.7.1.
 - Implementada as variáveis de geração de usinas não simuladas para a síntese da operação: `GUNS`, `GUNSD`, `CUNS`.
 - Implementada síntese da política construída pelo DECOMP, com as saídas `CORTES_COEFICIENTES.parquet`e `CORTES_VARIAVEIS.parquet`.
 
