@@ -11,7 +11,12 @@ A instalação pode ser feita diretamente a partir do repositório:
 ```
 $ git clone https://github.com/rjmalves/sintetizador-decomp
 $ cd sintetizador-decomp
-$ python setup.py install
+$ pip install .
+```
+
+Ou através do próprio `pip`:
+```
+$ pip install git+https://github.com/rjmalves/sintetizador-decomp
 ```
 
 ## Modelo Unificado de Dados
