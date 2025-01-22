@@ -18,8 +18,8 @@
 - Logging do processo de síntese melhorado e resumido, incluindo os tempos gastos em cada etapa do processo
 - Criação da abstração `Deck` que centraliza as conversões de formato e implementação de cálculos já realizados pelo modelo quando necessários para padronização do restante dos módulos de síntese
 - Dependência da [idecomp](https://github.com/rjmalves/idecomp) atualizada para 1.6.0.
-- Implementada as variáveis de geração de usinas não simuladas para a síntese da operação: `GUNS`, `GUNSD`, `CUNS`
-- Implementada síntese da política construída pelo DECOMP, com as saídas `CORTES_COEFICIENTES.parquet`e `CORTES_VARIAVEIS.parquet`
+- Implementada as variáveis de geração de usinas não simuladas para a síntese da operação: `GUNS`, `GUNSD`, `CUNS`.
+- Implementada síntese da política construída pelo DECOMP, com as saídas `CORTES_COEFICIENTES.parquet`e `CORTES_VARIAVEIS.parquet`.
 
 
 # v1.0.0
