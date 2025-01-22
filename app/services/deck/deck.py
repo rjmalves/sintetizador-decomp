@@ -158,7 +158,7 @@ class Deck:
     @classmethod
     def _get_dec_fcf_cortes(
         cls, stage: int, uow: AbstractUnitOfWork
-    ) -> DecFcfCortes:
+    ) -> Optional[DecFcfCortes]:
         with uow:
             dec = uow.files.get_dec_fcf_cortes(stage)
             return dec
@@ -1376,61 +1376,70 @@ class Deck:
         name = f"dec_fcf_cortes_{str(stage).zfill(3)}"
         df = cls.DECK_DATA_CACHING.get(name)
         if df is None:
-            df = cls._validate_data(
-                cls._get_dec_fcf_cortes(stage, uow).tabela,
-                pd.DataFrame,
-                name,
-            )
-            df = df.rename(
-                {
-                    "indice_iteracao": ITERATION_COL,
-                    "indice_lag": LAG_COL,
-                    "indice_patamar": BLOCK_COL,
-                    "indice_entidade": ENTITY_INDEX_COL,
-                    "valor_coeficiente": COEF_VALUE_COL,
-                    "ponto_consultado": STATE_VALUE_COL,
-                },
-                axis=1,
-            )
-            MAP_COEF_CODE = {
-                "VARM": str(VARM_COEF_CODE),
-                "-": str(VARM_COEF_CODE),
-                "RHS": str(RHS_COEF_CODE),
-                "GTERF": str(GTER_COEF_CODE),
-                "QDEFP": str(QDEF_COEF_CODE),
-            }
-            df[COEF_TYPE_COL] = df["tipo_coeficiente"].replace(MAP_COEF_CODE)
-            df[COEF_TYPE_COL] = df[COEF_TYPE_COL].astype(int)
-            df[STAGE_COL] = df.shape[0] * [stage]
-            df[SCENARIO_COL] = df.shape[0] * [np.nan]
-            df.drop(columns=["tipo_entidade", "nome_entidade"], inplace=True)
-            num_iterations = df[ITERATION_COL].max()
-            num_elements = len(
-                df.loc[
-                    df[ITERATION_COL] == num_iterations, ITERATION_COL
-                ].tolist()
-            )
-            df[CUT_INDEX_COL] = np.repeat(
-                list(range(num_iterations, 0, -1)), num_elements
-            )
-            cls.DECK_DATA_CACHING[name] = df
-        return df.copy()
+            dec_fcf_cortes = cls._get_dec_fcf_cortes(stage, uow)
+            if dec_fcf_cortes is not None:
+                df = cls._validate_data(
+                    dec_fcf_cortes.tabela,
+                    pd.DataFrame,
+                    name,
+                )
+                df = df.rename(
+                    {
+                        "indice_iteracao": ITERATION_COL,
+                        "indice_lag": LAG_COL,
+                        "indice_patamar": BLOCK_COL,
+                        "indice_entidade": ENTITY_INDEX_COL,
+                        "valor_coeficiente": COEF_VALUE_COL,
+                        "ponto_consultado": STATE_VALUE_COL,
+                    },
+                    axis=1,
+                )
+                MAP_COEF_CODE = {
+                    "VARM": str(VARM_COEF_CODE),
+                    "-": str(VARM_COEF_CODE),
+                    "RHS": str(RHS_COEF_CODE),
+                    "GTERF": str(GTER_COEF_CODE),
+                    "QDEFP": str(QDEF_COEF_CODE),
+                }
+                df[COEF_TYPE_COL] = df["tipo_coeficiente"].replace(
+                    MAP_COEF_CODE
+                )
+                df[COEF_TYPE_COL] = df[COEF_TYPE_COL].astype(int)
+                df[STAGE_COL] = df.shape[0] * [stage]
+                df[SCENARIO_COL] = df.shape[0] * [np.nan]
+                df.drop(
+                    columns=["tipo_entidade", "nome_entidade"], inplace=True
+                )
+                num_iterations = df[ITERATION_COL].max()
+                num_elements = len(
+                    df.loc[
+                        df[ITERATION_COL] == num_iterations, ITERATION_COL
+                    ].tolist()
+                )
+                df[CUT_INDEX_COL] = np.repeat(
+                    list(range(num_iterations, 0, -1)), num_elements
+                )
+                cls.DECK_DATA_CACHING[name] = df
+                return df.copy()
+            else:
+                return pd.DataFrame()
 
     @classmethod
     def dec_fcf_cortes(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         name = "dec_fcf_cortes"
         df = cls.DECK_DATA_CACHING.get(name)
         if df is None:
+            df = pd.DataFrame()
             # TODO melhorar logica para pegar dados de nos que geram cortes
             # a partir do mapcut. A logica atual funciona apenas para casos
             # com moldes de PMO
             cut_stages = list(range(1, cls.num_stages(uow)))
             for stage in cut_stages:
                 df_stage = cls._dec_fcf_cortes_per_stage(stage, uow)
-                if df is None:
-                    df = df_stage
-                else:
-                    df = pd.concat([df, df_stage], ignore_index=True)
+                # if df is None:
+                #     df = df_stage
+                # else:
+                df = pd.concat([df, df_stage], ignore_index=True)
             df = df.reset_index(drop=True)
             cls.DECK_DATA_CACHING[name] = df
         return df.copy()

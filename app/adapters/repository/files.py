@@ -180,9 +180,7 @@ class RawFilesRepository(AbstractFilesRepository):
                 arq_dadger = self.arquivos.dadger
                 if arq_dadger is None:
                     raise FileNotFoundError()
-                caminho = str(
-                    pathlib.Path(self.__tmppath).joinpath(arq_dadger)
-                )
+                caminho = str(pathlib.Path(self.__tmppath).joinpath(arq_dadger))
                 script = str(
                     pathlib.Path(Settings().installdir).joinpath(
                         Settings().encoding_script
@@ -481,9 +479,7 @@ class RawFilesRepository(AbstractFilesRepository):
                     )
             except Exception as e:
                 if logger is not None:
-                    logger.error(
-                        f"Erro na leitura do dec_oper_interc.csv: {e}"
-                    )
+                    logger.error(f"Erro na leitura do dec_oper_interc.csv: {e}")
                 raise e
         return self.__dec_oper_interc
 
