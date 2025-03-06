@@ -1,3 +1,8 @@
+# v2.0.1
+
+- Correção ao fixar as colunas do tipo `datetime` em `UTC` [#23](https://github.com/rjmalves/sintetizador-decomp/issues/23)
+- Adicionados novos dados para a síntese da execução: `VERSAO` e `TITULO`
+
 # v2.0.0
 
 - Suporte a Python 3.8 descontinuado. Apenas versões de Python >= 3.10 são suportadas nos ambientes de CI e tem garantia de reprodutibilidade.
@@ -20,7 +25,6 @@
 - Dependência da [idecomp](https://github.com/rjmalves/idecomp) atualizada para 1.7.1.
 - Implementada as variáveis de geração de usinas não simuladas para a síntese da operação: `GUNS`, `GUNSD`, `CUNS`.
 - Implementada síntese da política construída pelo DECOMP, com as saídas `CORTES_COEFICIENTES.parquet`e `CORTES_VARIAVEIS.parquet`.
-
 
 # v1.0.0
 
