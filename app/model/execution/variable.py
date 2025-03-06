@@ -4,6 +4,8 @@ from typing import Dict
 
 class Variable(Enum):
     PROGRAMA = "PROGRAMA"
+    VERSAO = "VERSAO"
+    TITULO = "TITULO"
     CONVERGENCIA = "CONVERGENCIA"
     TEMPO_EXECUCAO = "TEMPO"
     CUSTOS = "CUSTOS"
@@ -28,6 +30,8 @@ class Variable(Enum):
     def short_name(self) -> str | None:
         SHORT_NAMES: Dict[str, str] = {
             "PROGRAMA": "PROGRAMA",
+            "VERSAO": "VERSAO",
+            "TITULO": "TITULO",
             "CONVERGENCIA": "CONVERGENCIA",
             "TEMPO": "TEMPO",
             "CUSTOS": "CUSTOS",
@@ -39,6 +43,8 @@ class Variable(Enum):
     def long_name(self) -> str | None:
         LONG_NAMES: Dict[str, str] = {
             "PROGRAMA": "Modelo de Otimização",
+            "VERSAO": "Versão do Modelo",
+            "TITULO": "Título do Estudo",
             "CONVERGENCIA": "Convergência do Processo Iterativo",
             "TEMPO": "Tempo de Execução",
             "INVIABILIDADES": "Violações das Restrições",

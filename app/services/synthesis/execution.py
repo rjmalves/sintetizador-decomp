@@ -1,22 +1,24 @@
-from typing import Callable, List, Optional
-from traceback import print_exc
-import pandas as pd  # type: ignore
 import logging
-from logging import INFO, ERROR
+from logging import ERROR, INFO
+from traceback import print_exc
+from typing import Callable, List, Optional
+
+import pandas as pd  # type: ignore
+
+from app.internal.constants import (
+    EXECUTION_SYNTHESIS_METADATA_OUTPUT,
+    EXECUTION_SYNTHESIS_SUBDIR,
+    RUNTIME_COL,
+)
+from app.model.execution.executionsynthesis import (
+    SUPPORTED_SYNTHESIS,
+    ExecutionSynthesis,
+)
+from app.model.execution.variable import Variable
 from app.services.deck.deck import Deck
 from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.timing import time_and_log
 from app.utils.regex import match_variables_with_wildcards
-from app.model.execution.variable import Variable
-from app.model.execution.executionsynthesis import (
-    ExecutionSynthesis,
-    SUPPORTED_SYNTHESIS,
-)
-from app.internal.constants import (
-    RUNTIME_COL,
-    EXECUTION_SYNTHESIS_SUBDIR,
-    EXECUTION_SYNTHESIS_METADATA_OUTPUT,
-)
+from app.utils.timing import time_and_log
 
 
 class ExecutionSynthetizer:
@@ -79,6 +81,8 @@ class ExecutionSynthetizer:
     ) -> pd.DataFrame:
         RULES: dict[Variable, Callable] = {
             Variable.PROGRAMA: cls._resolve_program,
+            Variable.VERSAO: cls._resolve_version,
+            Variable.TITULO: cls._resolve_title,
             Variable.CONVERGENCIA: cls._resolve_convergence,
             Variable.TEMPO_EXECUCAO: cls._resolve_runtime,
             Variable.CUSTOS: cls._resolve_costs,
@@ -89,6 +93,14 @@ class ExecutionSynthetizer:
     @classmethod
     def _resolve_program(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         return pd.DataFrame(data={"programa": ["DECOMP"]})
+
+    @classmethod
+    def _resolve_version(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        return pd.DataFrame(data={"versao": [Deck.version(uow)]})
+
+    @classmethod
+    def _resolve_title(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        return pd.DataFrame(data={"titulo": [Deck.title(uow)]})
 
     @classmethod
     def __append_execution(
