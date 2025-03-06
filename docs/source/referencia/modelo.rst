@@ -43,6 +43,12 @@ Informações da execução do modelo, como ambiente escolhido, recursos computa
 
    * - VARIÁVEL
      - MNEMÔNICO
+   * - Nome do Modelo Computacional
+     - `PROGRAMA`
+   * - Versão do Modelo
+     - `VERSAO`
+   * - Título do Estudo
+     - `TITULO`
    * - Composição de Custos
      - `CUSTOS`
    * - Tempo de Execução
@@ -71,6 +77,17 @@ Política
 *********
 
 Informações sobre a política operativa construída pelo modelo.
+
+.. list-table:: Dados da Política
+   :widths: 50 10
+   :header-rows: 1
+
+   * - VARIÁVEL
+     - MNEMÔNICO
+   * - Descrição das variáveis dos cortes de Benders
+     - `CORTES_VARIAVEIS`
+   * - Coeficientes dos cortes de Benders
+     - `CORTES_COEFICIENTES`
 
 Operação
 *********

@@ -16,7 +16,7 @@ from idecomp.decomp.dec_oper_ree import DecOperRee
 from idecomp.decomp.dec_oper_sist import DecOperSist
 from idecomp.decomp.dec_oper_usih import DecOperUsih
 from idecomp.decomp.dec_oper_usit import DecOperUsit
-from idecomp.decomp.modelos.dadger import DT, HE
+from idecomp.decomp.modelos.dadger import DT, HE, TE
 
 from app.internal.constants import (
     BLOCK_COL,
@@ -1013,6 +1013,39 @@ class Deck:
         else:
             raise RuntimeError("Formato dos cenários não reconhecido")
         return df
+
+    @classmethod
+    def version(cls, uow: AbstractUnitOfWork) -> str:
+        name = "version"
+        version = cls.DECK_DATA_CACHING.get(name)
+        if version is None:
+            version = cls._validate_data(
+                cls._get_dec_oper_sist(uow).versao,
+                str,
+                name,
+            )
+            cls.DECK_DATA_CACHING[name] = version
+        return version
+
+    @classmethod
+    def title(cls, uow: AbstractUnitOfWork) -> str:
+        name = "title"
+        title = cls.DECK_DATA_CACHING.get(name)
+        if title is None:
+            dadger = cls.dadger(uow)
+            te = cls._validate_data(
+                dadger.te,
+                TE,
+                "registro TE do dadger",
+            )
+            title = cls._validate_data(
+                te.titulo,
+                str,
+                "título do estudo",
+            )
+
+            cls.DECK_DATA_CACHING[name] = title
+        return title
 
     @classmethod
     def dec_oper_sist(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:

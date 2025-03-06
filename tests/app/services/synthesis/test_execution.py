@@ -1,15 +1,17 @@
-from unittest.mock import patch, MagicMock
-from app.services.unitofwork import factory
-from app.services.synthesis.execution import ExecutionSynthetizer
-from app.model.execution.executionsynthesis import ExecutionSynthesis
+from os.path import join
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from tests.conftest import DECK_TEST_DIR
 import pandas as pd
+from idecomp.decomp import Decomptim, Relato
+
 from app.internal.constants import (
     EXECUTION_SYNTHESIS_METADATA_OUTPUT,
 )
-from idecomp.decomp import Relato, Decomptim
-from os.path import join
+from app.model.execution.executionsynthesis import ExecutionSynthesis
+from app.services.synthesis.execution import ExecutionSynthetizer
+from app.services.unitofwork import factory
+from tests.conftest import DECK_TEST_DIR
 
 uow = factory("FS", DECK_TEST_DIR)
 synthetizer = ExecutionSynthetizer()
@@ -26,9 +28,7 @@ def __sintetiza_com_mock(synthesis_str) -> tuple[pd.DataFrame, pd.DataFrame]:
     m.assert_called()
 
     df = __obtem_dados_sintese_mock(synthesis_str, m)
-    df_meta = __obtem_dados_sintese_mock(
-        EXECUTION_SYNTHESIS_METADATA_OUTPUT, m
-    )
+    df_meta = __obtem_dados_sintese_mock(EXECUTION_SYNTHESIS_METADATA_OUTPUT, m)
     print(df)
     print(df_meta)
     assert df is not None
@@ -60,6 +60,23 @@ def test_sintese_programa(test_settings):
     __valida_metadata(synthesis_str, df_meta)
 
 
+def test_sintese_versao(test_settings):
+    synthesis_str = "VERSAO"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    assert df.at[0, "versao"] == "31.21"
+    __valida_metadata(synthesis_str, df_meta)
+
+
+def test_sintese_titulo(test_settings):
+    synthesis_str = "TITULO"
+    df, df_meta = __sintetiza_com_mock(synthesis_str)
+    assert (
+        df.at[0, "titulo"]
+        == "PMO - MAIO/24 - JUNHO/24 - REV 0 - FCF COM CVAR - 12 REE - VALOR ESPERADO"
+    )
+    __valida_metadata(synthesis_str, df_meta)
+
+
 def test_sintese_convergencia(test_settings):
     synthesis_str = "CONVERGENCIA"
     df, df_meta = __sintetiza_com_mock(synthesis_str)
@@ -83,9 +100,7 @@ def test_sintese_convergencia(test_settings):
 
     dados_relato["delta_zinf"] = (
         dados_relato["zinf"].iloc[0]
-        - df_relato.loc[df_relato["iteracao"] == (iteracao - 1)]["zinf"].iloc[
-            0
-        ]
+        - df_relato.loc[df_relato["iteracao"] == (iteracao - 1)]["zinf"].iloc[0]
     ) / dados_relato["zinf"].iloc[0]
 
     dados_relato["tempo"] = (
