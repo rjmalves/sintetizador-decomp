@@ -32,6 +32,15 @@ Para a síntese da execução::
     >>> METADADOS_EXECUCAO.parquet
     >>> PROGRAMA.parquet
     >>> TEMPO.parquet
+    >>> TITULO.parquet
+    >>> VERSAO.parquet
+
+Para a síntese da política::
+    
+    $ ls sintese
+    >>> CORTES_COEFICIENTES.parquet
+    >>> CORTES_VARIAVEIS.parquet
+    >>> METADADOS_POLITICA.parquet
 
 Na síntese de cenários::
     
