@@ -299,7 +299,7 @@ o estado do desenvolvimento é listado a seguir, onde se encontram as combinaç�
 que estão disponíveis no modelo.
 
 .. list-table:: Sínteses da Operação Existentes
-   :widths: 50 10 10
+   :widths: 50 10
    :header-rows: 1
 
    * - VARIÁVEL
