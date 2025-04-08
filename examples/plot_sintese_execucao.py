@@ -48,6 +48,13 @@ import plotly.express as px
 from datetime import timedelta
 import pandas as pd
 
+# %%
+# Para a síntese da execução é produzido um arquivo com as informações das sínteses
+# que foram realizadas:
+metadados = pd.read_parquet("sintese/METADADOS_EXECUCAO.parquet")
+print(metadados)
+
+# A leitura das sínteses realizadas pode ser feita da seguinte forma:
 convergencia = pd.read_parquet("sintese/CONVERGENCIA.parquet")
 custos = pd.read_parquet("sintese/CUSTOS.parquet")
 tempo = pd.read_parquet("sintese/TEMPO.parquet")

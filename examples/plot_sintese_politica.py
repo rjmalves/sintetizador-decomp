@@ -37,6 +37,13 @@ Síntese da Política
 import plotly.express as px
 import pandas as pd
 
+# %%
+# Para a síntese da política é produzido um arquivo com as informações das sínteses
+# que foram realizadas:
+metadados = pd.read_parquet("sintese/METADADOS_POLITICA.parquet")
+print(metadados)
+
+# A leitura das sínteses realizadas pode ser feita da seguinte forma:
 variaveis = pd.read_parquet("sintese/CORTES_VARIAVEIS.parquet")
 coeficientes = pd.read_parquet("sintese/CORTES_COEFICIENTES.parquet")
 
