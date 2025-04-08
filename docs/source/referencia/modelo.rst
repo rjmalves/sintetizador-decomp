@@ -92,7 +92,7 @@ Informações sobre a política operativa construída pelo modelo.
 Operação
 *********
 
-Informações da operação fornecida como saída pelo modelo. Estas informações são formadas a partir de três especificações:
+Informações da operação fornecida como saída pelo modelo. Estas informações são formadas a partir de duas especificações:
 
 Variável
 =========
@@ -105,79 +105,160 @@ A variável informa a grandeza que é modelada e fornecida como saída da opera�
 
    * - VARIÁVEL
      - MNEMÔNICO
-   * - Custo de Operação (Presente - 10^3 R$)
-     - `COP`
-   * - Custo Futuro (10^3 R$)
-     - `CFU`
-   * - Custo Marginal de Operação (R$/MWh)
-     - `CMO`
-   * - Custo da Geração Térmica (10^3 R$)
-     - `CTER`
-   * - Déficit (MWmed)
-     - `DEF`
-   * - Energia Natural Afluente Absoluta (MWmes)
-     - `ENAA`
-   * - Energia Natural Afluente para Acoplamento (MWmed)
-     - `ENAC`
-   * - Energia Armazenada Absoluta Inicial (MWmes)
-     - `EARMI`
-   * - Energia Armazenada Percentual Inicial (%)
-     - `EARPI`
-   * - Energia Armazenada Absoluta Final (MWmes)
-     - `EARMF`
-   * - Energia Armazenada Percentual Final (%)
-     - `EARPF`
-   * - Energia Vertida (MWmed)
-     - `EVER`
-   * - Energia Vertida Turbinável (MWmed)
-     - `EVERT`
-   * - Energia Vertida Não-Turbinável (MWmed)
-     - `EVERNT`
-   * - Geração Hidráulica (MWmed)
-     - `GHID`
-   * - Geração Térmica (MWmed)
-     - `GTER`
-   * - Geração de Usinas Não Simuladas (MWmed)
-     - `GUNS`
-   * - Geração de Usinas Não Simuladas Disponível (MWmed)
-     - `GUND`
-   * - Corte de Geração de Usinas Não Simuladas (MWmed)
+   * - Cota de Jusante
+     - `HJUS`
+   * - Cota de Montante
+     - `HMON`
+   * - Corte de Geração de Usinas Não Simuladas
      - `CUNS`
-   * - Intercâmbio (MWmed)
+   * - Corte de Geração Eólica
+     - `VEOL`
+   * - Custo da Geração Térmica
+     - `CTER`
+   * - Custo de Déficit
+     - `CDEF`
+   * - Custo de Operação
+     - `COP`
+   * - Custo Futuro
+     - `CFU`
+   * - Custo Marginal de Operação
+     - `CMO`
+   * - Custo Total
+     - `CTO`
+   * - Déficit
+     - `DEF`
+   * - Energia Armazenada Absoluta Final
+     - `EARMF`
+   * - Energia Armazenada Absoluta Inicial
+     - `EARMI`
+   * - Energia Armazenada Percentual Final
+     - `EARPF`
+   * - Energia Armazenada Percentual Inicial
+     - `EARPI`
+   * - Energia de Defluência Mínima
+     - `EVMIN`
+   * - Energia de Enchimento de Volume Morto
+     - `EVMOR`
+   * - Energia Desviada em Fio d'Água
+     - `EDESF`
+   * - Energia Desviada em Reservatórios
+     - `EDESR`
+   * - Energia Evaporada
+     - `EEVAP`
+   * - Energia Natural Afluente Absoluta
+     - `ENAA`
+   * - Energia Natural Afluente Absoluta em Fio d'Água
+     - `ENAAF`
+   * - Energia Natural Afluente Absoluta em Reservatórios
+     - `ENAAR`
+   * - Energia Natural Afluente para Acoplamento
+     - `ENAC`
+   * - Energia Vertida
+     - `EVER`
+   * - Energia Vertida em Fio d'Água
+     - `EVERF`
+   * - Energia Vertida em Reservatórios
+     - `EVERR`
+   * - Energia Vertida Não-Turbinável
+     - `EVERNT`
+   * - Energia Vertida Não-Turbinável em Fio d'Água
+     - `EVERFNT`
+   * - Energia Vertida Não-Turbinável em Reservatórios
+     - `EVERRNT`
+   * - Energia Vertida Turbinável
+     - `EVERT`
+   * - Energia Vertida Turbinável em Fio d'Água
+     - `EVERFT`
+   * - Energia Vertida Turbinável em Reservatórios
+     - `EVERRT`
+   * - Excesso de Energia
+     - `EXC`
+   * - Geração Eólica
+     - `GEOL`
+   * - Geração Hidráulica
+     - `GHID`
+   * - Geração Hidráulica em Fio d'Água
+     - `GHIDF`
+   * - Geração Hidráulica em Reservatórios
+     - `GHIDR`
+   * - Geração Térmica
+     - `GTER`
+   * - Geração de Usinas Não Simuladas
+     - `GUNS`
+   * - Geração de Usinas Não Simuladas Disponível
+     - `GUNSD`
+   * - Intercâmbio
      - `INT`
-   * - Intercâmbio Líquido (MWmed)
+   * - Intercâmbio Líquido
      - `INTL`
-   * - Mercado de Energia (MWmed)
+   * - Mercado de Energia
      - `MER`
-   * - Mercado de Energia Líquido (MWmes)
+   * - Mercado de Energia Líquido
      - `MERL`
-   * - Valor da Água (R$/hm3)
+   * - Meta de Energia de Defluência Mínima
+     - `MEVMIN`
+   * - Queda Líquida
+     - `HLIQ`
+   * - Valor da Água
      - `VAGUA`
-   * - Vazão Afluente (m3/s)
+   * - Valor da Água Incremental
+     - `VAGUAI`
+   * - Vazão Afluente
      - `QAFL`
-   * - Vazão Defluente (m3/s)
+   * - Vazão Defluente
      - `QDEF`
-   * - Vazão Desviada (m3/s)
+   * - Vazão Desviada
      - `QDES`
-   * - Vazão Incremental (m3/s)
-     - `QINC`
-   * - Vazão Retirada (m3/s)
-     - `QRET`
-   * - Vazão Turbinada (m3/s)
-     - `QTUR`
-   * - Vazão Vertida (m3/s)
-     - `QVER`
-   * - Vazão Evaporada (m3/s)
+   * - Vazão Evaporada
      - `QEVP`
-   * - Volume Armazenado Absoluto Inicial (hm3)
-     - `VARMI`
-   * - Volume Armazenado Percentual Inicial (%)
-     - `VARPI`
-   * - Volume Armazenado Absoluto Final (hm3)
+   * - Vazão Incremental
+     - `QINC`
+   * - Vazão Retirada
+     - `QRET`
+   * - Vazão Turbinada
+     - `QTUR`
+   * - Vazão Vertida
+     - `QVER`
+   * - Velocidade do Vento
+     - `VENTO`
+   * - Violação de Energia de Defluência Mínima
+     - `VEVMIN`
+   * - Violação de Evaporação
+     - `VEVAP`
+   * - Violação de FPHA
+     - `VFPHA`
+   * - Violação de Geração Hidráulica Mínima
+     - `VGHMIN`
+   * - Violação Negativa de Evaporação
+     - `VNEGEVAP`
+   * - Violação Positiva de Evaporação
+     - `VPOSEVAP`
+   * - Volume Armazenado Absoluto Final
      - `VARMF`
-   * - Volume Armazenado Percentual Final (%)
+   * - Volume Armazenado Absoluto Inicial
+     - `VARMI`
+   * - Volume Armazenado na Calha
+     - `VCALHA`
+   * - Volume Armazenado Percentual Final
      - `VARPF`
-
+   * - Volume Armazenado Percentual Inicial
+     - `VARPI`
+   * - Volume Afluente
+     - `VAFL`
+   * - Volume Defluente
+     - `VDEF`
+   * - Volume Desviado
+     - `VDES`
+   * - Volume Evaporado
+     - `VEVP`
+   * - Volume Incremental
+     - `VINC`
+   * - Volume Retirado
+     - `VRET`
+   * - Volume Turbinado
+     - `VTUR`
+   * - Volume Vertido
+     - `VVER`
 
 Agregação Espacial
 ===================
@@ -223,38 +304,88 @@ que estão disponíveis no modelo.
 
    * - VARIÁVEL
      - AGREGAÇÃO ESPACIAL
+   * - `HJUS`
+     - 
+   * - `HMON`
+     - 
+   * - `VEOL`
+     - 
+   * - `CUNS`
+     - 
+   * - `CTER`
+     - `SIN`, `UTE`
+   * - `CDEF`
+     -
    * - `COP`
      - `SIN`
    * - `CFU`
      - `SIN`
    * - `CMO`
      - `SBM`
-   * - `CTER`
-     - `SIN`, `UTE`
+   * - `CTO`
+     - 
    * - `DEF`
      - `SIN`, `SBM`
-   * - `ENAA`
-     - `SIN`, `SBM`, `REE`
-   * - `ENAC`
+   * - `EARMF`
      - `SIN`, `SBM`, `REE`
    * - `EARMI`
      - `SIN`, `SBM`, `REE`
+   * - `EARPF`
+     - `SIN`, `SBM`, `REE`
    * - `EARPI`
      - `SIN`, `SBM`, `REE`
-   * - `EARMF`
+   * - `EVMIN`
+     - 
+   * - `EVMOR`
+     - 
+   * - `EDESF`
+     - 
+   * - `EDESR`
+     - 
+   * - `EEVAP`
+     - 
+   * - `ENAA`
      - `SIN`, `SBM`, `REE`
-   * - `EARPF`
+   * - `ENAAF`
+     - 
+   * - `ENAAR`
+     - 
+   * - `ENAC`
      - `SIN`, `SBM`, `REE`
    * - `EVER`
      - `SIN`, `SBM`, `REE`, `UHE`
-   * - `EVERT`
-     - `SIN`, `SBM`, `REE`, `UHE`
+   * - `EVERF`
+     - 
+   * - `EVERR`
+     - 
    * - `EVERNT`
      - `SIN`, `SBM`, `REE`, `UHE`
+   * - `EVERFNT`
+     - 
+   * - `EVERRNT`
+     - 
+   * - `EVERT`
+     - `SIN`, `SBM`, `REE`, `UHE`
+   * - `EVERFT`
+     - 
+   * - `EVERRT`
+     - 
+   * - `EXC`
+     - 
+   * - `GEOL`
+     - 
    * - `GHID`
      - `SIN`, `SBM`, `UHE`
+   * - `GHIDF`
+     - 
+   * - `GHIDR`
+     - 
    * - `GTER`
      - `SIN`, `SBM`, `UTE`
+   * - `GUNS`
+     - `SIN`, `SBM`
+   * - `GUNSD`
+     - 
    * - `INT`
      - `SBP`
    * - `INTL`
@@ -263,13 +394,21 @@ que estão disponíveis no modelo.
      - `SIN`, `SBM`
    * - `MERL`
      - `SIN`, `SBM`
+   * - `MEVMIN`
+     - 
+   * - `HLIQ`
+     - 
    * - `VAGUA`
+     - 
+   * - `VAGUAI`
      - 
    * - `QAFL`
      - `UHE`
+   * - `QDEF`
+     - `UHE`
    * - `QDES`
      - `UHE`
-   * - `QDEF`
+   * - `QEVP`
      - `UHE`
    * - `QINC`
      - `UHE`
@@ -279,15 +418,45 @@ que estão disponíveis no modelo.
      - `UHE`
    * - `QVER`
      - `UHE`
-   * - `QEVP`
-     - `UHE`
-   * - `VARMI`
-     - `SIN`, `SBM`, `REE`, `UHE`
-   * - `VARPI`
-     - `SIN`, `SBM`, `REE`, `UHE`
+   * - `VENTO`
+     - 
+   * - `VEVMIN`
+     - 
+   * - `VEVAP`
+     - 
+   * - `VFPHA`
+     - 
+   * - `VGHMIN`
+     - 
+   * - `VNEGEVAP`
+     - 
+   * - `VPOSEVAP`
+     - 
    * - `VARMF`
      - `SIN`, `SBM`, `REE`, `UHE`
+   * - `VARMI`
+     - `SIN`, `SBM`, `REE`, `UHE`
+   * - `VCALHA`
+     - 
    * - `VARPF`
      - `UHE`
+   * - `VARPI`
+     - `UHE`
+   * - `VAFL`
+     - 
+   * - `VDEF`
+     - 
+   * - `VDES`
+     - 
+   * - `VEVP`
+     - 
+   * - `VINC`
+     - 
+   * - `VRET`
+     - 
+   * - `VTUR`
+     - 
+   * - `VVER`
+     - 
 
 São exemplos de elementos de dados válidos para as sínteses da operação `EARPF_SBM`, `VARPF_UHE`, `GHID_UHE`, `CMO_SBM`, dentre outras.
