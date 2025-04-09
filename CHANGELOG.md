@@ -1,3 +1,7 @@
+# v2.1.0
+
+- Adicionados novos dados para a síntese do sistema: `CVU`
+
 # v2.0.1
 
 - Correção ao fixar as colunas do tipo `datetime` em `UTC` [#23](https://github.com/rjmalves/sintetizador-decomp/issues/23)
