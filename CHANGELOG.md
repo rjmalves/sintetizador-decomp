@@ -1,6 +1,7 @@
 # v2.1.0
 
 - Adicionados novos dados para a síntese do sistema: `CVU`
+- Documentação de sínteses suportadas atualizada e padronizada com o [sintetizador-newave](https://github.com/rjmalves/sintetizador-newave) e o [sintetizador-dessem](https://github.com/rjmalves/sintetizador-dessem)
 
 # v2.0.1
 
