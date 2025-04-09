@@ -1,5 +1,5 @@
 import logging
-from logging import ERROR, INFO
+from logging import ERROR, INFO, WARNING
 from traceback import print_exc
 from typing import Callable, Optional
 
@@ -9,8 +9,11 @@ from app.internal.constants import (
     BLOCK_COL,
     BLOCK_DURATION_COL,
     END_DATE_COL,
+    IDENTIFICATION_COLUMNS,
+    SCENARIO_COL,
     STAGE_COL,
     START_DATE_COL,
+    SUBMARKET_CODE_COL,
     SYSTEM_SYNTHESIS_METADATA_OUTPUT,
     SYSTEM_SYNTHESIS_SUBDIR,
     VALUE_COL,
@@ -93,6 +96,7 @@ class SystemSynthetizer:
             Variable.SBM: cls._resolve_SBM,
             Variable.REE: cls._resolve_REE,
             Variable.UTE: cls._resolve_UTE,
+            Variable.CVU: cls._resolve_CVU,
             Variable.UHE: cls._resolve_UHE,
         }
         return RULES[synthesis.variable](uow)
@@ -139,11 +143,56 @@ class SystemSynthetizer:
         return df
 
     @classmethod
+    def _resolve_CVU(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
+        with time_and_log(
+            message_root="Tempo para obtenção dos dados do dec_oper_usit",
+            logger=cls.logger,
+        ):
+            df = Deck.dec_oper_usit(uow)
+            df = cls._post_resolve_file(df, "custo_incremental")
+
+            if df is None:
+                cls._log("Dados de usinas térmicas não encontrados", ERROR)
+                raise RuntimeError()
+        return (
+            df.drop(
+                columns=[
+                    SCENARIO_COL,
+                    BLOCK_COL,
+                    BLOCK_DURATION_COL,
+                    STAGE_COL,
+                    SUBMARKET_CODE_COL,
+                    END_DATE_COL,
+                ]
+            )
+            .drop_duplicates()
+            .reset_index()
+        )
+
+    @classmethod
     def _resolve_UHE(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
         df = Deck.hydro_eer_submarket_map(uow)
         if df is None:
             cls._log("Dados de usinas hidrelétricas não encontrados", ERROR)
             raise RuntimeError()
+        return df
+
+    @classmethod
+    def _post_resolve_file(
+        cls,
+        df: pd.DataFrame,
+        col: str,
+    ) -> pd.DataFrame:
+        if col not in df.columns:
+            cls._log(f"Coluna {col} não encontrada no arquivo", WARNING)
+            df[col] = 0.0
+        df = df.rename(
+            columns={
+                col: VALUE_COL,
+            }
+        )
+        cols = [c for c in df.columns if c in IDENTIFICATION_COLUMNS]
+        df = df[cols + [VALUE_COL]]
         return df
 
     @classmethod
