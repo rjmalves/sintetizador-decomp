@@ -119,6 +119,13 @@ def test_synthesis_ute(test_settings):
     __validate_metadata(synthesis_str, df_meta)
 
 
+def test_synthesis_cvu(test_settings):
+    synthesis_str = "CVU"
+    df, df_meta = __synthetize_with_mock(synthesis_str)
+    assert df.at[0, THERMAL_CODE_COL] == 1
+    __validate_metadata(synthesis_str, df_meta)
+
+
 def test_synthesis_uhe(test_settings):
     synthesis_str = "UHE"
     df, df_meta = __synthetize_with_mock(synthesis_str)

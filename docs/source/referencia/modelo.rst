@@ -27,6 +27,8 @@ Informações da representação do sistema existente e alvo da otimização.
      - `SBM`
    * - Reservatórios Equivalentes de Energia
      - `REE`
+   * - Custos das Usinas Termoelétricas
+     - `CVU`
    * - Usina Termoelétrica
      - `UTE`
    * - Usina Hidroelétrica
