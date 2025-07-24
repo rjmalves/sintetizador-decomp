@@ -1181,10 +1181,13 @@ class Deck:
                     filters = (df[HYDRO_CODE_COL] == hydro_code) & (
                         df[STAGE_COL] == stage
                     )
-                    max_volume = df.loc[
-                        filters,
-                        "volume_util_maximo_hm3",
-                    ].iloc[0]
+                    max_volume = (
+                        df.loc[
+                            filters,
+                            "volume_util_maximo_hm3",
+                        ].iloc[0]
+                        + min_volume
+                    )
                     is_run_of_river = (min_volume >= max_volume) or (
                         regulation not in ["M", "S"]
                     )
