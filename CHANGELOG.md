@@ -1,3 +1,7 @@
+# v2.1.2
+
+- Refatoração dos processos de síntese de `GTER` para eficietização computacional. 
+
 # v2.1.1
 
 - Correção na síntese de `VARMF_UHE` e `VARMI_UHE` que ignorava algumas usinas reservatório como se fossem fio d'água
