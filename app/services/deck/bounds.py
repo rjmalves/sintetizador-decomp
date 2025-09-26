@@ -541,10 +541,12 @@ class OperationVariableBounds:
                 upper_bound_df.loc[
                     upper_bound_df[STAGE_COL] == 1, VALUE_COL
                 ] = float("inf")
-                upper_bound_df = upper_bound_df.sort_values([
-                    STAGE_COL,
-                    EER_CODE_COL,
-                ])
+                upper_bound_df = upper_bound_df.sort_values(
+                    [
+                        STAGE_COL,
+                        EER_CODE_COL,
+                    ]
+                )
                 lower_bound_df[STAGE_COL] += 1
                 lower_bound_df.loc[
                     lower_bound_df[STAGE_COL] == num_stages + 1, STAGE_COL
@@ -552,10 +554,12 @@ class OperationVariableBounds:
                 lower_bound_df.loc[
                     lower_bound_df[STAGE_COL] == 1, VALUE_COL
                 ] = 0.0
-                lower_bound_df = lower_bound_df.sort_values([
-                    STAGE_COL,
-                    EER_CODE_COL,
-                ])
+                lower_bound_df = lower_bound_df.sort_values(
+                    [
+                        STAGE_COL,
+                        EER_CODE_COL,
+                    ]
+                )
             upper_bounds = (
                 upper_bound_df.groupby(grouping_columns, as_index=False)
                 .sum(numeric_only=True)[VALUE_COL]
@@ -644,10 +648,12 @@ class OperationVariableBounds:
                     & (~upper_bound_df[VALUE_COL].isna()),
                     VALUE_COL,
                 ] = float("inf")
-                upper_bound_df = upper_bound_df.sort_values([
-                    STAGE_COL,
-                    HYDRO_CODE_COL,
-                ])
+                upper_bound_df = upper_bound_df.sort_values(
+                    [
+                        STAGE_COL,
+                        HYDRO_CODE_COL,
+                    ]
+                )
                 lower_bound_df[STAGE_COL] += 1
                 lower_bound_df.loc[
                     lower_bound_df[STAGE_COL] == num_stages + 1, STAGE_COL
@@ -657,10 +663,12 @@ class OperationVariableBounds:
                     & (~lower_bound_df[VALUE_COL].isna()),
                     VALUE_COL,
                 ] = 0.0
-                lower_bound_df = lower_bound_df.sort_values([
-                    STAGE_COL,
-                    HYDRO_CODE_COL,
-                ])
+                lower_bound_df = lower_bound_df.sort_values(
+                    [
+                        STAGE_COL,
+                        HYDRO_CODE_COL,
+                    ]
+                )
             upper_bounds = (
                 upper_bound_df.groupby(grouping_columns, as_index=False)
                 .sum(numeric_only=True)[VALUE_COL]
@@ -946,7 +954,7 @@ class OperationVariableBounds:
             df,
             df_bounds,
             how="left",
-            on=[STAGE_COL, SCENARIO_COL, BLOCK_COL] + entity_column_list,
+            on=[STAGE_COL, BLOCK_COL] + entity_column_list,
             suffixes=[None, "_bounds"],
         )
         df[LOWER_BOUND_COL] = df[LOWER_BOUND_COL].fillna(float(0))
