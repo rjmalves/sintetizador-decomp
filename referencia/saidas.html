@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="pt-BR" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saídas &mdash; Documentação sintetizador-decomp 2.1.2</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=ff53f0c5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/translations.js?v=71a39b36"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Buscar" href="../search.html" />
+    <link rel="next" title="Modelo Unificado de Dados" href="modelo.html" />
+    <link rel="prev" title="Como contribuir?" href="../geral/contribuicao.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            sintetizador-decomp
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Pesquisar documentos" aria-label="Pesquisar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Menu de navegação">
+              <p class="caption" role="heading"><span class="caption-text">Apresentação</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apresentacao/apresentacao.html">Aplicação CLI para síntese das saídas do modelo DECOMP</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Geral</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../geral/instalacao.html">Instalação</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../geral/tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Exemplos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../geral/contribuicao.html">Como contribuir?</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Referência</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Saídas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#arquivos-de-saida">Arquivos de Saída</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#formato-dos-metadados">Formato dos Metadados</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#formato-das-estatisticas">Formato das Estatísticas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#formato-dos-dados-brutos">Formato dos Dados Brutos</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modelo.html">Modelo Unificado de Dados</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Menu de navegação móvel" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sintetizador-decomp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Navegação da página">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Saídas</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/referencia/saidas.rst.txt" rel="nofollow"> Ver código-fonte da página</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="saidas">
+<span id="id1"></span><h1>Saídas<a class="headerlink" href="#saidas" title="Link para este cabeçalho"></a></h1>
+<section id="arquivos-de-saida">
+<h2>Arquivos de Saída<a class="headerlink" href="#arquivos-de-saida" title="Link para este cabeçalho"></a></h2>
+<p>Os arquivos de saída das sínteses são armazenados na pasta <code class="xref py py-obj docutils literal notranslate"><span class="pre">sintese</span></code> do diretório de trabalho. Para cada síntese realizada, é configurados
+um arquivo com metadados e um conjunto de arquivos com os dados sintetizados. Para as sínteses da operação e de cenários, além dos arquivos
+com os dados brutos sintetizados, são criados arquivos com estatísticas pré-calculadas sobre os dados brutos,
+permitindo análises mais rápidas.</p>
+<p>No caso de uma síntese do sistema, são esperados os arquivos:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ls sintese
+&gt;&gt;&gt; EST.parquet
+&gt;&gt;&gt; METADADOS_SISTEMA.parquet
+&gt;&gt;&gt; PAT.parquet
+&gt;&gt;&gt; REE.parquet
+&gt;&gt;&gt; SBM.parquet
+&gt;&gt;&gt; UHE.parquet
+&gt;&gt;&gt; UTE.parquet
+</pre></div>
+</div>
+<p>Para a síntese da execução:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ls sintese
+&gt;&gt;&gt; CONVERGENCIA.parquet
+&gt;&gt;&gt; CUSTOS.parquet
+&gt;&gt;&gt; INVIABILIDADES.parquet
+&gt;&gt;&gt; METADADOS_EXECUCAO.parquet
+&gt;&gt;&gt; PROGRAMA.parquet
+&gt;&gt;&gt; TEMPO.parquet
+&gt;&gt;&gt; TITULO.parquet
+&gt;&gt;&gt; VERSAO.parquet
+</pre></div>
+</div>
+<p>Para a síntese da política:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ls sintese
+&gt;&gt;&gt; CORTES_COEFICIENTES.parquet
+&gt;&gt;&gt; CORTES_VARIAVEIS.parquet
+&gt;&gt;&gt; METADADOS_POLITICA.parquet
+</pre></div>
+</div>
+<p>Na síntese de cenários:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ls sintese
+&gt;&gt;&gt; METADADOS_CENARIOS.parquet
+&gt;&gt;&gt; PROABABILIDADES.parquet
+</pre></div>
+</div>
+<p>Alguns dos arquivos esperados na síntese da operação:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ls sintese
+&gt;&gt;&gt; CMO_SBM.parquet
+&gt;&gt;&gt; COP_SIN.parquet
+&gt;&gt;&gt; CTER_SIN.parquet
+&gt;&gt;&gt; ...
+&gt;&gt;&gt; ESTATISTICAS_OPERACAO_REE.parquet
+&gt;&gt;&gt; ESTATISTICAS_OPERACAO_SBM.parquet
+&gt;&gt;&gt; ESTATISTICAS_OPERACAO_SBP.parquet
+&gt;&gt;&gt; ESTATISTICAS_OPERACAO_SIN.parquet
+&gt;&gt;&gt; ESTATISTICAS_OPERACAO_UHE.parquet
+&gt;&gt;&gt; ESTATISTICAS_OPERACAO_UTE.parquet
+&gt;&gt;&gt; ...
+&gt;&gt;&gt; GHID_REE.parquet
+&gt;&gt;&gt; GHID_SBM.parquet
+&gt;&gt;&gt; GHID_SIN.parquet
+&gt;&gt;&gt; GHID_UHE.parquet
+&gt;&gt;&gt; GTER_SBM.parquet
+&gt;&gt;&gt; GTER_SIN.parquet
+&gt;&gt;&gt; GTER_UTE.parquet
+&gt;&gt;&gt; INT_SBP.parquet
+&gt;&gt;&gt; MERL_SBM.parquet
+&gt;&gt;&gt; MERL_SIN.parquet
+&gt;&gt;&gt; ...
+&gt;&gt;&gt; METADADOS_OPERACAO.parquet
+&gt;&gt;&gt; QAFL_UHE.parquet
+&gt;&gt;&gt; ...
+&gt;&gt;&gt; VARMF_UHE.parquet
+&gt;&gt;&gt; VARMI_REE.parquet
+&gt;&gt;&gt; VARMI_SBM.parquet
+&gt;&gt;&gt; ...
+</pre></div>
+</div>
+</section>
+<section id="formato-dos-metadados">
+<h2>Formato dos Metadados<a class="headerlink" href="#formato-dos-metadados" title="Link para este cabeçalho"></a></h2>
+<p>As sínteses realizadas são armazenadas em arquivos de metadados, que também são DataFrames, no mesmo formato que foi solicitado para a saída da síntese (por padrão é utilizado o <code class="xref py py-obj docutils literal notranslate"><span class="pre">parquet</span></code>).</p>
+<p>Os metadados são armazenados em arquivos com o prefixo <code class="xref py py-obj docutils literal notranslate"><span class="pre">METADADOS_</span></code> e o nome da síntese. Por exemplo, para a síntese do sistema, os metadados são armazenados em <code class="xref py py-obj docutils literal notranslate"><span class="pre">METADADOS_SISTEMA.parquet</span></code>.</p>
+<p>Por exemplo, em uma síntese da operação, os metadados podem ser acessados como:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="n">meta_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">&quot;sintese/METADADOS_OPERACAO.parquet&quot;</span><span class="p">)</span>
+<span class="n">meta_df</span>
+
+         <span class="n">chave</span>  <span class="n">nome_curto_variavel</span>                  <span class="n">nome_longo_variavel</span>  <span class="o">...</span>  <span class="n">unidade</span> <span class="n">calculado</span> <span class="n">limitado</span>
+<span class="mi">0</span>      <span class="n">CMO_SBM</span>                  <span class="n">CMO</span>           <span class="n">Custo</span> <span class="n">Marginal</span> <span class="n">de</span> <span class="n">Operação</span>  <span class="o">...</span>   <span class="n">R</span><span class="err">$</span><span class="o">/</span><span class="n">MWh</span>     <span class="kc">False</span>    <span class="kc">False</span>
+<span class="mi">1</span>     <span class="n">CTER_UTE</span>          <span class="n">Custo</span> <span class="n">de</span> <span class="n">GT</span>             <span class="n">Custo</span> <span class="n">de</span> <span class="n">Geração</span> <span class="n">Térmica</span>  <span class="o">...</span>  <span class="mi">10</span><span class="o">^</span><span class="mi">3</span> <span class="n">R</span><span class="err">$</span>     <span class="kc">False</span>     <span class="kc">True</span>
+<span class="mi">2</span>    <span class="n">EARMI_REE</span>          <span class="n">EAR</span> <span class="n">Inicial</span>  <span class="n">Energia</span> <span class="n">Armazenada</span> <span class="n">Absoluta</span> <span class="n">Inicial</span>  <span class="o">...</span>    <span class="n">MWmes</span>     <span class="kc">False</span>     <span class="kc">True</span>
+<span class="mi">3</span>    <span class="n">EARMI_SBM</span>          <span class="n">EAR</span> <span class="n">Inicial</span>  <span class="n">Energia</span> <span class="n">Armazenada</span> <span class="n">Absoluta</span> <span class="n">Inicial</span>  <span class="o">...</span>    <span class="n">MWmes</span>     <span class="kc">False</span>     <span class="kc">True</span>
+<span class="mi">4</span>    <span class="n">EARMI_SIN</span>          <span class="n">EAR</span> <span class="n">Inicial</span>  <span class="n">Energia</span> <span class="n">Armazenada</span> <span class="n">Absoluta</span> <span class="n">Inicial</span>  <span class="o">...</span>    <span class="n">MWmes</span>      <span class="kc">True</span>     <span class="kc">True</span>
+<span class="o">..</span>         <span class="o">...</span>                  <span class="o">...</span>                                  <span class="o">...</span>  <span class="o">...</span>      <span class="o">...</span>       <span class="o">...</span>      <span class="o">...</span>
+<span class="mi">61</span>  <span class="n">EVERNT_SIN</span>  <span class="n">EVER</span> <span class="n">Não</span><span class="o">-</span><span class="n">Turbinável</span>       <span class="n">Energia</span> <span class="n">Vertida</span> <span class="n">Não</span><span class="o">-</span><span class="n">Turbinável</span>  <span class="o">...</span>    <span class="n">MWmed</span>      <span class="kc">True</span>     <span class="kc">True</span>
+<span class="mi">62</span>    <span class="n">EVER_SIN</span>                 <span class="n">EVER</span>                      <span class="n">Energia</span> <span class="n">Vertida</span>  <span class="o">...</span>    <span class="n">MWmed</span>      <span class="kc">True</span>     <span class="kc">True</span>
+<span class="mi">63</span>    <span class="n">GTER_UTE</span>                   <span class="n">GT</span>                      <span class="n">Geração</span> <span class="n">Térmica</span>  <span class="o">...</span>    <span class="n">MWmed</span>     <span class="kc">False</span>     <span class="kc">True</span>
+<span class="mi">64</span>     <span class="n">INT_SBP</span>          <span class="n">Intercâmbio</span>               <span class="n">Intercâmbio</span> <span class="n">de</span> <span class="n">Energia</span>  <span class="o">...</span>    <span class="n">MWmed</span>     <span class="kc">False</span>     <span class="kc">True</span>
+<span class="mi">65</span>    <span class="n">INTL_SBP</span>  <span class="n">Intercâmbio</span> <span class="n">Líquido</span>       <span class="n">Intercâmbio</span> <span class="n">Líquido</span> <span class="n">de</span> <span class="n">Energia</span>  <span class="o">...</span>    <span class="n">MWmed</span>     <span class="kc">False</span>    <span class="kc">False</span>
+
+<span class="p">[</span><span class="mi">66</span> <span class="n">rows</span> <span class="n">x</span> <span class="mi">8</span> <span class="n">columns</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="formato-das-estatisticas">
+<h2>Formato das Estatísticas<a class="headerlink" href="#formato-das-estatisticas" title="Link para este cabeçalho"></a></h2>
+<p>A síntese da operação também produz estatísticas dos dados envolvidos. Em cada uma das sínteses, as estatísticas são armazenadas segundo diferentes premissas, dependendo geralmente
+da agregação espacial dos dados.</p>
+<p>As estatísticas são armazenadas em arquivos com o prefixo <code class="xref py py-obj docutils literal notranslate"><span class="pre">ESTATISTICAS_</span></code> e o nome da síntese. Por exemplo, para a síntese da operação, as estatísticas são armazenadas em arquivos com prefixo <code class="xref py py-obj docutils literal notranslate"><span class="pre">ESTATISTICAS_OPERACAO_</span></code>, sendo um arquivo por agregação espacial.</p>
+<p>Por exemplo, em uma síntese da operação, as estatísticas podem ser acessadas como:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="n">hydro_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">&quot;sintese/ESTATISTICAS_OPERACAO_UHE.parquet&quot;</span><span class="p">)</span>
+<span class="n">hydro_df</span>
+
+       <span class="n">variavel</span>  <span class="n">codigo_usina</span>  <span class="n">codigo_ree</span>  <span class="n">codigo_submercado</span>  <span class="o">...</span>  <span class="n">duracao_patamar</span> <span class="n">valor</span> <span class="n">limite_inferior</span> <span class="n">limite_superior</span>
+<span class="mi">0</span>          <span class="n">EVER</span>             <span class="mi">1</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">168.0</span>   <span class="mf">0.2</span>             <span class="mf">0.0</span>             <span class="n">inf</span>
+<span class="mi">1</span>          <span class="n">EVER</span>             <span class="mi">1</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">168.0</span>   <span class="mf">0.2</span>             <span class="mf">0.0</span>             <span class="n">inf</span>
+<span class="mi">2</span>          <span class="n">EVER</span>             <span class="mi">1</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">168.0</span>   <span class="mf">0.2</span>             <span class="mf">0.0</span>             <span class="n">inf</span>
+<span class="mi">3</span>          <span class="n">EVER</span>             <span class="mi">1</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">168.0</span>   <span class="mf">0.2</span>             <span class="mf">0.0</span>             <span class="n">inf</span>
+<span class="mi">4</span>          <span class="n">EVER</span>             <span class="mi">1</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">168.0</span>   <span class="mf">0.2</span>             <span class="mf">0.0</span>             <span class="n">inf</span>
+<span class="o">...</span>         <span class="o">...</span>           <span class="o">...</span>         <span class="o">...</span>                <span class="o">...</span>  <span class="o">...</span>              <span class="o">...</span>   <span class="o">...</span>             <span class="o">...</span>             <span class="o">...</span>
+<span class="mi">910772</span>    <span class="n">VARPI</span>           <span class="mi">290</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">672.0</span>   <span class="mf">5.0</span>            <span class="o">-</span><span class="n">inf</span>             <span class="n">inf</span>
+<span class="mi">910773</span>    <span class="n">VARPI</span>           <span class="mi">290</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">672.0</span>   <span class="mf">5.0</span>            <span class="o">-</span><span class="n">inf</span>             <span class="n">inf</span>
+<span class="mi">910774</span>    <span class="n">VARPI</span>           <span class="mi">290</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">672.0</span>   <span class="mf">5.0</span>            <span class="o">-</span><span class="n">inf</span>             <span class="n">inf</span>
+<span class="mi">910775</span>    <span class="n">VARPI</span>           <span class="mi">290</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">672.0</span>   <span class="mf">5.0</span>            <span class="o">-</span><span class="n">inf</span>             <span class="n">inf</span>
+<span class="mi">910776</span>    <span class="n">VARPI</span>           <span class="mi">290</span>          <span class="mi">10</span>                  <span class="mi">1</span>  <span class="o">...</span>            <span class="mf">672.0</span>   <span class="n">NaN</span>            <span class="o">-</span><span class="n">inf</span>             <span class="n">inf</span>
+
+<span class="p">[</span><span class="mi">910777</span> <span class="n">rows</span> <span class="n">x</span> <span class="mi">13</span> <span class="n">columns</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>No arquivo de estatísticas, ao invés dos dados associados aos <code class="xref py py-obj docutils literal notranslate"><span class="pre">N</span></code> cenários da etapa de simulação, são armazenadas as estatísticas dos dados associados a cada entidade, em cada estágio / patamar, calculadas nos cenários.
+Nestes arquivos, a coluna <code class="xref py py-obj docutils literal notranslate"><span class="pre">cenario</span></code> possui tipo <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(em Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></a>, assumindo valores <code class="xref py py-obj docutils literal notranslate"><span class="pre">mean</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">std</span></code> e percentis de 5 em 5 (<a class="reference external" href="https://docs.python.org/3/library/functions.html#min" title="(em Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">min</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">p5</span></code>, …, <code class="xref py py-obj docutils literal notranslate"><span class="pre">p45</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">median</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">p55</span></code>, …, <code class="xref py py-obj docutils literal notranslate"><span class="pre">p95</span></code>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#max" title="(em Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">max</span></code></a>).</p>
+</section>
+<section id="formato-dos-dados-brutos">
+<h2>Formato dos Dados Brutos<a class="headerlink" href="#formato-dos-dados-brutos" title="Link para este cabeçalho"></a></h2>
+<p>Os dados brutos também são armazenados em arquivos de mesma extensão dos demais produzidos pela síntese. Por exemplo, para a síntese da operação, os dados são armazenados em arquivos que possuem os nomes da chave identificadora da variável e da agregação espacial,
+como <code class="xref py py-obj docutils literal notranslate"><span class="pre">CMO_SBM</span></code> e <code class="xref py py-obj docutils literal notranslate"><span class="pre">EARMF_REE</span></code>. Para uma mesma entidade, os arquivos de todas as variáveis possuem as mesmas colunas:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="n">eer_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">&quot;sintese/EARMF_REE.parquet&quot;</span><span class="p">)</span>
+<span class="n">eer_df</span>
+
+    <span class="n">codigo_ree</span>  <span class="n">codigo_submercado</span>  <span class="n">estagio</span> <span class="n">data_inicio</span>  <span class="o">...</span> <span class="n">duracao_patamar</span>    <span class="n">valor</span>  <span class="n">limite_inferior</span>  <span class="n">limite_superior</span>
+<span class="mi">0</span>            <span class="mi">1</span>                  <span class="mi">1</span>        <span class="mi">1</span>  <span class="mi">2024</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span>  <span class="o">...</span>           <span class="mf">168.0</span>  <span class="mf">26181.0</span>              <span class="mf">0.0</span>          <span class="mf">50958.0</span>
+<span class="mi">1</span>            <span class="mi">1</span>                  <span class="mi">1</span>        <span class="mi">2</span>  <span class="mi">2024</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">07</span>  <span class="o">...</span>           <span class="mf">168.0</span>  <span class="mf">25483.0</span>              <span class="mf">0.0</span>          <span class="mf">50958.0</span>
+<span class="mi">2</span>            <span class="mi">1</span>                  <span class="mi">1</span>        <span class="mi">3</span>  <span class="mi">2024</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">14</span>  <span class="o">...</span>           <span class="mf">168.0</span>  <span class="mf">25149.0</span>              <span class="mf">0.0</span>          <span class="mf">50958.0</span>
+<span class="mi">3</span>            <span class="mi">1</span>                  <span class="mi">1</span>        <span class="mi">4</span>  <span class="mi">2024</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">21</span>  <span class="o">...</span>           <span class="mf">168.0</span>  <span class="mf">24719.0</span>              <span class="mf">0.0</span>          <span class="mf">50958.0</span>
+<span class="mi">4</span>            <span class="mi">1</span>                  <span class="mi">1</span>        <span class="mi">5</span>  <span class="mi">2024</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">28</span>  <span class="o">...</span>           <span class="mf">168.0</span>  <span class="mf">24377.0</span>              <span class="mf">0.0</span>          <span class="mf">50958.0</span>
+<span class="o">..</span>         <span class="o">...</span>                <span class="o">...</span>      <span class="o">...</span>         <span class="o">...</span>  <span class="o">...</span>             <span class="o">...</span>      <span class="o">...</span>              <span class="o">...</span>              <span class="o">...</span>
+<span class="mi">79</span>          <span class="mi">12</span>                  <span class="mi">1</span>        <span class="mi">3</span>  <span class="mi">2024</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">14</span>  <span class="o">...</span>           <span class="mf">168.0</span>   <span class="mf">4974.0</span>              <span class="mf">0.0</span>          <span class="mf">11791.0</span>
+<span class="mi">80</span>          <span class="mi">12</span>                  <span class="mi">1</span>        <span class="mi">4</span>  <span class="mi">2024</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">21</span>  <span class="o">...</span>           <span class="mf">168.0</span>   <span class="mf">4907.0</span>              <span class="mf">0.0</span>          <span class="mf">11791.0</span>
+<span class="mi">81</span>          <span class="mi">12</span>                  <span class="mi">1</span>        <span class="mi">5</span>  <span class="mi">2024</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">28</span>  <span class="o">...</span>           <span class="mf">168.0</span>   <span class="mf">4833.0</span>              <span class="mf">0.0</span>          <span class="mf">11791.0</span>
+<span class="mi">82</span>          <span class="mi">12</span>                  <span class="mi">1</span>        <span class="mi">6</span>  <span class="mi">2025</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="o">...</span>           <span class="mf">672.0</span>   <span class="mf">5073.0</span>              <span class="mf">0.0</span>          <span class="mf">11791.0</span>
+<span class="mi">83</span>          <span class="mi">12</span>                  <span class="mi">1</span>        <span class="mi">7</span>  <span class="mi">2025</span><span class="o">-</span><span class="mi">02</span><span class="o">-</span><span class="mi">01</span>  <span class="o">...</span>           <span class="mf">672.0</span>   <span class="mf">5824.0</span>              <span class="mf">0.0</span>          <span class="mf">11791.0</span>
+
+<span class="p">[</span><span class="mi">84</span> <span class="n">rows</span> <span class="n">x</span> <span class="mi">11</span> <span class="n">columns</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Rodapé">
+        <a href="../geral/contribuicao.html" class="btn btn-neutral float-left" title="Como contribuir?" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="modelo.html" class="btn btn-neutral float-right" title="Modelo Unificado de Dados" accesskey="n" rel="next">Próximo <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Direitos autorais 2025, Rogerio Alves.</p>
+  </div>
+
+  Compilado com <a href="https://www.sphinx-doc.org/">Sphinx</a> usando um
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    fornecido por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
