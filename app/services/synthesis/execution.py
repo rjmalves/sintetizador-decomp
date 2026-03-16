@@ -27,7 +27,7 @@ class ExecutionSynthetizer:
     logger: Optional[logging.Logger] = None
 
     @classmethod
-    def _log(cls, msg: str, level: int = INFO):
+    def _log(cls, msg: str, level: int = INFO) -> None:
         if cls.logger is not None:
             cls.logger.log(level, msg)
 
@@ -79,7 +79,7 @@ class ExecutionSynthetizer:
     def _resolve(
         cls, synthesis: ExecutionSynthesis, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
-        RULES: dict[Variable, Callable] = {
+        rules = {
             Variable.PROGRAMA: cls._resolve_program,
             Variable.VERSAO: cls._resolve_version,
             Variable.TITULO: cls._resolve_title,
@@ -88,7 +88,7 @@ class ExecutionSynthetizer:
             Variable.CUSTOS: cls._resolve_costs,
             Variable.INVIABILIDADES: cls._resolve_infeasibilities,
         }
-        return RULES[synthesis.variable](uow)
+        return rules[synthesis.variable](uow)
 
     @classmethod
     def _resolve_program(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
@@ -111,9 +111,8 @@ class ExecutionSynthetizer:
         if existing_data is None:
             df.loc[:, "execucao"] = 0
             return df
-        else:
-            df.loc[:, "execucao"] = existing_data["execucao"].max() + 1
-            return pd.concat([existing_data, df], ignore_index=True)
+        df.loc[:, "execucao"] = existing_data["execucao"].max() + 1
+        return pd.concat([existing_data, df], ignore_index=True)
 
     @classmethod
     def _resolve_convergence(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
@@ -194,9 +193,9 @@ class ExecutionSynthetizer:
         ):
             try:
                 cls._log(f"Realizando síntese de {filename}")
-                df = cls._resolve(s, uow)
-                if df is not None:
-                    with uow:
+                with uow:
+                    df = cls._resolve(s, uow)
+                    if df is not None:
                         uow.export.synthetize_df(df, filename)
                         return s
                 return None
