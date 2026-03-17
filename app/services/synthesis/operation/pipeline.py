@@ -1,3 +1,4 @@
+import logging
 from logging import WARNING
 from typing import TYPE_CHECKING, Any, Callable
 
@@ -15,12 +16,16 @@ if TYPE_CHECKING:
 
 
 def post_resolve_file(
-    cls: "type[OperationSynthetizer]",
+    cls: "type[OperationSynthetizer] | None",
     df: pd.DataFrame,
     col: str,
+    logger: logging.Logger | None = None,
 ) -> pd.DataFrame:
     if col not in df.columns:
-        cls._log(f"Coluna {col} não encontrada no arquivo", WARNING)
+        if cls is not None:
+            cls._log(f"Coluna {col} não encontrada no arquivo", WARNING)
+        elif logger is not None:
+            logger.log(WARNING, f"Coluna {col} não encontrada no arquivo")
         df[col] = 0.0
     df = df.rename(
         columns={

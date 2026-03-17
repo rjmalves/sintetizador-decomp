@@ -7,7 +7,6 @@ import pandas as pd
 import polars as pl
 
 from app.internal.constants import (
-    BLOCK_COL,
     OPERATION_SYNTHESIS_SUBDIR,
 )
 from app.model.operation.operationsynthesis import (
@@ -16,9 +15,9 @@ from app.model.operation.operationsynthesis import (
     OperationSynthesis,
 )
 from app.model.operation.spatialresolution import SpatialResolution
-from app.model.operation.variable import Variable
 from app.services.deck.bounds import OperationVariableBounds
 from app.services.deck.deck import Deck
+from app.services.synthesis.operation import resolution as _resolution_mod
 from app.services.synthesis.operation.cache import (
     get_from_cache,
     get_from_cache_if_exists,
@@ -88,241 +87,6 @@ class OperationSynthetizer:
             cls.logger.log(level, msg)
 
     @classmethod
-    def _resolve(
-        cls, synthesis: tuple[Variable, SpatialResolution]
-    ) -> Callable[..., pd.DataFrame]:
-        _rules: dict[
-            tuple[Variable, SpatialResolution],
-            Callable[..., pd.DataFrame],
-        ] = {
-            (
-                Variable.CUSTO_MARGINAL_OPERACAO,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(uow, "cmo"),
-            (
-                Variable.CUSTO_GERACAO_TERMICA,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ): lambda uow: cls._resolve_operation_report_block(
-                uow, "geracao_termica"
-            ),
-            (
-                Variable.CUSTO_OPERACAO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ): lambda uow: cls._resolve_operation_report_block(
-                uow, "custo_presente"
-            ),
-            (
-                Variable.CUSTO_FUTURO,
-                SpatialResolution.SISTEMA_INTERLIGADO,
-            ): lambda uow: cls._resolve_operation_report_block(
-                uow, "custo_futuro"
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_dec_oper_ree(uow, "earm_inicial_MWmes"),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_dec_oper_ree(
-                uow, "earm_inicial_percentual"
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_INICIAL,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_valid_values_dec_oper_sist(
-                uow, "earm_inicial_MWmes", blocks=[0]
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_INICIAL,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_valid_values_dec_oper_sist(
-                uow, "earm_inicial_percentual", blocks=[0]
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_dec_oper_ree(uow, "earm_final_MWmes"),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_dec_oper_ree(
-                uow, "earm_final_percentual"
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_ABSOLUTA_FINAL,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_valid_values_dec_oper_sist(
-                uow, "earm_final_MWmes", blocks=[0]
-            ),
-            (
-                Variable.ENERGIA_ARMAZENADA_PERCENTUAL_FINAL,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_valid_values_dec_oper_sist(
-                uow, "earm_final_percentual", blocks=[0]
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls.__stub_thermal_submarkets_dec_oper_sist(
-                uow, "geracao_termica_total_MW"
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_hydro_generation_report_block(uow),
-            (
-                Variable.GERACAO_USINAS_NAO_SIMULADAS,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
-                uow, "geracao_nao_simuladas_MW"
-            ),
-            (
-                Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_ena_coupling_eer(uow),
-            (
-                Variable.ENERGIA_NATURAL_AFLUENTE_ACOPLAMENTO,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_ena_coupling_sbm(uow),
-            (
-                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
-                SpatialResolution.RESERVATORIO_EQUIVALENTE,
-            ): lambda uow: cls._resolve_dec_oper_ree(
-                uow,
-                "ena_MWmes",
-            ),
-            (
-                Variable.ENERGIA_NATURAL_AFLUENTE_ABSOLUTA,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
-                uow,
-                "ena_MWmes",
-            ),
-            (
-                Variable.MERCADO,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(uow, "demanda_MW"),
-            (
-                Variable.MERCADO_LIQUIDO,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(
-                uow, "demanda_liquida_MW"
-            ),
-            (
-                Variable.DEFICIT,
-                SpatialResolution.SUBMERCADO,
-            ): lambda uow: cls._resolve_dec_oper_sist(uow, "deficit_MW"),
-            (
-                Variable.VOLUME_ARMAZENADO_PERCENTUAL_INICIAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
-                uow, "volume_util_inicial_percentual"
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_PERCENTUAL_FINAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
-                uow, "volume_util_final_percentual"
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_INICIAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
-                uow, "volume_util_inicial_hm3"
-            ),
-            (
-                Variable.VOLUME_ARMAZENADO_ABSOLUTO_FINAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls.__stub_stored_volume_dec_oper_usih(
-                uow, "volume_util_final_hm3"
-            ),
-            (
-                Variable.VAZAO_INCREMENTAL,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_incremental_m3s", blocks=[0]
-            ),
-            (
-                Variable.VAZAO_AFLUENTE,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_afluente_m3s", blocks=[0]
-            ),
-            (
-                Variable.VAZAO_DEFLUENTE,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_defluente_m3s"
-            ),
-            (
-                Variable.GERACAO_HIDRAULICA,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(uow, "geracao_MW"),
-            (
-                Variable.ENERGIA_VERTIDA_TURBINAVEL,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_hydro_operation_report_block(
-                uow, "vertimento_turbinavel"
-            ),
-            (
-                Variable.ENERGIA_VERTIDA_NAO_TURBINAVEL,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_hydro_operation_report_block(
-                uow, "vertimento_nao_turbinavel"
-            ),
-            (
-                Variable.VAZAO_TURBINADA,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_turbinada_m3s"
-            ),
-            (
-                Variable.VAZAO_VERTIDA,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(uow, "vazao_vertida_m3s"),
-            (
-                Variable.VAZAO_DESVIADA,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_desviada_m3s"
-            ),
-            (
-                Variable.VAZAO_RETIRADA,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_retirada_m3s"
-            ),
-            (
-                Variable.VAZAO_EVAPORADA,
-                SpatialResolution.USINA_HIDROELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usih(
-                uow, "vazao_evaporada_m3s"
-            ),
-            (
-                Variable.GERACAO_TERMICA,
-                SpatialResolution.USINA_TERMELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usit(uow, "geracao_MW"),
-            (
-                Variable.CUSTO_GERACAO_TERMICA,
-                SpatialResolution.USINA_TERMELETRICA,
-            ): lambda uow: cls._resolve_dec_oper_usit(uow, "custo_geracao"),
-            (
-                Variable.INTERCAMBIO,
-                SpatialResolution.PAR_SUBMERCADOS,
-            ): lambda uow: cls._resolve_dec_oper_interc(
-                uow, "intercambio_origem_MW"
-            ),
-            (
-                Variable.INTERCAMBIO_LIQUIDO,
-                SpatialResolution.PAR_SUBMERCADOS,
-            ): lambda uow: cls._resolve_dec_oper_interc_net(
-                uow, "intercambio_origem_MW"
-            ),
-        }
-        return _rules[synthesis]
-
-    @classmethod
     def _post_resolve_file(
         cls,
         df: pd.DataFrame,
@@ -336,125 +100,18 @@ class OperationSynthetizer:
         uow: AbstractUnitOfWork,
         col: str,
     ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados do dec_oper_sist",
-            logger=cls.logger,
-        ):
-            df = Deck.dec_oper_sist(uow)
-            return cls._post_resolve_file(df, col)
-
-    @classmethod
-    def _resolve_dec_oper_ree(
-        cls, uow: AbstractUnitOfWork, col: str
-    ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados do dec_oper_ree",
-            logger=cls.logger,
-        ):
-            df = Deck.dec_oper_ree(uow)
-            return cls._post_resolve_file(df, col)
-
-    @classmethod
-    def _resolve_ena_coupling_eer(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados de ENA do relato",
-            logger=cls.logger,
-        ):
-            df = Deck.eer_afluent_energy(uow)
-            return df
-
-    @classmethod
-    def _resolve_ena_coupling_sbm(cls, uow: AbstractUnitOfWork) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados de ENA do relato",
-            logger=cls.logger,
-        ):
-            df = Deck.sbm_afluent_energy(uow)
-            return df
+        return _resolution_mod.resolve_dec_oper_sist(uow, col, cls.logger)
 
     @classmethod
     def _resolve_dec_oper_usih(
-        cls, uow: AbstractUnitOfWork, col: str, blocks: list[int] | None = None
-    ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados do dec_oper_usih",
-            logger=cls.logger,
-        ):
-            df = Deck.dec_oper_usih(uow)
-
-            df = cls._post_resolve_file(df, col)
-            if blocks:
-                df = df.loc[df[BLOCK_COL].isin(blocks)].copy()
-            return df
-
-    @classmethod
-    def _resolve_dec_oper_usit(
         cls,
         uow: AbstractUnitOfWork,
         col: str,
+        blocks: list[int] | None = None,
     ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados do dec_oper_usit",
-            logger=cls.logger,
-        ):
-            df = Deck.dec_oper_usit(uow)
-            return cls._post_resolve_file(df, col)
-
-    @classmethod
-    def _resolve_dec_oper_interc(
-        cls,
-        uow: AbstractUnitOfWork,
-        col: str,
-    ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados do dec_oper_interc",
-            logger=cls.logger,
-        ):
-            df = Deck.dec_oper_interc(uow)
-            return cls._post_resolve_file(df, col)
-
-    @classmethod
-    def _resolve_dec_oper_interc_net(
-        cls,
-        uow: AbstractUnitOfWork,
-        col: str,
-    ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados do dec_oper_interc",
-            logger=cls.logger,
-        ):
-            df = Deck.dec_oper_interc_net(uow)
-            return cls._post_resolve_file(df, col)
-
-    @classmethod
-    def _resolve_hydro_operation_report_block(
-        cls, uow: AbstractUnitOfWork, col: str
-    ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados dos relato e relato2",
-            logger=cls.logger,
-        ):
-            return Deck.hydro_operation_report_data(col, uow)
-
-    @classmethod
-    def _resolve_hydro_generation_report_block(
-        cls, uow: AbstractUnitOfWork
-    ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados dos relato e relato2",
-            logger=cls.logger,
-        ):
-            return Deck.energy_balance_report_data("geracao_hidraulica", uow)
-
-    @classmethod
-    def _resolve_operation_report_block(
-        cls, uow: AbstractUnitOfWork, col: str
-    ) -> pd.DataFrame:
-        with time_and_log(
-            message_root="Tempo para obtenção dos dados dos relato e relato2",
-            logger=cls.logger,
-        ):
-            return Deck.operation_report_data(col, uow)
+        return _resolution_mod.resolve_dec_oper_usih(
+            uow, col, blocks, cls.logger
+        )
 
     @classmethod
     def _default_args(cls) -> list[str]:
@@ -630,7 +287,9 @@ class OperationSynthetizer:
         Realiza a resolução de uma síntese, opcionalmente adicionando
         limites superiores e inferiores aos valores de cada linha.
         """
-        df = cls._resolve((s.variable, s.spatial_resolution))(uow)
+        df = _resolution_mod.resolve_dispatch(
+            (s.variable, s.spatial_resolution), cls.logger
+        )(uow)
         if df is not None:
             df = cls._post_resolve(df, s, uow)
             df = cls._resolve_bounds(s, df, uow)
