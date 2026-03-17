@@ -24,7 +24,7 @@ No caso de uma síntese do sistema, são esperados os arquivos::
     >>> UTE.parquet
 
 Para a síntese da execução::
-    
+
     $ ls sintese
     >>> CONVERGENCIA.parquet
     >>> CUSTOS.parquet
@@ -36,14 +36,14 @@ Para a síntese da execução::
     >>> VERSAO.parquet
 
 Para a síntese da política::
-    
+
     $ ls sintese
     >>> CORTES_COEFICIENTES.parquet
     >>> CORTES_VARIAVEIS.parquet
     >>> METADADOS_POLITICA.parquet
 
 Na síntese de cenários::
-    
+
     $ ls sintese
     >>> METADADOS_CENARIOS.parquet
     >>> PROABABILIDADES.parquet
@@ -75,7 +75,7 @@ Alguns dos arquivos esperados na síntese da operação::
     >>> ...
     >>> METADADOS_OPERACAO.parquet
     >>> QAFL_UHE.parquet
-    >>> ... 
+    >>> ...
     >>> VARMF_UHE.parquet
     >>> VARMI_REE.parquet
     >>> VARMI_SBM.parquet
@@ -91,8 +91,8 @@ Os metadados são armazenados em arquivos com o prefixo `METADADOS_` e o nome da
 
 Por exemplo, em uma síntese da operação, os metadados podem ser acessados como:
 
-    
-.. code-block:: python
+
+.. code-block:: none
 
     import pandas as pd
     meta_df = pd.read_parquet("sintese/METADADOS_OPERACAO.parquet")
@@ -110,7 +110,7 @@ Por exemplo, em uma síntese da operação, os metadados podem ser acessados com
     63    GTER_UTE                   GT                      Geração Térmica  ...    MWmed     False     True
     64     INT_SBP          Intercâmbio               Intercâmbio de Energia  ...    MWmed     False     True
     65    INTL_SBP  Intercâmbio Líquido       Intercâmbio Líquido de Energia  ...    MWmed     False    False
-    
+
     [66 rows x 8 columns]
 
 
@@ -143,7 +143,7 @@ Por exemplo, em uma síntese da operação, as estatísticas podem ser acessadas
     910774    VARPI           290          10                  1  ...            672.0   5.0            -inf             inf
     910775    VARPI           290          10                  1  ...            672.0   5.0            -inf             inf
     910776    VARPI           290          10                  1  ...            672.0   NaN            -inf             inf
-    
+
     [910777 rows x 13 columns]
 
 
@@ -176,5 +176,5 @@ como `CMO_SBM` e `EARMF_REE`. Para uma mesma entidade, os arquivos de todas as v
     81          12                  1        5  2024-12-28  ...           168.0   4833.0              0.0          11791.0
     82          12                  1        6  2025-01-04  ...           672.0   5073.0              0.0          11791.0
     83          12                  1        7  2025-02-01  ...           672.0   5824.0              0.0          11791.0
-    
+
     [84 rows x 11 columns]

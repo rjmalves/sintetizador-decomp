@@ -88,7 +88,7 @@ def thermals(cache: Dict[str, Any], uow: AbstractUnitOfWork) -> pd.DataFrame:
         dadger_ct = Deck.dadger(uow).ct()
         registers = dadger_ct if isinstance(dadger_ct, list) else [dadger_ct]
         sbm_df = submarkets(cache, uow).set_index(SUBMARKET_CODE_COL)
-        data: Dict[str, list] = {
+        data: Dict[str, list[Any]] = {
             THERMAL_CODE_COL: [],
             THERMAL_NAME_COL: [],
             SUBMARKET_CODE_COL: [],

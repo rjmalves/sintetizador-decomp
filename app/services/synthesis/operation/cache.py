@@ -1,7 +1,7 @@
 from logging import DEBUG, ERROR
 from typing import TYPE_CHECKING
 
-import pandas as pd  # type: ignore
+import pandas as pd
 
 from app.model.operation.operationsynthesis import OperationSynthesis
 from app.utils.timing import time_and_log

@@ -1,7 +1,7 @@
 from logging import WARNING
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
-import pandas as pd  # type: ignore
+import pandas as pd
 
 from app.internal.constants import IDENTIFICATION_COLUMNS, VALUE_COL
 from app.model.operation.operationsynthesis import OperationSynthesis
@@ -34,21 +34,21 @@ def post_resolve_file(
 
 def get_unique_column_values_in_order(
     df: pd.DataFrame, cols: list[str]
-) -> dict[str, list]:
+) -> dict[str, list[Any]]:
     return {col: df[col].unique().tolist() for col in cols}
 
 
 def set_ordered_entities(
     cls: "type[OperationSynthetizer]",
     s: OperationSynthesis,
-    entities: dict[str, list],
+    entities: dict[str, list[Any]],
 ) -> None:
     cls.ORDERED_SYNTHESIS_ENTITIES[s] = entities
 
 
 def get_ordered_entities(
     cls: "type[OperationSynthetizer]", s: OperationSynthesis
-) -> dict[str, list]:
+) -> dict[str, list[Any]]:
     return cls.ORDERED_SYNTHESIS_ENTITIES[s]
 
 
@@ -57,8 +57,8 @@ def post_resolve(
     df: pd.DataFrame,
     s: OperationSynthesis,
     uow: AbstractUnitOfWork,
-    early_hooks: list[Callable] | None = None,
-    late_hooks: list[Callable] | None = None,
+    early_hooks: list[Callable[..., pd.DataFrame]] | None = None,
+    late_hooks: list[Callable[..., pd.DataFrame]] | None = None,
 ) -> pd.DataFrame:
     if early_hooks is None:
         early_hooks = []

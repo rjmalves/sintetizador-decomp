@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Callable
 
-import pandas as pd  # type: ignore
+import pandas as pd
 
 from app.internal.constants import (
     BLOCK_COL,
@@ -217,7 +217,7 @@ def stub_percent_SIN(
 
 def stub_mappings(
     cls: "type[OperationSynthetizer]", s: OperationSynthesis
-) -> Callable | None:
+) -> Callable[..., pd.DataFrame] | None:
     if s.variable == Variable.ENERGIA_VERTIDA:
         return lambda synthesis, uow: stub_EVER(cls, synthesis, uow)
 

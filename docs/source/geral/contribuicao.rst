@@ -16,10 +16,10 @@ No *sintetizador-decomp* a dependência do módulo *idecomp* é concentrada na c
 objetos nativos, DataFrames ou arrays para as demais partes da aplicação.
 
 Para instalar as dependências de desenvolvimento, incluindo as necessárias para a geração automática do site::
-    
+
     $ git clone https://github.com/rjmalves/sintetizador-decomp.git
     $ cd sintetizador-decomp
-    $ pip install .[dev]
+    $ uv sync --all-extras --dev
 
 .. warning::
 

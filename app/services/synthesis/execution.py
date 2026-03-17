@@ -1,9 +1,9 @@
 import logging
 from logging import ERROR, INFO
 from traceback import print_exc
-from typing import Callable, List, Optional
+from typing import List, Optional
 
-import pandas as pd  # type: ignore
+import pandas as pd
 
 from app.internal.constants import (
     EXECUTION_SYNTHESIS_METADATA_OUTPUT,
@@ -159,7 +159,7 @@ class ExecutionSynthetizer:
         cls,
         success_synthesis: List[ExecutionSynthesis],
         uow: AbstractUnitOfWork,
-    ):
+    ) -> None:
         metadata_df = pd.DataFrame(
             columns=[
                 "chave",
@@ -205,7 +205,7 @@ class ExecutionSynthetizer:
                 return None
 
     @classmethod
-    def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork):
+    def synthetize(cls, variables: List[str], uow: AbstractUnitOfWork) -> None:
         cls.logger = logging.getLogger("main")
         uow.subdir = EXECUTION_SYNTHESIS_SUBDIR
 

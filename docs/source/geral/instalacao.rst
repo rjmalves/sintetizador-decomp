@@ -1,20 +1,26 @@
 Instalação
 ============
 
-O *sintetizador-decomp* é compatível com versões de Python >= 3.10. 
+O *sintetizador-decomp* é compatível com versões de Python >= 3.11.
 
-Instalando a partir do repositório oficial
--------------------------------------------
+Instalando via uv (recomendado)
+--------------------------------
 
-É possível realizar a instalação desta versão fazendo o uso do `Git <https://git-scm.com/>`_. Para instalar a partir do repositório, é necessário
-primeiramente desinstalar a versão instalada (se houver), com::
+O `uv <https://docs.astral.sh/uv/>`_ é o gerenciador de pacotes recomendado por oferecer instalação rápida e reproduzível::
 
-    $ pip uninstall sintetizador-decomp
+    $ uv tool install sintetizador-decomp
 
-Em seguida, basta fazer::
+Para instalar a partir do repositório diretamente::
+
+    $ uv tool install git+https://github.com/rjmalves/sintetizador-decomp
+
+Instalando via pip
+-------------------
+
+É possível instalar via ``pip`` a partir do repositório oficial com::
 
     $ pip install git+https://github.com/rjmalves/sintetizador-decomp
 
 Também é possível selecionar um branch ou release específicos::
 
-    $ pip install git+https://github.com/rjmalves/sintetizador-decomp@v2.0.0
+    $ pip install git+https://github.com/rjmalves/sintetizador-decomp@v3.0.0

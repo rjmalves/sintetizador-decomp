@@ -1,8 +1,9 @@
-import pandas as pd  # type: ignore
-from typing import Callable
-from idecomp.decomp.hidr import Hidr
 from dataclasses import dataclass
 from enum import Enum
+from typing import Callable
+
+import pandas as pd
+from idecomp.decomp.hidr import Hidr
 
 
 class InfeasibilityType(Enum):

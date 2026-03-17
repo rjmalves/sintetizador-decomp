@@ -1,9 +1,9 @@
 import logging
 from logging import ERROR, INFO, WARNING
 from traceback import print_exc
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
-import pandas as pd  # type: ignore
+import pandas as pd
 import polars as pl
 
 from app.internal.constants import (
@@ -66,13 +66,15 @@ class OperationSynthetizer:
 
     # Estratégias de cache para reduzir tempo total de síntese
     CACHED_SYNTHESIS: dict[OperationSynthesis, pd.DataFrame] = {}
-    ORDERED_SYNTHESIS_ENTITIES: dict[OperationSynthesis, dict[str, list]] = {}
+    ORDERED_SYNTHESIS_ENTITIES: dict[
+        OperationSynthesis, dict[str, list[Any]]
+    ] = {}
 
     # Estatísticas das sínteses são armazenadas separadamente
     SYNTHESIS_STATS: dict[SpatialResolution, list[pd.DataFrame]] = {}
 
     @classmethod
-    def clear_cache(cls):
+    def clear_cache(cls) -> None:
         """
         Limpa o cache de síntese de operação.
         """
@@ -88,10 +90,10 @@ class OperationSynthetizer:
     @classmethod
     def _resolve(
         cls, synthesis: tuple[Variable, SpatialResolution]
-    ) -> Callable:
+    ) -> Callable[..., pd.DataFrame]:
         _rules: dict[
             tuple[Variable, SpatialResolution],
-            Callable,
+            Callable[..., pd.DataFrame],
         ] = {
             (
                 Variable.CUSTO_MARGINAL_OPERACAO,
@@ -333,7 +335,7 @@ class OperationSynthetizer:
         cls,
         uow: AbstractUnitOfWork,
         col: str,
-    ):
+    ) -> pd.DataFrame:
         with time_and_log(
             message_root="Tempo para obtenção dos dados do dec_oper_sist",
             logger=cls.logger,
@@ -373,7 +375,7 @@ class OperationSynthetizer:
     @classmethod
     def _resolve_dec_oper_usih(
         cls, uow: AbstractUnitOfWork, col: str, blocks: list[int] | None = None
-    ):
+    ) -> pd.DataFrame:
         with time_and_log(
             message_root="Tempo para obtenção dos dados do dec_oper_usih",
             logger=cls.logger,
@@ -390,7 +392,7 @@ class OperationSynthetizer:
         cls,
         uow: AbstractUnitOfWork,
         col: str,
-    ):
+    ) -> pd.DataFrame:
         with time_and_log(
             message_root="Tempo para obtenção dos dados do dec_oper_usit",
             logger=cls.logger,
@@ -490,7 +492,7 @@ class OperationSynthetizer:
         def _add_synthesis_dependencies_recursive(
             current_synthesis: list[OperationSynthesis],
             todo_synthesis: OperationSynthesis,
-        ):
+        ) -> None:
             if todo_synthesis in SYNTHESIS_DEPENDENCIES:
                 for dep in SYNTHESIS_DEPENDENCIES[todo_synthesis]:
                     _add_synthesis_dependencies_recursive(
@@ -507,17 +509,19 @@ class OperationSynthetizer:
     @classmethod
     def _get_unique_column_values_in_order(
         cls, df: pd.DataFrame, cols: list[str]
-    ):
+    ) -> dict[str, list[Any]]:
         return get_unique_column_values_in_order(df, cols)
 
     @classmethod
     def _set_ordered_entities(
-        cls, s: OperationSynthesis, entities: dict[str, list]
-    ):
+        cls, s: OperationSynthesis, entities: dict[str, list[Any]]
+    ) -> None:
         set_ordered_entities(cls, s, entities)
 
     @classmethod
-    def _get_ordered_entities(cls, s: OperationSynthesis) -> dict[str, list]:
+    def _get_ordered_entities(
+        cls, s: OperationSynthesis
+    ) -> dict[str, list[Any]]:
         return get_ordered_entities(cls, s)
 
     @classmethod
@@ -555,7 +559,9 @@ class OperationSynthetizer:
         return stub_thermal_submarkets_dec_oper_sist(cls, uow, col)
 
     @classmethod
-    def _stub_mappings(cls, s: OperationSynthesis) -> Callable | None:
+    def _stub_mappings(
+        cls, s: OperationSynthesis
+    ) -> Callable[..., pd.DataFrame] | None:
         return stub_mappings(cls, s)
 
     @classmethod
@@ -611,8 +617,8 @@ class OperationSynthetizer:
         df: pd.DataFrame,
         s: OperationSynthesis,
         uow: AbstractUnitOfWork,
-        early_hooks: list[Callable] | None = None,
-        late_hooks: list[Callable] | None = None,
+        early_hooks: list[Callable[..., pd.DataFrame]] | None = None,
+        late_hooks: list[Callable[..., pd.DataFrame]] | None = None,
     ) -> pd.DataFrame:
         return post_resolve(cls, df, s, uow, early_hooks, late_hooks)
 
@@ -710,7 +716,7 @@ class OperationSynthetizer:
                 return None
 
     @classmethod
-    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork):
+    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork) -> None:
         cls.logger = logging.getLogger("main")
         Deck.logger = cls.logger
         OperationVariableBounds.logger = cls.logger

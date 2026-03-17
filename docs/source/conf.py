@@ -13,7 +13,6 @@
 import os
 import sys
 from datetime import date
-from typing import List
 
 import plotly.io as pio
 
@@ -46,7 +45,6 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx_gallery.gen_gallery",
     "numpydoc",
-    "sphinx_rtd_theme",
 ]
 
 # generate autosummary pages
@@ -74,21 +72,24 @@ master_doc = "index"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns: List[str] = []
+exclude_patterns: list[str] = []
 
 add_module_names = False
 pygments_style = "sphinx"
-modindex_common_prefix = ["idessem."]
+modindex_common_prefix = ["app."]
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 html_theme_options = {
-    "navigation_depth": 5,
+    "sidebar_hide_name": False,
+    "navigation_with_keys": True,
+    "top_of_page_buttons": ["view", "edit"],
 }
+
 github_url = "https://github.com/rjmalves/sintetizador-decomp"
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -108,9 +109,10 @@ intersphinx_mapping = {
         "https://docs.python.org/{.major}".format(sys.version_info),
         None,
     ),
-    "pandas": ("http://pandas.pydata.org/pandas-docs/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "idecomp": ("https://rjmalves.github.io/idecomp/", None),
+    "polars": ("https://docs.pola.rs/api/python/stable/", None),
 }
 
 # https://github.com/sphinx-gallery/sphinx-gallery

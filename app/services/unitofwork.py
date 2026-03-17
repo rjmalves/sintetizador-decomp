@@ -1,13 +1,17 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, Type
+from typing import Any, Optional
 
 from app.adapters.repository.export import (
     AbstractExportRepository,
+)
+from app.adapters.repository.export import (
     factory as export_factory,
 )
 from app.adapters.repository.files import (
     AbstractFilesRepository,
+)
+from app.adapters.repository.files import (
     factory as files_factory,
 )
 from app.model.settings import Settings

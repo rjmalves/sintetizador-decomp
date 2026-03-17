@@ -1,4 +1,4 @@
-import pandas as pd  # type: ignore
+import pandas as pd
 
 from app.internal.constants import (
     EER_CODE_COL,

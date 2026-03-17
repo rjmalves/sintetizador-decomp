@@ -2,10 +2,17 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
-import numpy as np  # type: ignore
-import pandas as pd  # type: ignore
+import numpy as np
+import pandas as pd
 from cfinterface.components.register import Register
-from idecomp.decomp import Dadger, Decomptim, Hidr, InviabUnic, Relato, Vazoes
+from idecomp.decomp import (  # type: ignore[attr-defined]
+    Dadger,
+    Decomptim,
+    Hidr,
+    InviabUnic,
+    Relato,
+    Vazoes,
+)
 from idecomp.decomp.avl_turb_max import AvlTurbMax
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
 from idecomp.decomp.dec_fcf_cortes import DecFcfCortes
@@ -26,7 +33,6 @@ from app.internal.constants import (
     EXCHANGE_TARGET_CODE_COL,
     HYDRO_CODE_COL,
     ITERATION_COL,
-    IV_SUBMARKET_CODE,
     LOWER_BOUND_COL,
     RUNTIME_COL,
     SCENARIO_COL,
@@ -48,7 +54,7 @@ from app.services.deck import (
     reports,
 )
 from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.operations import cast_ac_fields_to_stage, fast_group_df
+from app.utils.operations import fast_group_df
 
 
 class Deck:
@@ -124,7 +130,7 @@ class Deck:
         return accessors.get_dec_fcf_cortes(stage, uow)
 
     @classmethod
-    def _validate_data(cls, data, type: Type[T], msg: str = "dados") -> T:
+    def _validate_data(cls, data: Any, type: Type[T], msg: str = "dados") -> T:
         if not isinstance(data, type):
             if cls.logger is not None:
                 cls.logger.error(f"Erro na leitura de {msg}")
@@ -1139,7 +1145,7 @@ class Deck:
         cls,
         df: pd.DataFrame,
         df_constraints: pd.DataFrame,
-    ):
+    ) -> pd.DataFrame:
         df = pd.merge(
             df,
             df_constraints,
@@ -1164,7 +1170,9 @@ class Deck:
         return df
 
     @classmethod
-    def __eval_block_0_bounds(cls, uow: AbstractUnitOfWork, df: pd.DataFrame):
+    def __eval_block_0_bounds(
+        cls, uow: AbstractUnitOfWork, df: pd.DataFrame
+    ) -> pd.DataFrame:
         df_pat = df.copy()
         # Adiciona duracao dos patamares e calcula media ponderada dos
         # limites pela duracao
@@ -1205,7 +1213,9 @@ class Deck:
         # impresso no relato não é o que foi considerado no PL efetivamente, e sim
         # um cálculo pós-processamento com resultados da operação
         # # Substitui cota abaixo da soleira de vertedouro com o limite superior 0
-        def __overwrite_with_spill_operation_status_bound(uow, df):
+        def __overwrite_with_spill_operation_status_bound(
+            uow: AbstractUnitOfWork, df: pd.DataFrame
+        ) -> pd.DataFrame:
             spill_limits = Deck.hydro_operation_report_data(
                 "considera_soleira_vertedouro", uow
             )
@@ -1274,7 +1284,9 @@ class Deck:
     def hydro_turbined_flow_bounds(
         cls, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
-        def _get_turbined_flow_bounds(uow, df) -> pd.DataFrame:
+        def _get_turbined_flow_bounds(
+            uow: AbstractUnitOfWork, df: pd.DataFrame
+        ) -> pd.DataFrame:
             df_qmax = Deck.avl_turb_max(uow)
             df_qmax = df_qmax.rename(
                 {

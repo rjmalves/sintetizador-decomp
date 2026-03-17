@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from typing import Optional
 
-from idecomp.decomp import Dadger, Decomptim, Hidr, InviabUnic, Relato, Vazoes
+from idecomp.decomp import (  # type: ignore[attr-defined]
+    Dadger,
+    Decomptim,
+    Hidr,
+    InviabUnic,
+    Relato,
+    Vazoes,
+)
 from idecomp.decomp.avl_turb_max import AvlTurbMax
 from idecomp.decomp.dec_eco_discr import DecEcoDiscr
 from idecomp.decomp.dec_fcf_cortes import DecFcfCortes

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from app.model.scenarios.variable import Variable
 from typing import Optional
+
+from app.model.scenarios.variable import Variable
 
 
 @dataclass

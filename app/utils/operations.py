@@ -1,29 +1,24 @@
 from datetime import datetime
 from typing import Callable, Dict, List
 
-import numpy as np  # type: ignore
-import pandas as pd  # type: ignore
+import pandas as pd
 import polars as pl
-from idecomp.decomp import Dadger
+from idecomp.decomp import Dadger  # type: ignore[attr-defined]
 
 from app.internal.constants import (
-    BLOCK_COL,
-    LOWER_BOUND_COL,
-    OPERATION_SYNTHESIS_COMMON_COLUMNS,
     PANDAS_GROUPING_ENGINE,
     PROBABILITY_COL,
     QUANTILES_FOR_STATISTICS,
     SCENARIO_COL,
     STAGE_COL,
-    UPPER_BOUND_COL,
     VALUE_COL,
 )
 
 
 def fast_group_df(
     df: pd.DataFrame,
-    grouping_columns: list,
-    extract_columns: list,
+    grouping_columns: list[str],
+    extract_columns: list[str],
     operation: str,
     reset_index: bool = True,
 ) -> pd.DataFrame:

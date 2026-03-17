@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-import pandas as pd  # type: ignore
+import pandas as pd
 import polars as pl
 
 from app.internal.constants import (
@@ -14,11 +14,10 @@ from app.model.operation.operationsynthesis import (
     UNITS,
     OperationSynthesis,
 )
-from app.model.operation.spatialresolution import SpatialResolution
 from app.services.deck.bounds import OperationVariableBounds
 from app.services.deck.deck import Deck
-from app.services.unitofwork import AbstractUnitOfWork
 from app.services.synthesis.operation.cache import store_in_cache_if_needed
+from app.services.unitofwork import AbstractUnitOfWork
 from app.utils.operations import calc_statistics
 from app.utils.timing import time_and_log
 

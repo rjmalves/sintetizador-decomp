@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import numpy as np
 import pandas as pd
 from cfinterface.components.register import Register
-from idecomp.decomp.dadger import ACVOLMIN
+from idecomp.decomp.dadger import ACVOLMIN  # type: ignore[attr-defined]
 
 from app.internal.constants import (
     BLOCK_COL,
@@ -19,8 +19,8 @@ from app.internal.constants import (
     EXCHANGE_TARGET_CODE_COL,
     GTER_COEF_CODE,
     HYDRO_CODE_COL,
-    IV_SUBMARKET_CODE,
     ITERATION_COL,
+    IV_SUBMARKET_CODE,
     LAG_COL,
     QDEF_COEF_CODE,
     RHS_COEF_CODE,

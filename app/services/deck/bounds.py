@@ -1,5 +1,5 @@
 from logging import INFO, Logger
-from typing import Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, Dict, Optional, TypeVar
 
 import polars as pl
 
@@ -36,7 +36,7 @@ class OperationVariableBounds:
     T = TypeVar("T")
     logger: Optional[Logger] = None
 
-    MAPPINGS: Dict[OperationSynthesis, Callable] = {
+    MAPPINGS: Dict[OperationSynthesis, Callable[..., pl.DataFrame]] = {
         OperationSynthesis(
             Variable.VAZAO_VERTIDA,
             SpatialResolution.USINA_HIDROELETRICA,
@@ -519,7 +519,7 @@ class OperationVariableBounds:
         df: pl.DataFrame,
         uow: AbstractUnitOfWork,
         synthesis_unit: str,
-        ordered_entities: Dict[str, list],
+        ordered_entities: Dict[str, list[Any]],
         entity_column: Optional[str] = None,
         initial: bool = False,
     ) -> pl.DataFrame:
@@ -615,7 +615,7 @@ class OperationVariableBounds:
         df: pl.DataFrame,
         uow: AbstractUnitOfWork,
         synthesis_unit: str,
-        ordered_entities: Dict[str, list],
+        ordered_entities: Dict[str, list[Any]],
         entity_column: Optional[str] = None,
         initial: bool = False,
     ) -> pl.DataFrame:
@@ -916,7 +916,7 @@ class OperationVariableBounds:
         cls,
         s: OperationSynthesis,
         df: pl.DataFrame,
-        ordered_synthesis_entities: Dict[str, list],
+        ordered_synthesis_entities: Dict[str, list[Any]],
         uow: AbstractUnitOfWork,
     ) -> pl.DataFrame:
         if not cls.is_bounded(s):

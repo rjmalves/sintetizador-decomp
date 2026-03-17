@@ -16,11 +16,8 @@ jobs:
           enable-cache: true
       - run: uv python install 3.12
       - run: uv sync --all-extras --dev
-      # TODO: remove continue-on-error once ruff violations are fixed (ticket-003+)
       - run: uv run ruff check ./app
-        continue-on-error: true
       - run: uv run ruff format --check ./app
-        continue-on-error: true
 
   typecheck:
     runs-on: ubuntu-latest
@@ -31,9 +28,7 @@ jobs:
           enable-cache: true
       - run: uv python install 3.12
       - run: uv sync --all-extras --dev
-      # TODO: remove continue-on-error once mypy errors are fixed (later tickets)
       - run: uv run mypy ./app
-        continue-on-error: true
 
   test:
     runs-on: ubuntu-latest
