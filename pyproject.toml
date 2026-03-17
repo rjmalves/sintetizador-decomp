@@ -88,38 +88,12 @@ ignore_errors = true
 
 # idecomp v1.9+ .read() classmethods return base types (SectionFile,
 # BlockFile, RegisterFile) instead of Self, causing many false-positive
-# errors throughout this module. Additionally, idecomp attributes such as
-# arq_caso.arquivos return Any, causing no-any-return in typed properties;
-# and Settings.installdir is Optional[str] passed to pathlib.Path (arg-type).
+# errors throughout this module.
 [[tool.mypy.overrides]]
 module = ["app.adapters.repository.files"]
-disable_error_code = ["assignment", "return-value", "attr-defined", "unused-ignore", "no-any-return", "arg-type"]
+disable_error_code = ["assignment", "return-value", "attr-defined", "unused-ignore"]
 
 [[tool.mypy.overrides]]
 module = ["dateutil.*"]
 ignore_errors = true
 
-# Deck class uses a Dict[str, Any] cache to store heterogeneous typed values
-# (datetime, int, list[datetime], list[int]). Returning cache entries typed as
-# Any in methods with specific return types generates false-positive no-any-return
-# errors that cannot be resolved without refactoring the caching architecture.
-[[tool.mypy.overrides]]
-module = ["app.services.deck.deck"]
-disable_error_code = ["no-any-return"]
-
-# pandas .at[], .iloc[], and .to_numpy().flatten() return Any regardless of
-# the DataFrame's dtype, causing false-positive no-any-return in helper
-# functions that delegate entirely to pandas internal indexing.
-[[tool.mypy.overrides]]
-module = ["app.services.deck.processing"]
-disable_error_code = ["no-any-return"]
-
-# infeasibility.py is a legacy parsing module with many _build_* classmethods
-# that share the same untyped parameter pattern (iteration, stage, scenario,
-# constraint_message, violation, unit, hidr). The hidr parameter is typed via
-# idecomp (already suppressed in idecomp.*). The no-untyped-def, type-arg, and
-# no-any-return errors are systemic across all builder methods and cannot be
-# resolved without full annotation of idecomp.decomp.hidr return types.
-[[tool.mypy.overrides]]
-module = ["app.model.execution.infeasibility"]
-disable_error_code = ["no-untyped-def", "type-arg", "no-any-return"]

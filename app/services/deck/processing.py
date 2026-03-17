@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -24,13 +24,14 @@ def add_dates_to_df(
     def _internal(
         line: pd.Series, stages_durations: pd.DataFrame
     ) -> np.ndarray:
-        return (
+        return cast(
+            np.ndarray,
             stages_durations.loc[
                 stages_durations[STAGE_COL] == line[STAGE_COL],
                 [START_DATE_COL, END_DATE_COL],
             ]
             .to_numpy()
-            .flatten()
+            .flatten(),
         )
 
     from app.services.deck.deck import Deck
@@ -60,7 +61,9 @@ def add_stages_durations_to_df(
     df: pd.DataFrame, uow: "AbstractUnitOfWork"
 ) -> pd.DataFrame:
     def _internal(line: pd.Series, stages_durations: pd.DataFrame) -> float:
-        return stages_durations.at[line[STAGE_COL], BLOCK_DURATION_COL]
+        return cast(
+            float, stages_durations.at[line[STAGE_COL], BLOCK_DURATION_COL]
+        )
 
     from app.services.deck.deck import Deck
 
@@ -80,11 +83,14 @@ def add_block_durations_to_df(
         if pd.isna(line[BLOCK_COL]):
             return np.nan
         else:
-            return blocks_durations.loc[
-                (blocks_durations[STAGE_COL] == line[STAGE_COL])
-                & (blocks_durations[BLOCK_COL] == line[BLOCK_COL]),
-                BLOCK_DURATION_COL,
-            ].iloc[0]
+            return cast(
+                float,
+                blocks_durations.loc[
+                    (blocks_durations[STAGE_COL] == line[STAGE_COL])
+                    & (blocks_durations[BLOCK_COL] == line[BLOCK_COL]),
+                    BLOCK_DURATION_COL,
+                ].iloc[0],
+            )
 
     from app.services.deck.deck import Deck
 

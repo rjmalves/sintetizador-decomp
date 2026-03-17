@@ -4,7 +4,7 @@ import pathlib
 import platform
 from abc import ABC, abstractmethod
 from os.path import join
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, cast
 
 from idecomp.decomp.arquivos import Arquivos
 from idecomp.decomp.avl_turb_max import AvlTurbMax
@@ -126,7 +126,7 @@ class RawFilesRepository(AbstractFilesRepository):
             extensao = arq_caso.arquivos
             if extensao is None:
                 raise FileNotFoundError()
-            self.__extensao = extensao
+            self.__extensao = cast(str, extensao)
         except FileNotFoundError as e:
             logger = logging.getLogger("main")
             logger.error("Erro na leitura do arquivo arquivo caso.dat")
@@ -177,8 +177,10 @@ class RawFilesRepository(AbstractFilesRepository):
                 if arq_dadger is None:
                     raise FileNotFoundError()
                 caminho = str(pathlib.Path(self.__tmppath).joinpath(arq_dadger))
+                installdir = Settings().installdir
+                assert installdir is not None
                 script = str(
-                    pathlib.Path(Settings().installdir).joinpath(
+                    pathlib.Path(installdir).joinpath(
                         Settings().encoding_script
                     )
                 )
