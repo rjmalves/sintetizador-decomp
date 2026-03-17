@@ -4,8 +4,10 @@ Programa auxiliar para realizar a síntese de dados do programa DECOMP em arquiv
 
 [![tests](https://github.com/rjmalves/sintetizador-decomp/actions/workflows/main.yml/badge.svg)](https://github.com/rjmalves/sintetizador-decomp/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/rjmalves/sintetizador-decomp/graph/badge.svg?token=8KTPAR862Z)](https://codecov.io/gh/rjmalves/sintetizador-decomp)
+[![PyPI](https://img.shields.io/pypi/v/sintetizador-decomp)](https://pypi.org/project/sintetizador-decomp/)
+[![Python](https://img.shields.io/pypi/pyversions/sintetizador-decomp)](https://pypi.org/project/sintetizador-decomp/)
 [![docs](https://img.shields.io/badge/docs-online-blue)](https://rjmalves.github.io/sintetizador-decomp/)
-[![python](https://img.shields.io/badge/python-%3E%3D%203.11-blue)](https://www.python.org/)
+[![license](https://img.shields.io/github/license/rjmalves/sintetizador-decomp)](https://github.com/rjmalves/sintetizador-decomp/blob/main/LICENSE)
 
 ## Instalação
 
@@ -37,10 +39,10 @@ As saídas são geradas em formato Parquet e podem ser lidas com [pandas](https:
 
 ```python
 import pandas as pd
-df = pd.read_parquet("CMARG_SBM.parquet")
+df = pd.read_parquet("CMO_SBM.parquet")
 
 import polars as pl
-df = pl.read_parquet("CMARG_SBM.parquet")
+df = pl.read_parquet("CMO_SBM.parquet")
 ```
 
 ## Comandos
