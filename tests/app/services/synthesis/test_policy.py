@@ -17,9 +17,9 @@ from app.internal.constants import (
 from app.model.policy.policysynthesis import PolicySynthesis
 from app.services.synthesis.policy import PolicySynthetizer
 from app.services.unitofwork import factory
-from tests.conftest import DECK_TEST_DIR
+from tests.conftest import DECK_TEST_DIR, q
 
-uow = factory("FS", DECK_TEST_DIR)
+uow = factory("FS", DECK_TEST_DIR, q)
 synthetizer = PolicySynthetizer()
 
 

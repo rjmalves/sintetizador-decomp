@@ -23,9 +23,9 @@ from app.services.deck.bounds import OperationVariableBounds
 from app.services.deck.deck import Deck
 from app.services.synthesis.operation import OperationSynthetizer
 from app.services.unitofwork import factory
-from tests.conftest import DECK_TEST_DIR
+from tests.conftest import DECK_TEST_DIR, q
 
-uow = factory("FS", DECK_TEST_DIR)
+uow = factory("FS", DECK_TEST_DIR, q)
 
 
 def __compara_sintese_dec_oper(
@@ -915,12 +915,14 @@ def test_sintese_varmi_sbm(test_settings):
     )
     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
     df_dec_oper = (
-        df_dec_oper.groupby([
-            "estagio",
-            "cenario",
-            "patamar",
-            "codigo_submercado",
-        ])
+        df_dec_oper.groupby(
+            [
+                "estagio",
+                "cenario",
+                "patamar",
+                "codigo_submercado",
+            ]
+        )
         .sum()
         .reset_index()
     )
@@ -940,12 +942,14 @@ def test_sintese_varmf_sbm(test_settings):
     )
     df_dec_oper["patamar"] = df_dec_oper["patamar"].fillna(0)
     df_dec_oper = (
-        df_dec_oper.groupby([
-            "estagio",
-            "cenario",
-            "patamar",
-            "codigo_submercado",
-        ])
+        df_dec_oper.groupby(
+            [
+                "estagio",
+                "cenario",
+                "patamar",
+                "codigo_submercado",
+            ]
+        )
         .sum()
         .reset_index()
     )

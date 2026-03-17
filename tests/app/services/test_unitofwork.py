@@ -1,11 +1,11 @@
 from app.services.unitofwork import factory
 import pandas as pd
 from unittest.mock import patch
-from tests.conftest import DECK_TEST_DIR
+from tests.conftest import DECK_TEST_DIR, q
 
 
 def test_fs_uow(test_settings):
-    uow = factory("FS", DECK_TEST_DIR)
+    uow = factory("FS", DECK_TEST_DIR, q)
     with uow:
         dadger = uow.files.get_dadger()
         assert dadger is not None

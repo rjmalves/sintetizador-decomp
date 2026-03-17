@@ -9,13 +9,19 @@ O *sintetizador-decomp* é um pacote Python para formatação dos arquivos de sa
 desenvolvido pelo `CEPEL <http://www.cepel.br/>`_ e utilizado para a planejamento da operação do Sistema Interligado Nacional (SIN).
 
 .. toctree::
-   :caption: Apresentação 
+   :caption: Apresentação
    :maxdepth: 3
 
    apresentacao/apresentacao.rst
 
 .. toctree::
-   :caption: Geral 
+   :caption: Arquitetura
+   :maxdepth: 3
+
+   arquitetura/arquitetura
+
+.. toctree::
+   :caption: Geral
    :maxdepth: 3
 
    geral/instalacao
@@ -29,5 +35,6 @@ desenvolvido pelo `CEPEL <http://www.cepel.br/>`_ e utilizado para a planejament
 
    referencia/saidas
    referencia/modelo
+   referencia/api
 
 :ref:`genindex`

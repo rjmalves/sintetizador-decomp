@@ -1,6 +1,17 @@
+# v3.0.0
+
+- Versão mínima do Python atualizada para >= 3.11. Suporte a Python 3.8, 3.9 e 3.10 descontinuado.
+- Modernização da infraestrutura de CI: substituição do `setup.py` por `pyproject.toml` com [hatchling](https://hatch.pypa.io/), adoção do [uv](https://docs.astral.sh/uv/) como gerenciador de pacotes e ambientes, e remoção dos guards `continue-on-error` dos passos de lint e tipagem estática.
+- Integração do [Polars](https://pola.rs/) para o cálculo de estatísticas de cenários e para o processamento dos limites das variáveis de operação, reduzindo o consumo de memória e o tempo de execução das sínteses.
+- Decomposição do módulo de síntese da operação (`app/services/synthesis/operation/`) em submódulos especializados: `orchestrator`, `pipeline`, `cache`, `export`, `spatial` e `stubs`.
+- Decomposição da fachada `Deck` em submódulos (`accessors`, `entities`, `operations`, `processing`, `reports`, `bounds`) para melhor organização e testabilidade.
+- Migração do tema de documentação para [Furo](https://pradyunsg.me/furo/) e atualização das extensões Sphinx para compatibilidade com Python >= 3.11.
+- Correção de tipagem estática em todo o código: remoção de comentários `# type: ignore` obsoletos, adição de anotações de tipo em funções sem assinatura e parametrização de genéricos (`list`, `tuple`, `Callable`).
+- Atualização da dependência [idecomp](https://github.com/rjmalves/idecomp) para >= 1.9.0.
+
 # v2.1.2
 
-- Refatoração dos processos de síntese de `GTER` para eficietização computacional. 
+- Refatoração dos processos de síntese de `GTER` para eficietização computacional.
 
 # v2.1.1
 

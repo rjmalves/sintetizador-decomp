@@ -1,18 +1,21 @@
 from enum import Enum
+
 from app.internal.constants import (
-    HYDRO_CODE_COL,
-    THERMAL_CODE_COL,
+    BLOCK_DURATION_COL,
     EER_CODE_COL,
-    SUBMARKET_CODE_COL,
+    END_DATE_COL,
     EXCHANGE_SOURCE_CODE_COL,
     EXCHANGE_TARGET_CODE_COL,
-    START_DATE_COL,
-    END_DATE_COL,
-    BLOCK_DURATION_COL,
-    VALUE_COL,
-    OPERATION_SYNTHESIS_COMMON_COLUMNS as COLUMNS,
+    HYDRO_CODE_COL,
     LOWER_BOUND_COL,
+    START_DATE_COL,
+    SUBMARKET_CODE_COL,
+    THERMAL_CODE_COL,
     UPPER_BOUND_COL,
+    VALUE_COL,
+)
+from app.internal.constants import (
+    OPERATION_SYNTHESIS_COMMON_COLUMNS as COLUMNS,
 )
 
 
@@ -31,7 +34,7 @@ class SpatialResolution(Enum):
                 return v
         return cls.SISTEMA_INTERLIGADO
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.value
 
     @property
@@ -87,10 +90,7 @@ class SpatialResolution(Enum):
 
     @property
     def all_synthesis_df_columns(self) -> list[str]:
-        return (
-            self.entity_df_columns
-            + COLUMNS
-        )
+        return self.entity_df_columns + COLUMNS
 
     @property
     def entity_synthesis_df_columns(self) -> list[str]:
@@ -113,7 +113,7 @@ class SpatialResolution(Enum):
                 BLOCK_DURATION_COL,
                 VALUE_COL,
                 UPPER_BOUND_COL,
-                LOWER_BOUND_COL
+                LOWER_BOUND_COL,
             ]
         ]
 

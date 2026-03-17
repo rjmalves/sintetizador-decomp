@@ -1,22 +1,23 @@
-from typing import Callable
-import pandas as pd  # type: ignore
 import logging
-from logging import INFO, ERROR
-from app.services.unitofwork import AbstractUnitOfWork
-from app.utils.timing import time_and_log
-from app.utils.regex import match_variables_with_wildcards
-from app.model.scenarios.variable import Variable
-from app.model.scenarios.scenariosynthesis import (
-    ScenarioSynthesis,
-    SUPPORTED_SYNTHESIS,
-)
-from app.internal.constants import (
-    SCENARIO_SYNTHESIS_SUBDIR,
-    SCENARIO_SYNTHESIS_METADATA_OUTPUT,
-)
+from logging import ERROR, INFO
 from traceback import print_exc
+from typing import Callable
 
+import pandas as pd
+
+from app.internal.constants import (
+    SCENARIO_SYNTHESIS_METADATA_OUTPUT,
+    SCENARIO_SYNTHESIS_SUBDIR,
+)
+from app.model.scenarios.scenariosynthesis import (
+    SUPPORTED_SYNTHESIS,
+    ScenarioSynthesis,
+)
+from app.model.scenarios.variable import Variable
 from app.services.deck.deck import Deck
+from app.services.unitofwork import AbstractUnitOfWork
+from app.utils.regex import match_variables_with_wildcards
+from app.utils.timing import time_and_log
 
 
 class ScenarioSynthetizer:
@@ -25,7 +26,7 @@ class ScenarioSynthetizer:
     logger: logging.Logger | None = None
 
     @classmethod
-    def _log(cls, msg: str, level: int = INFO):
+    def _log(cls, msg: str, level: int = INFO) -> None:
         if cls.logger is not None:
             cls.logger.log(level, msg)
 
@@ -85,7 +86,7 @@ class ScenarioSynthetizer:
     def _resolve(
         cls, s: ScenarioSynthesis, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
-        rules: dict[Variable, Callable] = {
+        rules: dict[Variable, Callable[..., pd.DataFrame]] = {
             Variable.PROBABILIDADES: cls._resolve_probabilities,
         }
         return rules[s.variable](uow)
@@ -95,7 +96,7 @@ class ScenarioSynthetizer:
         cls,
         success_synthesis: list[ScenarioSynthesis],
         uow: AbstractUnitOfWork,
-    ):
+    ) -> None:
         metadata_df = pd.DataFrame(
             columns=[
                 "chave",
@@ -141,7 +142,7 @@ class ScenarioSynthetizer:
                 return None
 
     @classmethod
-    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork):
+    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork) -> None:
         cls.logger = logging.getLogger("main")
         uow.subdir = SCENARIO_SYNTHESIS_SUBDIR
 

@@ -1,9 +1,10 @@
 import asyncio
+import logging
 import pathlib
 import platform
 from abc import ABC, abstractmethod
 from os.path import join
-from typing import Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, cast
 
 from idecomp.decomp.arquivos import Arquivos
 from idecomp.decomp.avl_turb_max import AvlTurbMax
@@ -27,7 +28,6 @@ from idecomp.decomp.vazoes import Vazoes
 
 from app.model.settings import Settings
 from app.utils.encoding import converte_codificacao
-from app.utils.log import Log
 
 if platform.system() == "Windows":
     Dadger.ENCODING = "iso-8859-1"
@@ -118,18 +118,18 @@ class AbstractFilesRepository(ABC):
 
 
 class RawFilesRepository(AbstractFilesRepository):
-    def __init__(self, tmppath: str):
+    def __init__(self, tmppath: str, version: str = "latest"):
         self.__tmppath = tmppath
+        self.__version = version
         try:
             arq_caso = Caso.read(join(str(self.__tmppath), "caso.dat"))
             extensao = arq_caso.arquivos
             if extensao is None:
                 raise FileNotFoundError()
-            self.__extensao = extensao
+            self.__extensao = cast(str, extensao)
         except FileNotFoundError as e:
-            logger = Log.log()
-            if logger is not None:
-                logger.error("Erro na leitura do arquivo arquivo caso.dat")
+            logger = logging.getLogger("main")
+            logger.error("Erro na leitura do arquivo arquivo caso.dat")
             raise e
         self.__arquivos: Optional[Arquivos] = None
         self.__read_dadger = False
@@ -159,193 +159,172 @@ class RawFilesRepository(AbstractFilesRepository):
     @property
     def arquivos(self) -> Arquivos:
         if self.__arquivos is None:
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
                 self.__arquivos = Arquivos.read(
                     join(self.__tmppath, self.extensao)
                 )
             except FileNotFoundError as e:
-                if logger is not None:
-                    logger.error(
-                        f"Não foi encontrado o arquivo {self.extensao}"
-                    )
+                logger.error(f"Não foi encontrado o arquivo {self.extensao}")
                 raise e
         return self.__arquivos
 
     def get_dadger(self) -> Dadger:
-        if self.__read_dadger is False:
+        if not self.__read_dadger:
             self.__read_dadger = True
-            logger = Log.log()
             try:
                 arq_dadger = self.arquivos.dadger
                 if arq_dadger is None:
                     raise FileNotFoundError()
                 caminho = str(pathlib.Path(self.__tmppath).joinpath(arq_dadger))
+                installdir = Settings().installdir
+                assert installdir is not None
                 script = str(
-                    pathlib.Path(Settings().installdir).joinpath(
+                    pathlib.Path(installdir).joinpath(
                         Settings().encoding_script
                     )
                 )
                 asyncio.run(converte_codificacao(caminho, script))
 
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {arq_dadger}")
+                logger = logging.getLogger("main")
+                logger.info(f"Lendo arquivo {arq_dadger}")
 
                 self.__dadger = Dadger.read(join(self.__tmppath, arq_dadger))
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do dadger: {e}")
+                logging.getLogger("main").error(
+                    f"Erro na leitura do dadger: {e}"
+                )
                 raise e
         return self.__dadger
 
     def get_dadgnl(self) -> Dadgnl:
-        if self.__read_dadgnl is False:
+        if not self.__read_dadgnl:
             self.__read_dadgnl = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
                 arq_dadgnl = self.arquivos.dadgnl
                 if arq_dadgnl is None:
                     raise FileNotFoundError()
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {arq_dadgnl}")
+                logger.info(f"Lendo arquivo {arq_dadgnl}")
                 self.__dadgnl = Dadgnl.read(join(self.__tmppath, arq_dadgnl))
             except Exception as e:
-                if logger is not None:
-                    logger.info(f"Erro na leitura do dadgnl: {e}")
+                logger.info(f"Erro na leitura do dadgnl: {e}")
                 raise e
         return self.__dadgnl
 
     def get_relato(self) -> Relato:
-        if self.__read_relato is False:
+        if not self.__read_relato:
             self.__read_relato = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
                 arq_relato = f"relato.{self.extensao}"
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {arq_relato}")
+                logger.info(f"Lendo arquivo {arq_relato}")
                 self.__relato = Relato.read(join(self.__tmppath, arq_relato))
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do {arq_relato}: {e}")
+                logger.error(f"Erro na leitura do {arq_relato}: {e}")
                 raise e
         return self.__relato
 
     def get_relato2(self) -> Relato:
-        if self.__read_relato2 is False:
+        if not self.__read_relato2:
             self.__read_relato2 = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
                 arq_relato2 = f"relato2.{self.extensao}"
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {arq_relato2}")
+                logger.info(f"Lendo arquivo {arq_relato2}")
                 self.__relato2 = Relato.read(join(self.__tmppath, arq_relato2))
             except FileNotFoundError:
-                if logger is not None:
-                    logger.info(f"Não encontrado arquivo {arq_relato2}")
+                logger.info(f"Não encontrado arquivo {arq_relato2}")
                 raise RuntimeError()
             except Exception as e:
-                if logger is not None:
-                    logger.info(f"Erro na leitura do {arq_relato2}: {e}")
+                logger.info(f"Erro na leitura do {arq_relato2}: {e}")
                 raise e
         return self.__relato2
 
     def get_decomptim(self) -> Decomptim:
-        if self.__read_decomptim is False:
+        if not self.__read_decomptim:
             self.__read_decomptim = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo decomp.tim")
+                logger.info("Lendo arquivo decomp.tim")
                 self.__decomptim = Decomptim.read(
                     join(self.__tmppath, "decomp.tim")
                 )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do decomp.tim: {e}")
+                logger.error(f"Erro na leitura do decomp.tim: {e}")
                 raise e
         return self.__decomptim
 
     def get_inviabunic(self) -> InviabUnic:
-        if self.__read_inviabunic is False:
+        if not self.__read_inviabunic:
             self.__read_inviabunic = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
                 arq_inviabunic = f"inviab_unic.{self.extensao}"
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {arq_inviabunic}")
+                logger.info(f"Lendo arquivo {arq_inviabunic}")
                 self.__inviabunic = InviabUnic.read(
                     join(self.__tmppath, arq_inviabunic)
                 )
             except FileNotFoundError:
-                if logger is not None:
-                    logger.info(f"Não encontrado arquivo {arq_inviabunic}")
+                logger.info(f"Não encontrado arquivo {arq_inviabunic}")
                 raise RuntimeError()
             except Exception as e:
-                if logger is not None:
-                    logger.info(f"Erro na leitura do {arq_inviabunic}: {e}")
+                logger.info(f"Erro na leitura do {arq_inviabunic}: {e}")
                 raise e
         return self.__inviabunic
 
     def get_relgnl(self) -> Relgnl:
-        if self.__read_relgnl is False:
+        if not self.__read_relgnl:
             self.__read_relgnl = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
                 arq_relgnl = f"relgnl.{self.extensao}"
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {arq_relgnl}")
+                logger.info(f"Lendo arquivo {arq_relgnl}")
                 self.__relgnl = Relgnl.read(join(self.__tmppath, arq_relgnl))
             except FileNotFoundError:
-                if logger is not None:
-                    logger.info(f"Não encontrado arquivo {arq_relgnl}")
+                logger.info(f"Não encontrado arquivo {arq_relgnl}")
                 raise RuntimeError()
             except Exception as e:
-                if logger is not None:
-                    logger.info(f"Erro na leitura do {arq_relgnl}: {e}")
+                logger.info(f"Erro na leitura do {arq_relgnl}: {e}")
                 raise e
         return self.__relgnl
 
     def get_hidr(self) -> Hidr:
-        if self.__read_hidr is False:
+        if not self.__read_hidr:
             self.__read_hidr = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
                 arq_hidr = self.arquivos.hidr
                 if arq_hidr is None:
                     raise FileNotFoundError()
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {arq_hidr}")
+                logger.info(f"Lendo arquivo {arq_hidr}")
                 self.__hidr = Hidr.read(join(self.__tmppath, arq_hidr))
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do {arq_hidr}: {e}")
+                logger.error(f"Erro na leitura do {arq_hidr}: {e}")
                 raise e
         return self.__hidr
 
     def get_vazoes(self) -> Vazoes:
-        if self.__read_vazoes is False:
+        if not self.__read_vazoes:
             self.__read_vazoes = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
                 arq_vazoes = self.arquivos.vazoes
                 if arq_vazoes is None:
                     raise FileNotFoundError()
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {arq_vazoes}")
+                logger.info(f"Lendo arquivo {arq_vazoes}")
                 self.__vazoes = Vazoes.read(join(self.__tmppath, arq_vazoes))
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do {arq_vazoes}: {e}")
+                logger.error(f"Erro na leitura do {arq_vazoes}: {e}")
                 raise e
         return self.__vazoes
 
     def get_dec_oper_usih(self) -> DecOperUsih:
-        if self.__read_dec_oper_usih is False:
+        if not self.__read_dec_oper_usih:
             self.__read_dec_oper_usih = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo dec_oper_usih.csv")
+                logger.info("Lendo arquivo dec_oper_usih.csv")
                 self.__dec_oper_usih = DecOperUsih.read(
                     join(self.__tmppath, "dec_oper_usih.csv")
                 )
@@ -358,18 +337,16 @@ class RawFilesRepository(AbstractFilesRepository):
                         join(self.__tmppath, "dec_oper_usih.csv")
                     )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do dec_oper_usih.csv: {e}")
+                logger.error(f"Erro na leitura do dec_oper_usih.csv: {e}")
                 raise e
         return self.__dec_oper_usih
 
     def get_dec_oper_usit(self) -> DecOperUsit:
-        if self.__read_dec_oper_usit is False:
+        if not self.__read_dec_oper_usit:
             self.__read_dec_oper_usit = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo dec_oper_usit.csv")
+                logger.info("Lendo arquivo dec_oper_usit.csv")
                 self.__dec_oper_usit = DecOperUsit.read(
                     join(self.__tmppath, "dec_oper_usit.csv")
                 )
@@ -382,18 +359,16 @@ class RawFilesRepository(AbstractFilesRepository):
                         join(self.__tmppath, "dec_oper_usit.csv")
                     )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do dec_oper_usit.csv: {e}")
+                logger.error(f"Erro na leitura do dec_oper_usit.csv: {e}")
                 raise e
         return self.__dec_oper_usit
 
     def get_dec_oper_gnl(self) -> DecOperGnl:
-        if self.__read_dec_oper_gnl is False:
+        if not self.__read_dec_oper_gnl:
             self.__read_dec_oper_gnl = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo dec_oper_gnl.csv")
+                logger.info("Lendo arquivo dec_oper_gnl.csv")
                 self.__dec_oper_gnl = DecOperGnl.read(
                     join(self.__tmppath, "dec_oper_gnl.csv")
                 )
@@ -406,18 +381,16 @@ class RawFilesRepository(AbstractFilesRepository):
                         join(self.__tmppath, "dec_oper_gnl.csv")
                     )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do dec_oper_gnl.csv: {e}")
+                logger.error(f"Erro na leitura do dec_oper_gnl.csv: {e}")
                 raise e
         return self.__dec_oper_gnl
 
     def get_dec_oper_ree(self) -> DecOperRee:
-        if self.__read_dec_oper_ree is False:
+        if not self.__read_dec_oper_ree:
             self.__read_dec_oper_ree = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo dec_oper_ree.csv")
+                logger.info("Lendo arquivo dec_oper_ree.csv")
                 self.__dec_oper_ree = DecOperRee.read(
                     join(self.__tmppath, "dec_oper_ree.csv")
                 )
@@ -430,18 +403,16 @@ class RawFilesRepository(AbstractFilesRepository):
                         join(self.__tmppath, "dec_oper_ree.csv")
                     )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do dec_oper_ree.csv: {e}")
+                logger.error(f"Erro na leitura do dec_oper_ree.csv: {e}")
                 raise e
         return self.__dec_oper_ree
 
     def get_dec_oper_sist(self) -> DecOperSist:
-        if self.__read_dec_oper_sist is False:
+        if not self.__read_dec_oper_sist:
             self.__read_dec_oper_sist = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo dec_oper_sist.csv")
+                logger.info("Lendo arquivo dec_oper_sist.csv")
                 self.__dec_oper_sist = DecOperSist.read(
                     join(self.__tmppath, "dec_oper_sist.csv")
                 )
@@ -454,18 +425,16 @@ class RawFilesRepository(AbstractFilesRepository):
                         join(self.__tmppath, "dec_oper_sist.csv")
                     )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do dec_oper_sist.csv: {e}")
+                logger.error(f"Erro na leitura do dec_oper_sist.csv: {e}")
                 raise e
         return self.__dec_oper_sist
 
     def get_dec_oper_interc(self) -> DecOperInterc:
-        if self.__read_dec_oper_interc is False:
+        if not self.__read_dec_oper_interc:
             self.__read_dec_oper_interc = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo dec_oper_interc.csv")
+                logger.info("Lendo arquivo dec_oper_interc.csv")
                 self.__dec_oper_interc = DecOperInterc.read(
                     join(self.__tmppath, "dec_oper_interc.csv")
                 )
@@ -478,18 +447,16 @@ class RawFilesRepository(AbstractFilesRepository):
                         join(self.__tmppath, "dec_oper_interc.csv")
                     )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do dec_oper_interc.csv: {e}")
+                logger.error(f"Erro na leitura do dec_oper_interc.csv: {e}")
                 raise e
         return self.__dec_oper_interc
 
     def get_dec_eco_discr(self) -> DecEcoDiscr:
-        if self.__read_dec_eco_discr is False:
+        if not self.__read_dec_eco_discr:
             self.__read_dec_eco_discr = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo dec_eco_discr.csv")
+                logger.info("Lendo arquivo dec_eco_discr.csv")
                 self.__dec_eco_discr = DecEcoDiscr.read(
                     join(self.__tmppath, "dec_eco_discr.csv")
                 )
@@ -502,24 +469,21 @@ class RawFilesRepository(AbstractFilesRepository):
                         join(self.__tmppath, "dec_eco_discr.csv")
                     )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do dec_eco_discr.csv: {e}")
+                logger.error(f"Erro na leitura do dec_eco_discr.csv: {e}")
                 raise e
         return self.__dec_eco_discr
 
     def get_avl_turb_max(self) -> AvlTurbMax:
-        if self.__read_avl_turb_max is False:
+        if not self.__read_avl_turb_max:
             self.__read_avl_turb_max = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info("Lendo arquivo avl_turb_max.csv")
+                logger.info("Lendo arquivo avl_turb_max.csv")
                 self.__avl_turb_max = AvlTurbMax.read(
                     join(self.__tmppath, "avl_turb_max.csv")
                 )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do avl_turb_max.csv: {e}")
+                logger.error(f"Erro na leitura do avl_turb_max.csv: {e}")
                 raise e
         return self.__avl_turb_max
 
@@ -527,21 +491,19 @@ class RawFilesRepository(AbstractFilesRepository):
         file_name = f"dec_fcf_cortes_{str(stage).zfill(3)}.{self.extensao}"
         if self.__read_dec_fcf_cortes.get(stage) is None:
             self.__read_dec_fcf_cortes[stage] = True
-            logger = Log.log()
+            logger = logging.getLogger("main")
             try:
-                if logger is not None:
-                    logger.info(f"Lendo arquivo {file_name}")
+                logger.info(f"Lendo arquivo {file_name}")
                 self.__dec_fcf_cortes[stage] = DecFcfCortes.read(
                     join(self.__tmppath, file_name)
                 )
             except Exception as e:
-                if logger is not None:
-                    logger.error(f"Erro na leitura do {file_name}: {e}")
+                logger.error(f"Erro na leitura do {file_name}: {e}")
                 raise e
         return self.__dec_fcf_cortes.get(stage)
 
 
-def factory(kind: str, *args, **kwargs) -> AbstractFilesRepository:
+def factory(kind: str, *args: Any, **kwargs: Any) -> AbstractFilesRepository:
     mapping: Dict[str, Type[AbstractFilesRepository]] = {
         "FS": RawFilesRepository
     }

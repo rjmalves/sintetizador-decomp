@@ -11,9 +11,9 @@ from app.internal.constants import (
 from app.model.execution.executionsynthesis import ExecutionSynthesis
 from app.services.synthesis.execution import ExecutionSynthetizer
 from app.services.unitofwork import factory
-from tests.conftest import DECK_TEST_DIR
+from tests.conftest import DECK_TEST_DIR, q
 
-uow = factory("FS", DECK_TEST_DIR)
+uow = factory("FS", DECK_TEST_DIR, q)
 synthetizer = ExecutionSynthetizer()
 
 

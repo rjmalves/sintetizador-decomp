@@ -1,8 +1,9 @@
-import pandas as pd  # type: ignore
-from typing import Callable
-from idecomp.decomp.hidr import Hidr
 from dataclasses import dataclass
 from enum import Enum
+from typing import Callable
+
+import pandas as pd
+from idecomp.decomp.hidr import Hidr
 
 
 class InfeasibilityType(Enum):
@@ -56,14 +57,14 @@ class Infeasibility:
     def _build_RE(
         cls,
         iteration: int,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
-        def _process_message(constraint_message: str) -> tuple:
+        def _process_message(constraint_message: str) -> tuple[int, int, str]:
             r = InfeasibilityType.RE.message_pattern
             code = int(constraint_message.split(r)[1].split("PATAMAR")[0])
             block = int(constraint_message.split("PATAMAR")[1].split("(")[0])
@@ -88,15 +89,15 @@ class Infeasibility:
     @classmethod
     def _build_RHA(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
-        def _process_message(constraint_message: str) -> tuple:
+        def _process_message(constraint_message: str) -> tuple[int, str]:
             code = int(constraint_message.split("RHA")[1].split(":")[0])
             bound = constraint_message.split("(")[1].split(")")[0]
             return (code, bound)
@@ -118,15 +119,15 @@ class Infeasibility:
     @classmethod
     def _build_RHQ(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
-        def _process_message(constraint_message: str) -> tuple:
+        def _process_message(constraint_message: str) -> tuple[int, int, str]:
             code = int(constraint_message.split("RHQ")[1].split(":")[0])
             block = int(constraint_message.split("PATAMAR")[1].split("(")[0])
             bound = constraint_message.split("(")[1].split(")")[0]
@@ -150,13 +151,13 @@ class Infeasibility:
     @classmethod
     def _build_TI(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
         def _process_message(constraint_message: str, hidr: Hidr) -> int:
             name = constraint_message.split("IRRIGACAO, USINA")[1].strip()
@@ -185,15 +186,17 @@ class Infeasibility:
     @classmethod
     def _build_VERT(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
-        def _process_message(constraint_message: str, hidr: Hidr) -> tuple:
+        def _process_message(
+            constraint_message: str, hidr: Hidr
+        ) -> tuple[int, int]:
             block = int(
                 constraint_message.split("USINA")[0].split("PAT. ")[1].strip()
             )
@@ -224,15 +227,15 @@ class Infeasibility:
     @classmethod
     def _build_RHV(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
-        def _process_message(constraint_message: str) -> tuple:
+        def _process_message(constraint_message: str) -> tuple[int, str]:
             code = int(constraint_message.split("RHV")[1].split(":")[0])
             bound = constraint_message.split("(")[1].split(")")[0]
             return (code, bound)
@@ -254,15 +257,15 @@ class Infeasibility:
     @classmethod
     def _build_RHE(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
-        def _process_message(constraint_message: str) -> tuple:
+        def _process_message(constraint_message: str) -> tuple[int, int, str]:
             s_rhe = "RESTRICAO RHE - NUMERO"
             s_per = "PERIODO"
             code = int(constraint_message.split(s_rhe)[1].split(",")[0])
@@ -287,13 +290,13 @@ class Infeasibility:
     @classmethod
     def _build_EV(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
         def _process_message(constraint_message: str, hidr: Hidr) -> int:
             name = constraint_message.split("EVAPORACAO, USINA")[1].strip()
@@ -322,15 +325,17 @@ class Infeasibility:
     @classmethod
     def _build_DEFMIN(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
-        def _process_message(constraint_message: str, hidr: Hidr) -> tuple:
+        def _process_message(
+            constraint_message: str, hidr: Hidr
+        ) -> tuple[int, int]:
             block_string = "PATAMAR"
             hydro_string = "USINA"
             block = int(
@@ -365,15 +370,17 @@ class Infeasibility:
     @classmethod
     def _build_FP(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
-        def _process_message(constraint_message: str, hidr: Hidr) -> tuple:
+        def _process_message(
+            constraint_message: str, hidr: Hidr
+        ) -> tuple[int, int]:
             block_string = "PATAMAR"
             hydro_string = "USINA"
             block = int(constraint_message.split(block_string)[1])
@@ -406,17 +413,17 @@ class Infeasibility:
     @classmethod
     def _build_DEFICIT(
         cls,
-        iteration,
-        stage,
-        scenario,
-        constraint_message,
-        violation,
-        unit,
-        hidr,
+        iteration: int,
+        stage: int,
+        scenario: int,
+        constraint_message: str,
+        violation: float,
+        unit: str,
+        hidr: Hidr,
     ) -> "Infeasibility":
         def _process_message(
             constraint_message: str,
-        ) -> tuple:
+        ) -> tuple[str, int]:
             submarket = (
                 constraint_message.split("SUBSISTEMA ")[1].split(",")[0].strip()
             )
@@ -449,7 +456,7 @@ class Infeasibility:
         constraint_message = str(inviab_unic_line["restricao"])
         violation = float(inviab_unic_line["violacao"])
         unit = str(inviab_unic_line["unidade"])
-        inseasibility_map: dict[str, Callable] = {
+        inseasibility_map: dict[str, Callable[..., Infeasibility]] = {
             InfeasibilityType.RE.message_pattern: cls._build_RE,
             InfeasibilityType.RHA.message_pattern: cls._build_RHA,
             InfeasibilityType.RHQ.message_pattern: cls._build_RHQ,

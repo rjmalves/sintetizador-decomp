@@ -3,7 +3,7 @@ from logging import ERROR, INFO
 from traceback import print_exc
 from typing import Callable, Optional
 
-import pandas as pd  # type: ignore
+import pandas as pd
 
 from app.internal.constants import (
     POLICY_SYNTHESIS_METADATA_OUTPUT,
@@ -26,7 +26,7 @@ class PolicySynthetizer:
     logger: Optional[logging.Logger] = None
 
     @classmethod
-    def _log(cls, msg: str, level: int = INFO):
+    def _log(cls, msg: str, level: int = INFO) -> None:
         if cls.logger is not None:
             cls.logger.log(level, msg)
 
@@ -78,7 +78,7 @@ class PolicySynthetizer:
     def _resolve(
         cls, synthesis: PolicySynthesis, uow: AbstractUnitOfWork
     ) -> pd.DataFrame:
-        RULES: dict[Variable, Callable] = {
+        RULES: dict[Variable, Callable[..., pd.DataFrame]] = {
             Variable.CORTES_COEFICIENTES: cls._resolve_cortes_coeficientes,
             Variable.CORTES_VARIAVEIS: cls._resolve_cortes_variaveis,
         }
@@ -108,7 +108,7 @@ class PolicySynthetizer:
         cls,
         success_synthesis: list[PolicySynthesis],
         uow: AbstractUnitOfWork,
-    ):
+    ) -> None:
         metadata_df = pd.DataFrame(
             columns=[
                 "chave",
@@ -154,7 +154,7 @@ class PolicySynthetizer:
                 return None
 
     @classmethod
-    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork):
+    def synthetize(cls, variables: list[str], uow: AbstractUnitOfWork) -> None:
         cls.logger = logging.getLogger("main")
         uow.subdir = POLICY_SYNTHESIS_SUBDIR
 

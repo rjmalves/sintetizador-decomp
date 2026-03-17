@@ -1,13 +1,37 @@
-import click
 import os
+import time
+from multiprocessing import Manager
+from typing import Any, Tuple
+
+import click
+
 import app.domain.commands as commands
 import app.services.handlers as handlers
 from app.services.unitofwork import factory
 from app.utils.log import Log
 
 
+def _setup_logging() -> Any:
+    """Initialize multiprocessing queue and logging."""
+    m = Manager()
+    q: Any = m.Queue(-1)
+    Log.start_logging_process(q)
+    return q
+
+
+def _log_and_execute(title: str, q: Any, handler_fn: Any, command: Any) -> None:
+    """Execute handler with logging setup and teardown."""
+    logger = Log.configure_main_logger(q)
+    logger.info(f"# {title} #")
+    uow = factory("FS", os.curdir, q)
+    handler_fn(command, uow)
+    logger.info("# Fim da síntese #")
+    time.sleep(1.0)
+    Log.terminate_logging_process()
+
+
 @click.group()
-def app():
+def app() -> None:
     """
     Aplicação para realizar a síntese de informações em
     um modelo unificado de dados para o DECOMP.
@@ -23,21 +47,16 @@ def app():
 @click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def sistema(variaveis, formato):
-    """
-    Realiza a síntese dos dados do sistema do DECOMP.
-    """
+def sistema(variaveis: Tuple[str, ...], formato: str) -> None:
+    """Realiza a síntese dos dados do sistema do DECOMP."""
     os.environ["FORMATO_SINTESE"] = formato
-    Log.log().info("# Realizando síntese do SISTEMA #")
-
-    uow = factory(
-        "FS",
-        os.curdir,
+    q = _setup_logging()
+    _log_and_execute(
+        "Realizando síntese do SISTEMA",
+        q,
+        handlers.synthetize_system,
+        commands.SynthetizeSystem(list(variaveis)),
     )
-    command = commands.SynthetizeSystem(variaveis)
-    handlers.synthetize_system(command, uow)
-
-    Log.log().info("# Fim da síntese #")
 
 
 @click.command("execucao")
@@ -48,21 +67,16 @@ def sistema(variaveis, formato):
 @click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def execucao(variaveis, formato):
-    """
-    Realiza a síntese dos dados da execução do DECOMP.
-    """
+def execucao(variaveis: Tuple[str, ...], formato: str) -> None:
+    """Realiza a síntese dos dados da execução do DECOMP."""
     os.environ["FORMATO_SINTESE"] = formato
-    Log.log().info("# Realizando síntese da EXECUÇÃO #")
-
-    uow = factory(
-        "FS",
-        os.curdir,
+    q = _setup_logging()
+    _log_and_execute(
+        "Realizando síntese da EXECUÇÃO",
+        q,
+        handlers.synthetize_execution,
+        commands.SynthetizeExecution(list(variaveis)),
     )
-    command = commands.SynthetizeExecution(variaveis)
-    handlers.synthetize_execution(command, uow)
-
-    Log.log().info("# Fim da síntese #")
 
 
 @click.command("cenarios")
@@ -73,20 +87,16 @@ def execucao(variaveis, formato):
 @click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def cenarios(variaveis, formato):
-    """
-    Realiza a síntese dos dados de cenários do DECOMP.
-    """
+def cenarios(variaveis: Tuple[str, ...], formato: str) -> None:
+    """Realiza a síntese dos dados de cenários do DECOMP."""
     os.environ["FORMATO_SINTESE"] = formato
-    Log.log().info("# Realizando síntese dos CENÁRIOS #")
-
-    uow = factory(
-        "FS",
-        os.curdir,
+    q = _setup_logging()
+    _log_and_execute(
+        "Realizando síntese dos CENÁRIOS",
+        q,
+        handlers.synthetize_scenario,
+        commands.SynthetizeScenario(list(variaveis)),
     )
-    command = commands.SynthetizeScenario(variaveis)
-    handlers.synthetize_scenario(command, uow)
-    Log.log().info("# Fim da síntese #")
 
 
 @click.command("operacao")
@@ -97,21 +107,24 @@ def cenarios(variaveis, formato):
 @click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def operacao(variaveis, formato):
-    """
-    Realiza a síntese dos dados da operação do DECOMP.
-    """
+@click.option(
+    "--processadores",
+    default=1,
+    help="numero de processadores para paralelizar",
+)
+def operacao(
+    variaveis: Tuple[str, ...], formato: str, processadores: int
+) -> None:
+    """Realiza a síntese dos dados da operação do DECOMP."""
     os.environ["FORMATO_SINTESE"] = formato
-    Log.log().info("# Realizando síntese da OPERACAO #")
-
-    uow = factory(
-        "FS",
-        os.curdir,
+    os.environ["PROCESSADORES"] = str(processadores)
+    q = _setup_logging()
+    _log_and_execute(
+        "Realizando síntese da OPERACAO",
+        q,
+        handlers.synthetize_operation,
+        commands.SynthetizeOperation(list(variaveis)),
     )
-    command = commands.SynthetizeOperation(variaveis)
-    handlers.synthetize_operation(command, uow)
-
-    Log.log().info("# Fim da síntese #")
 
 
 @click.command("politica")
@@ -122,25 +135,20 @@ def operacao(variaveis, formato):
 @click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def politica(variaveis, formato):
-    """
-    Realiza a síntese dos dados da política do DECOMP.
-    """
+def politica(variaveis: Tuple[str, ...], formato: str) -> None:
+    """Realiza a síntese dos dados da política do DECOMP."""
     os.environ["FORMATO_SINTESE"] = formato
-    Log.log().info("# Realizando síntese da POLITICA #")
-
-    uow = factory(
-        "FS",
-        os.curdir,
+    q = _setup_logging()
+    _log_and_execute(
+        "Realizando síntese da POLITICA",
+        q,
+        handlers.synthetize_policy,
+        commands.SynthetizePolicy(list(variaveis)),
     )
-    command = commands.SynthetizeOperation(variaveis)
-    handlers.synthetize_policy(command, uow)
-
-    Log.log().info("# Fim da síntese #")
 
 
 @click.command("limpeza")
-def limpeza():
+def limpeza() -> None:
     """
     Realiza a limpeza dos dados resultantes de uma síntese.
     """
@@ -166,29 +174,47 @@ def limpeza():
 @click.option(
     "--formato", default="PARQUET", help="formato para escrita da síntese"
 )
-def completa(sistema, execucao, cenarios, operacao, politica, formato):
-    """
-    Realiza a síntese completa do DECOMP.
-    """
+@click.option(
+    "--processadores",
+    default=1,
+    help="numero de processadores para paralelizar",
+)
+def completa(
+    sistema: Tuple[str, ...],
+    execucao: Tuple[str, ...],
+    cenarios: Tuple[str, ...],
+    operacao: Tuple[str, ...],
+    politica: Tuple[str, ...],
+    formato: str,
+    processadores: int,
+) -> None:
+    """Realiza a síntese completa do DECOMP."""
     os.environ["FORMATO_SINTESE"] = formato
-    Log.log().info("# Realizando síntese COMPLETA #")
+    os.environ["PROCESSADORES"] = str(processadores)
 
-    uow = factory(
-        "FS",
-        os.curdir,
+    m = Manager()
+    q: Any = m.Queue(-1)
+    Log.start_logging_process(q)
+
+    logger = Log.configure_main_logger(q)
+    logger.info("# Realizando síntese COMPLETA #")
+
+    uow = factory("FS", os.curdir, q)
+    handlers.synthetize_system(commands.SynthetizeSystem(list(sistema)), uow)
+    handlers.synthetize_execution(
+        commands.SynthetizeExecution(list(execucao)), uow
     )
-    command = commands.SynthetizeSystem(sistema)
-    handlers.synthetize_system(command, uow)
-    command = commands.SynthetizeExecution(execucao)
-    handlers.synthetize_execution(command, uow)
-    command = commands.SynthetizeScenario(cenarios)
-    handlers.synthetize_scenario(command, uow)
-    command = commands.SynthetizeOperation(operacao)
-    handlers.synthetize_operation(command, uow)
-    command = commands.SynthetizePolicy(politica)
-    handlers.synthetize_policy(command, uow)
+    handlers.synthetize_scenario(
+        commands.SynthetizeScenario(list(cenarios)), uow
+    )
+    handlers.synthetize_operation(
+        commands.SynthetizeOperation(list(operacao)), uow
+    )
+    handlers.synthetize_policy(commands.SynthetizePolicy(list(politica)), uow)
 
-    Log.log().info("# Fim da síntese #")
+    logger.info("# Fim da síntese #")
+    time.sleep(1.0)
+    Log.terminate_logging_process()
 
 
 app.add_command(completa)
