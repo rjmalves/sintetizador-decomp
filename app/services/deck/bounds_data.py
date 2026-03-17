@@ -438,7 +438,6 @@ def hydro_spilled_flow_bounds(
     name = "hydro_spilled_flow_bounds"
     obj = cache.get(name)
     if obj is None:
-
         df = _initialize_df_hydro_bounds(uow)
         df[LOWER_BOUND_COL] = 0.00
         df[UPPER_BOUND_COL] = float("inf")
