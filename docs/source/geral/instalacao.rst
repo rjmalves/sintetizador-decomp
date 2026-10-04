@@ -23,4 +23,4 @@ Instalando via pip
 
 Também é possível selecionar um branch ou release específicos::
 
-    $ pip install git+https://github.com/rjmalves/sintetizador-decomp@v3.0.0
+    $ pip install git+https://github.com/rjmalves/sintetizador-decomp@v3.0.1

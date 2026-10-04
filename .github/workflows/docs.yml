@@ -23,7 +23,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv python install 3.12
-      - run: uv sync --all-extras --dev
+      - run: uv sync --locked --all-extras --dev
       - run: uv run sphinx-build -M html docs/source docs/build
       - uses: actions/upload-pages-artifact@v4
         with:

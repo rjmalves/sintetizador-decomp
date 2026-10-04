@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 import pandas as pd
+from cfinterface.components.register import Register
 
 from app.internal.constants import (
     EER_CODE_COL,
@@ -85,8 +86,11 @@ def thermals(cache: Dict[str, Any], uow: AbstractUnitOfWork) -> pd.DataFrame:
     if thermals_df is None:
         from app.services.deck.deck import Deck
 
-        dadger_ct = Deck.dadger(uow).ct()
-        registers = dadger_ct if isinstance(dadger_ct, list) else [dadger_ct]
+        registers = Deck.dadger(uow).ct()
+        if isinstance(registers, Register):
+            registers = [registers]
+        elif registers is None:
+            registers = []
         sbm_df = submarkets(cache, uow).set_index(SUBMARKET_CODE_COL)
         data: Dict[str, list[Any]] = {
             THERMAL_CODE_COL: [],

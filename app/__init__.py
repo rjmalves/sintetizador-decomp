@@ -7,4 +7,4 @@ padronização dos arquivos de saída do DECOMP em um
 modelo unificado de dados.
 """
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"

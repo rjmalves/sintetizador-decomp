@@ -1,3 +1,8 @@
+# v3.0.1
+
+- Arquivo `uv.lock` passa a ser versionado no repositório, garantindo reprodutibilidade dos ambientes de desenvolvimento e de CI. Os workflows de CI passam a usar `uv sync --locked`, falhando caso o lockfile esteja desatualizado em relação ao `pyproject.toml`.
+- Correção na síntese das entidades térmicas, que falhava quando o `dadger` não possuía registros `CT`, e adequação da tipagem estática ao [idecomp](https://github.com/rjmalves/idecomp) >= 1.14.
+
 # v3.0.0
 
 - Versão mínima do Python atualizada para >= 3.11. Suporte a Python 3.8, 3.9 e 3.10 descontinuado.
